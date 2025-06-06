@@ -111,8 +111,8 @@
     </div>
 
     <form id="withdrawForm">
-      <label>Enter Amount (Min ₹100)</label>
-      <input type="number" id="amount" min="100" required />
+      <label>Enter Amount (Min ₹110)</label>
+      <input type="number" id="amount" min="110" required />
 
       <label>Your UPI ID (if withdrawing via UPI)</label>
       <input type="text" id="upi" placeholder="example@upi" />
@@ -186,8 +186,8 @@
         return;
       }
 
-      if (amount < 100) {
-        alert("❌ Minimum withdrawal amount is ₹100.");
+      if (amount < 110) {
+        alert("❌ Minimum withdrawal amount is ₹110.");
         return;
       }
 
