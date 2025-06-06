@@ -60,6 +60,11 @@
       text-align: center;
       color: #ccc;
     }
+
+    ul {
+      padding-left: 20px;
+      text-align: left;
+    }
   </style>
 </head>
 <body>
@@ -69,7 +74,7 @@
     <button onclick="copyCode()">Copy Referral Code</button>
     <button onclick="shareCode()">📤 Share Referral</button>
     <div class="info" id="rewardInfo">
-      Share your referral code with friends. When they sign up and login, you earn ₹100 per referral!
+      Share your referral code with friends. When they register and make their first deposit, you earn ₹100!
     </div>
     <div class="info" id="teamInfo">
       Loading your team...
@@ -91,7 +96,6 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Save referral code if user came via link
     const urlParams = new URLSearchParams(window.location.search);
     const incomingRef = urlParams.get("ref");
     if (incomingRef) {
@@ -115,23 +119,37 @@
 
         document.getElementById("referralCode").innerText = code;
 
-        // Fetch team
+        // Fetch referred users who completed first deposit
         db.ref("users").once("value").then((allUsersSnap) => {
           let count = 0;
           let teamList = [];
+
           allUsersSnap.forEach((userSnap) => {
             let user = userSnap.val();
-            if (user.referredBy === code && user.loginCompleted === true) {
+            let userKey = userSnap.key;
+
+            if (user.referredBy === code && user.firstDepositDone === true) {
               count++;
               teamList.push(user.name || "Unnamed User");
+
+              // Give reward only if not already given
+              if (!user.rewardGiven) {
+                let wallet = userData.wallet || 0;
+                db.ref("users/" + userId).update({ wallet: wallet + 100 });
+
+                db.ref("users/" + userKey).update({ rewardGiven: true });
+              }
             }
           });
 
           const teamInfo = document.getElementById("teamInfo");
           if (count === 0) {
-            teamInfo.innerText = "No one has joined your team yet.";
+            teamInfo.innerText = "No one has made their first deposit yet.";
           } else {
-            teamInfo.innerHTML = `👥 You referred <strong>${count}</strong> people.<br>Team: ${teamList.join(", ")}`;
+            teamInfo.innerHTML = `
+              <div>👥 <strong>${count}</strong> referrals completed first deposit.</div>
+              <ul>${teamList.map(name => `<li>${name}</li>`).join("")}</ul>
+            `;
           }
         });
       });
@@ -150,7 +168,7 @@
 
     function shareCode() {
       const code = document.getElementById("referralCode").innerText;
-      const shareUrl = `https://saineek123.github.io/my-websitesaneek/?ref=${code}`;
+      const shareUrl = `https://saineek123.github.io/my-websitesaineek/betting-app/invite.html?ref=${code}`;
       const message = `Join this awesome app & earn rewards!\nUse my referral code: ${code}\nSign up here: ${shareUrl}`;
 
       if (navigator.share) {
