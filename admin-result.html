@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin - Match Result</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      background-color: #111;
+      color: #fff;
+    }
+    h2 {
+      color: #00e5ff;
+    }
+    select, button {
+      padding: 10px;
+      font-size: 16px;
+      margin-top: 10px;
+      border-radius: 6px;
+      border: none;
+      width: 300px;
+    }
+    button {
+      background-color: #00e5ff;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #00bcd4;
+    }
+  </style>
+</head>
+<body>
+  <h2>🏁 Declare Match Result</h2>
+  <select id="matchSelect">
+    <option disabled selected>-- Select Match --</option>
+  </select><br><br>
+
+  <select id="winnerSelect">
+    <option disabled selected>-- Select Winner --</option>
+  </select><br><br>
+
+  <button onclick="declareResult()">✔️ Declare Result</button>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+      authDomain: "betting-app-43800.firebaseapp.com",
+      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+      projectId: "betting-app-43800"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const matchSelect = document.getElementById("matchSelect");
+    const winnerSelect = document.getElementById("winnerSelect");
+
+    // Load matches
+    db.ref("matches").once("value", (snap) => {
+      snap.forEach(match => {
+        const data = match.val();
+        const option = document.createElement("option");
+        option.value = match.key;
+        option.textContent = `${data.team1} vs ${data.team2}`;
+        matchSelect.appendChild(option);
+      });
+    });
+
+    matchSelect.addEventListener("change", () => {
+      const matchId = matchSelect.value;
+      winnerSelect.innerHTML = `<option disabled selected>-- Select Winner --</option>`;
+      db.ref("matches/" + matchId).once("value").then(snap => {
+        const match = snap.val();
+        if (match) {
+          const opt1 = document.createElement("option");
+          opt1.value = match.team1;
+          opt1.textContent = match.team1;
+          const opt2 = document.createElement("option");
+          opt2.value = match.team2;
+          opt2.textContent = match.team2;
+          winnerSelect.appendChild(opt1);
+          winnerSelect.appendChild(opt2);
+        }
+      });
+    });
+
+    function declareResult() {
+      const matchId = matchSelect.value;
+      const winner = winnerSelect.value;
+
+      if (!matchId || !winner) {
+        alert("Please select match and winner.");
+        return;
+      }
+
+      // Update match result
+      db.ref("matches/" + matchId + "/result").set(winner);
+
+      // Process all user bets
+      db.ref("users").once("value").then(usersSnap => {
+        usersSnap.forEach(userSnap => {
+          const uid = userSnap.key;
+          const user = userSnap.val();
+          const bets = user.bets || {};
+
+          Object.keys(bets).forEach(betId => {
+            const bet = bets[betId];
+            if (bet.match && bet.match.includes(matchId)) return; // skip if not matching
+
+            if (bet.match.includes(winner) && bet.result === "pending" && bet.team === winner) {
+              // user won
+              const winAmt = parseFloat(bet.return);
+              const updatedWallet = (user.wallet || 0) + winAmt;
+              db.ref("users/" + uid + "/wallet").set(updatedWallet);
+              db.ref("users/" + uid + "/bets/" + betId + "/result").set("won");
+            } else if (bet.result === "pending") {
+              db.ref("users/" + uid + "/bets/" + betId + "/result").set("lost");
+            }
+          });
+        });
+        alert("✅ Result declared and users updated.");
+      });
+    }
+  </script>
+</body>
+</html>
