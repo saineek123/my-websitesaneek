@@ -94,16 +94,14 @@
   <a href="login.html">Logout</a>
 </nav>
 
-<!-- 🔴 Current Balance Display -->
 <div style="text-align:center; font-size:20px; margin-top:20px;">
   Current Balance: ₹<span id="liveUserBalance">0</span>
 </div>
 
 <h2>🔥 Place Your Bet</h2>
+<div class="matches" id="matchesContainer">Loading Matches...</div>
 
-<div class="matches" id="matchesContainer"></div>
-
-<!-- Firebase SDK -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
@@ -119,41 +117,58 @@
 </script>
 
 <script>
-  const matches = JSON.parse(localStorage.getItem("matchRates")) || [];
-
-  let currentUser = JSON.parse(localStorage.getItem("loggedInUser"));
   const userId = localStorage.getItem("userId");
-  let allUsers = JSON.parse(localStorage.getItem('users')) || [];
-  const selectedBets = {};
+  if (!userId) {
+    alert("Please login first.");
+    window.location.href = "login.html";
+  }
 
-  // 🔴 Live Balance Updater
+  const selectedBets = {};
+  const matches = [];
+
+  // 🔴 Show Live Wallet
   if (userId) {
-    const liveWalletEl = document.getElementById("liveUserBalance");
+    const walletEl = document.getElementById("liveUserBalance");
     db.ref("users/" + userId + "/wallet").on("value", (snap) => {
-      const balance = snap.val() || 0;
-      liveWalletEl.innerText = balance;
+      walletEl.innerText = snap.val() || 0;
     });
   }
+
+  // 🔄 Load Matches from Firebase
+  db.ref("matches").on("value", (snapshot) => {
+    matches.length = 0;
+    snapshot.forEach((child) => {
+      const data = child.val();
+      data.id = child.key;
+      matches.push(data);
+    });
+    renderMatches();
+  });
 
   function renderMatches() {
     const container = document.getElementById("matchesContainer");
     container.innerHTML = "";
+
+    if (matches.length === 0) {
+      container.innerHTML = "<p>No matches available.</p>";
+      return;
+    }
 
     matches.forEach(match => {
       const card = document.createElement("div");
       card.className = "card";
       card.innerHTML = `
         <h3>${match.team1} vs ${match.team2}</h3>
-        <div class="team-btn" onclick="selectTeam(${match.id}, '${match.team1}', ${match.rate1})">
+        <div class="team-btn" onclick="selectTeam('${match.id}', '${match.team1}', ${match.rate1})">
           <span>${match.team1}</span>
           <span class="rate">@${match.rate1}</span>
         </div>
-        <div class="team-btn" onclick="selectTeam(${match.id}, '${match.team2}', ${match.rate2})">
+        <div class="team-btn" onclick="selectTeam('${match.id}', '${match.team2}', ${match.rate2})">
           <span>${match.team2}</span>
           <span class="rate">@${match.rate2}</span>
         </div>
         <input type="number" id="amount-${match.id}" placeholder="Enter amount">
-        <button onclick="placeBet(${match.id})">Submit Bet</button>
+        <button onclick="placeBet('${match.id}')">Submit Bet</button>
         <div id="selected-${match.id}" style="margin-top: 5px; font-size: 14px; color: #ccc;"></div>
       `;
       container.appendChild(card);
@@ -173,7 +188,7 @@
       return;
     }
 
-    db.ref("users/" + userId + "/wallet").once("value", (snap) => {
+    db.ref("users/" + userId + "/wallet").once("value").then((snap) => {
       const currentBalance = snap.val() || 0;
       if (currentBalance < amount) {
         alert("Insufficient balance!");
@@ -183,7 +198,7 @@
       const match = matches.find(m => m.id === matchId);
       const returnAmount = (amount * selected.rate).toFixed(2);
 
-      const newBet = {
+      const betData = {
         match: `${match.team1} vs ${match.team2}`,
         team: selected.team,
         rate: selected.rate,
@@ -193,20 +208,16 @@
         result: "pending"
       };
 
-      const updatedBalance = currentBalance - amount;
-      db.ref("users/" + userId + "/wallet").set(updatedBalance);
+      // Save bet in Firebase
+      db.ref("users/" + userId + "/bets").push(betData);
 
-      currentUser.bets = currentUser.bets || [];
-      currentUser.bets.push(newBet);
-      localStorage.setItem("loggedInUser", JSON.stringify(currentUser));
+      // Deduct from wallet
+      db.ref("users/" + userId + "/wallet").set(currentBalance - amount);
 
-      alert(`✅ Bet placed on ${selected.team} for ₹${amount}. Potential return: ₹${returnAmount}`);
+      alert(`✅ Bet placed on ${selected.team} for ₹${amount}. Return: ₹${returnAmount}`);
       window.location.href = "history.html";
     });
   }
-
-  renderMatches();
 </script>
-
 </body>
 </html>
