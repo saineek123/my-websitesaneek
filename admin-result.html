@@ -72,6 +72,7 @@
       });
     });
 
+    // Load teams into winner selector
     matchSelect.addEventListener("change", () => {
       const matchId = matchSelect.value;
       winnerSelect.innerHTML = `<option disabled selected>-- Select Winner --</option>`;
@@ -99,32 +100,43 @@
         return;
       }
 
-      // Update match result
-      db.ref("matches/" + matchId + "/result").set(winner);
+      // 1. Save result
+      db.ref("matches/" + matchId + "/result").set(winner).then(() => {
 
-      // Process all user bets
-      db.ref("users").once("value").then(usersSnap => {
-        usersSnap.forEach(userSnap => {
-          const uid = userSnap.key;
-          const user = userSnap.val();
-          const bets = user.bets || {};
+        // 2. Process user bets
+        db.ref("users").once("value").then(usersSnap => {
+          usersSnap.forEach(userSnap => {
+            const uid = userSnap.key;
+            const user = userSnap.val();
+            const bets = user.bets || {};
 
-          Object.keys(bets).forEach(betId => {
-            const bet = bets[betId];
-            if (bet.match && bet.match.includes(matchId)) return; // skip if not matching
+            Object.keys(bets).forEach(betId => {
+              const bet = bets[betId];
 
-            if (bet.match.includes(winner) && bet.result === "pending" && bet.team === winner) {
-              // user won
-              const winAmt = parseFloat(bet.return);
-              const updatedWallet = (user.wallet || 0) + winAmt;
-              db.ref("users/" + uid + "/wallet").set(updatedWallet);
-              db.ref("users/" + uid + "/bets/" + betId + "/result").set("won");
-            } else if (bet.result === "pending") {
-              db.ref("users/" + uid + "/bets/" + betId + "/result").set("lost");
-            }
+              // Match title check
+              if (bet.match.includes(winner) && bet.result === "pending" && bet.team === winner) {
+                const winAmt = parseFloat(bet.return);
+                const updatedWallet = (user.wallet || 0) + winAmt;
+
+                // Update wallet
+                db.ref("users/" + uid + "/wallet").set(updatedWallet);
+
+                // Update bet status
+                db.ref("users/" + uid + "/bets/" + betId + "/result").set("won");
+              } else if (bet.result === "pending") {
+                db.ref("users/" + uid + "/bets/" + betId + "/result").set("lost");
+              }
+            });
           });
+
+          // 3. Auto delete match after result
+          db.ref("matches/" + matchId).remove().then(() => {
+            alert("✅ Result declared, users updated, and match removed from Firebase.");
+            matchSelect.selectedIndex = 0;
+            winnerSelect.innerHTML = `<option disabled selected>-- Select Winner --</option>`;
+          });
+
         });
-        alert("✅ Result declared and users updated.");
       });
     }
   </script>
