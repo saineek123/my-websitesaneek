@@ -100,11 +100,14 @@
           const user = data[userId];
 
           if (user.password === password) {
-            localStorage.setItem("userId", userId); // ✅ यहीं होना चाहिए
+            // ✅ Store both userId and full user object
+            localStorage.setItem("userId", userId);
+            localStorage.setItem("loggedInUser", JSON.stringify(user));
+
             msg.style.color = "lightgreen";
             msg.innerText = "Login successful ✔";
             setTimeout(() => {
-              window.location.href = "index.html"; // या recharge.html
+              window.location.href = "index.html";
             }, 1000);
           } else {
             msg.innerText = "Incorrect password.";
