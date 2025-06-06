@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Chart Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #111;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background: #222;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h2 {
+      margin: 0;
+      color: #00e5ff;
+    }
+
+    header a {
+      color: #fff;
+      text-decoration: none;
+      background: #00e5ff;
+      padding: 8px 14px;
+      border-radius: 6px;
+    }
+
+    main {
+      padding: 20px;
+    }
+
+    canvas {
+      background: #1c1c1c;
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .card {
+      background: #1c1c1c;
+      padding: 20px;
+      border-radius: 12px;
+      margin-top: 20px;
+      box-shadow: 0 0 10px rgba(0,255,255,0.1);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h2>📊 Admin Analytics</h2>
+    <a href="admin.html">← Back to Admin</a>
+  </header>
+
+  <main>
+    <div class="card">
+      <h3>Overview Chart</h3>
+      <canvas id="summaryChart" height="250"></canvas>
+    </div>
+  </main>
+
+  <script>
+    const users = JSON.parse(localStorage.getItem("users")) || [];
+    const recharges = JSON.parse(localStorage.getItem("recharges")) || [];
+    const withdraws = JSON.parse(localStorage.getItem("withdraws")) || [];
+
+    const totalUsers = users.length;
+    const totalRecharge = recharges.reduce((sum, r) => sum + parseFloat(r.amount), 0);
+    const totalWithdraw = withdraws.reduce((sum, w) => sum + parseFloat(w.amount), 0);
+
+    const ctx = document.getElementById('summaryChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Total Users', 'Total Recharge', 'Total Withdraw'],
+        datasets: [{
+          label: 'Overview Stats',
+          data: [totalUsers, totalRecharge, totalWithdraw],
+          backgroundColor: ['#00e5ff', '#00c853', '#d50000']
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              color: '#00e5ff'
+            }
+          },
+          x: {
+            ticks: {
+              color: '#fff'
+            }
+          }
+        }
+      }
+    });
+  </script>
+
+</body>
+</html>

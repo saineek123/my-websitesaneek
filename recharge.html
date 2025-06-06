@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Recharge Wallet</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #121212;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+    }
+    nav {
+      background-color: #1e1e1e;
+      padding: 12px 0;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    }
+    nav a {
+      color: #00e5ff;
+      margin: 0 15px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+    .container {
+      max-width: 400px;
+      margin: 30px auto;
+      background-color: #1c1c1c;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0, 229, 255, 0.05);
+    }
+    h2 {
+      text-align: center;
+      color: #00e5ff;
+      margin-bottom: 25px;
+    }
+    label {
+      font-size: 14px;
+      display: block;
+      margin-top: 15px;
+    }
+    input[type="number"],
+    input[type="text"],
+    input[type="file"] {
+      width: 100%;
+      padding: 12px;
+      margin-top: 5px;
+      background-color: #2a2a2a;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 20px;
+      background-color: #00e5ff;
+      color: #000;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .qr-section {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .upi-id-copy {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #2a2a2a;
+      padding: 10px;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+    .upi-id-copy span {
+      color: #00e5ff;
+      font-size: 14px;
+    }
+    .copy-btn {
+      background: #00e5ff;
+      color: #000;
+      padding: 6px 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .success-msg {
+      color: lightgreen;
+      margin-top: 15px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="recharge.html">Recharge</a>
+    <a href="withdraw.html">Withdraw</a>
+    <a href="history.html">History</a>
+    <a href="account.html">Account</a>
+  </nav>
+
+  <div class="container">
+    <h2>Recharge Wallet</h2>
+
+    <form id="amountForm">
+      <label>Enter Amount (₹)</label>
+      <input type="number" id="amount" required />
+      <button type="submit">Submit Amount</button>
+    </form>
+
+    <div id="paymentSection" style="display: none;">
+      <div class="qr-section">
+        <img src="png.jpg" alt="QR Code" width="200" />
+        <div class="upi-id-copy">
+          <span id="fixedUpi">amit.894@ptyes</span>
+          <button class="copy-btn" onclick="copyUpi()">Copy</button>
+        </div>
+      </div>
+
+      <form id="rechargeForm">
+        <label>Upload Screenshot</label>
+        <input type="file" id="screenshot" accept="image/*" required />
+
+        <label>Enter UTR / Transaction ID</label>
+        <input type="text" id="utr" required />
+
+        <button type="submit">Submit Recharge</button>
+      </form>
+    </div>
+    <strong>👉Note:</strong> Please ensure that your UPI ID or UTR are correct to avoid any issues with the recharge process. <br>
+    <strong>👉Important:</strong> Recharge requests are processed within 24- hours. <br>
+    <strong>👉Disclaimer:</strong> The company is not responsible for any errors in the provided information. <br>
+    <br>
+    <strong>👉Contact Customer Service:</strong> If you have any questions or need assistance, please contact our customer service team. <br>
+    <strong>👉Note:</strong> Please don't worry, your money is safe, just wait a little. <br>
+    <p class="success-msg" id="successMsg"></p>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+      authDomain: "betting-app-43800.firebaseapp.com",
+      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+      projectId: "betting-app-43800",
+      storageBucket: "betting-app-43800.appspot.com",
+      messagingSenderId: "752263307747",
+      appId: "1:752263307747:web:183e06d62bc5920fc700d6",
+      measurementId: "G-Y452BY8453"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    function copyUpi() {
+      const upiText = document.getElementById("fixedUpi").innerText;
+      navigator.clipboard.writeText(upiText).then(() => {
+        alert("UPI ID copied: " + upiText);
+      });
+    }
+
+    document.getElementById("amountForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const amount = parseFloat(document.getElementById("amount").value);
+      if (amount >= 100) {
+        document.getElementById("paymentSection").style.display = "block";
+      } else {
+        alert("Please enter a minimum amount of ₹100.");
+      }
+    });
+
+    document.getElementById("rechargeForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const userId = localStorage.getItem("userId");
+      if (!userId) {
+        alert("User not logged in.");
+        return;
+      }
+
+      const amount = parseFloat(document.getElementById("amount").value);
+      const screenshot = document.getElementById("screenshot").files[0];
+      const utr = document.getElementById("utr").value;
+      const successMsg = document.getElementById("successMsg");
+
+      if (!amount || !screenshot || !utr) {
+        alert("Please fill all fields.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function () {
+        const screenshotBase64 = reader.result;
+
+        const rechargeRequest = {
+          amount,
+          upi: "9792368894@ptyes",
+          paymentMethod: "UPI",
+          screenshot: screenshotBase64,
+          utr,
+          date: new Date().toLocaleString(),
+          status: "pending",
+          userId
+        };
+
+        db.ref("recharges/" + userId).push(rechargeRequest)
+          .then(() => {
+            successMsg.innerText = "Recharge request sent! Waiting for admin approval.";
+            document.getElementById("rechargeForm").reset();
+          })
+          .catch((error) => {
+            alert("Error: " + error.message);
+          });
+      };
+      reader.readAsDataURL(screenshot);
+    });
+  </script>
+
+</body>
+</html>

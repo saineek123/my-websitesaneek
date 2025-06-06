@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mines Game - Daily Bonus</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(to right, #0f0f0f, #1a1a1a);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    h1 {
+      color: #00e676;
+      margin-bottom: 10px;
+    }
+    .wallet {
+      background: #222;
+      padding: 10px 20px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    #dailyRewardBtn {
+      margin-bottom: 15px;
+      background: #f39c12;
+      color: #222;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, 60px);
+      gap: 10px;
+    }
+    .cell {
+      width: 60px;
+      height: 60px;
+      background: #333;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 24px;
+      transition: 0.2s;
+    }
+    .cell.revealed {
+      background: #00e676;
+      color: #000;
+      font-weight: bold;
+    }
+    .cell.mine {
+      background: #e53935;
+    }
+    .controls {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+    input, select {
+      padding: 10px;
+      border-radius: 6px;
+      border: none;
+      width: 200px;
+      text-align: center;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      background: #00bcd4;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    #message {
+      margin-top: 10px;
+      color: #ffeb3b;
+    }
+  </style>
+</head>
+<body>
+  <h1>💣 Mines Game + 🎁 Daily Reward</h1>
+  <div class="wallet">Wallet: ₹<span id="wallet">0</span></div>
+  <button id="dailyRewardBtn" onclick="claimDailyReward()">🎁 Claim ₹5 Daily Bonus</button>
+  
+  <div class="controls">
+    <input type="number" id="betAmount" placeholder="Enter Bet Amount">
+    <select id="mineCount">
+      <option value="3">3 Mines (Safe)</option>
+      <option value="5" selected>5 Mines (Medium)</option>
+      <option value="10">10 Mines (Risky)</option>
+      <option value="15">15 Mines (High Risk)</option>
+      <option value="20">20 Mines (Deadly 😈)</option>
+    </select>
+    <button onclick="startGame()">Start Game</button>
+    <button onclick="cashOut()">Cash Out</button>
+    <div id="message"></div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+      authDomain: "betting-app-43800.firebaseapp.com",
+      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+      projectId: "betting-app-43800"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const walletEl = document.getElementById("wallet");
+    const messageEl = document.getElementById("message");
+    const gridEl = document.getElementById("grid");
+    const rewardBtn = document.getElementById("dailyRewardBtn");
+    const userId = localStorage.getItem("userId");
+    const mineCountSelect = document.getElementById("mineCount");
+
+    let wallet = 0;
+    let bet = 0;
+    let multiplier = 1;
+    let mines = [];
+    let revealed = [];
+    let gameStarted = false;
+    let mineCount = 5;
+
+    // Load wallet
+    if (userId) {
+      db.ref("users/" + userId).on("value", snap => {
+        const data = snap.val() || {};
+        wallet = data.wallet || 0;
+        walletEl.innerText = wallet.toFixed(2);
+
+        // Check reward timer
+        const last = data.lastClaim || 0;
+        const now = Date.now();
+        rewardBtn.disabled = (now - last < 86400000);
+      });
+    }
+
+    function claimDailyReward() {
+      if (!userId) return alert("Login required");
+
+      const rewardAmount = 5;
+      const userRef = db.ref("users/" + userId);
+
+      userRef.once("value").then(snap => {
+        const data = snap.val() || {};
+        const lastClaim = data.lastClaim || 0;
+        const now = Date.now();
+
+        if (now - lastClaim < 86400000) {
+          alert("⏳ Already claimed today. Come back tomorrow!");
+          return;
+        }
+
+        const newBalance = (data.wallet || 0) + rewardAmount;
+
+        userRef.update({
+          wallet: newBalance,
+          lastClaim: now
+        });
+
+        walletEl.innerText = newBalance.toFixed(2);
+        alert(`🎉 You got ₹${rewardAmount} as daily reward!`);
+        rewardBtn.disabled = true;
+      });
+    }
+
+    function startGame() {
+      bet = parseFloat(document.getElementById("betAmount").value);
+      mineCount = parseInt(mineCountSelect.value);
+
+      if (isNaN(bet) || bet <= 0 || bet > wallet) {
+        messageEl.innerText = "Invalid bet amount.";
+        return;
+      }
+
+      wallet -= bet;
+      walletEl.innerText = wallet.toFixed(2);
+      if (userId) {
+        db.ref("users/" + userId + "/wallet").set(wallet);
+      }
+
+      multiplier = 1;
+      revealed = [];
+      gameStarted = true;
+      messageEl.innerText = `Game Started with ${mineCount} mines! Click cells to reveal.`;
+      generateMines();
+      renderGrid();
+    }
+
+    function generateMines() {
+      mines = [];
+      while (mines.length < mineCount) {
+        const r = Math.floor(Math.random() * 25);
+        if (!mines.includes(r)) mines.push(r);
+      }
+    }
+
+    function renderGrid() {
+      gridEl.innerHTML = "";
+      for (let i = 0; i < 25; i++) {
+        const div = document.createElement("div");
+        div.className = "cell";
+        div.onclick = () => revealCell(i, div);
+        gridEl.appendChild(div);
+      }
+    }
+
+    function revealCell(i, el) {
+      if (!gameStarted || revealed.includes(i)) return;
+      if (mines.includes(i)) {
+        el.classList.add("mine");
+        el.innerText = "💣";
+        messageEl.innerText = "💥 You hit a mine! Lost ₹" + bet.toFixed(2);
+        gameStarted = false;
+        return;
+      }
+      el.classList.add("revealed");
+      el.innerText = "✅";
+      revealed.push(i);
+
+      let boost = 0.15 * (mineCount / 5);
+      multiplier += boost;
+      if (multiplier > 5) multiplier = 5;
+
+      messageEl.innerText = `Safe! Current Multiplier: ${multiplier.toFixed(2)}x`;
+    }
+
+    function cashOut() {
+      if (!gameStarted || revealed.length === 0) {
+        messageEl.innerText = "Nothing to cash out.";
+        return;
+      }
+      const win = Math.floor(bet * multiplier * 0.95);
+      wallet += win;
+      walletEl.innerText = wallet.toFixed(2);
+      if (userId) {
+        db.ref("users/" + userId + "/wallet").set(wallet);
+      }
+
+      messageEl.innerText = `🎉 You cashed out ₹${win}`;
+      gameStarted = false;
+    }
+  </script>
+</body>
+</html>

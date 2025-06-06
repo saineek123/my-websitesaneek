@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Dashboard</title>
+  <style>
+    body {
+      background-color: #0f0f0f;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    h2, h3 {
+      color: #00e5ff;
+      text-align: center;
+      margin-top: 20px;
+    }
+    .section {
+      max-width: 900px;
+      margin: 30px auto;
+      background: #1c1c1c;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    .item {
+      border-bottom: 1px solid #333;
+      padding: 10px 0;
+    }
+    button {
+      margin: 5px;
+      padding: 6px 10px;
+      border: none;
+      border-radius: 5px;
+      background-color: #00e5ff;
+      color: black;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #00cde6;
+    }
+    #logout {
+      position: fixed;
+      top: 15px;
+      right: 20px;
+      background: red;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <button id="logout" onclick="logout()">Logout</button>
+  <h2>Admin Dashboard</h2>
+
+  <div class="section" id="summary">
+    <h3>📊 Summary</h3>
+    <p id="totalUsers"></p>
+    <p id="totalWithdraws"></p>
+    <p id="totalRecharges"></p>
+  </div>
+
+  <div class="section" id="rechargeRequests">
+    <h3>💰 Recharge Requests</h3>
+    <div id="rechargeList"></div>
+  </div>
+
+  <div class="section" id="withdrawRequests">
+    <h3>💸 Withdraw Requests</h3>
+    <div id="withdrawList"></div>
+  </div>
+
+  <div class="section" id="userList">
+    <h3>👥 User List</h3>
+    <div id="users"></div>
+  </div>
+
+  <!-- Firebase Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+
+  <!-- App Script -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+      authDomain: "betting-app-43800.firebaseapp.com",
+      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+      projectId: "betting-app-43800"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();
+
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        const emailKey = user.email.replace(/\./g, '_');
+        db.ref("admins/" + emailKey).once("value").then((snap) => {
+          if (snap.exists()) {
+            loadSummary();
+            loadRecharges();
+            loadWithdraws();
+            loadUsers();
+          } else {
+            alert("❌ Not admin");
+            auth.signOut().then(() => window.location.href = "admin-login.html");
+          }
+        }).catch((err) => {
+          alert("Database read failed");
+        });
+      } else {
+        window.location.href = "admin-login.html";
+      }
+    });
+
+    function logout() {
+      auth.signOut().then(() => {
+        window.location.href = "admin-login.html";
+      });
+    }
+
+    function loadSummary() {
+      db.ref("users").once("value").then((snap) => {
+        document.getElementById("totalUsers").innerText = `Total Users: ${snap.numChildren()}`;
+      });
+      db.ref("withdraws").once("value").then((snap) => {
+        let total = 0;
+        snap.forEach(user => total += user.numChildren());
+        document.getElementById("totalWithdraws").innerText = `Total Withdraw Requests: ${total}`;
+      });
+      db.ref("recharges").once("value").then((snap) => {
+        let total = 0;
+        snap.forEach(user => total += user.numChildren());
+        document.getElementById("totalRecharges").innerText = `Total Recharge Requests: ${total}`;
+      });
+    }
+
+    function loadRecharges() {
+      db.ref("recharges").once("value").then((snap) => {
+        const container = document.getElementById("rechargeList");
+        container.innerHTML = '';
+        snap.forEach((userNode) => {
+          const userId = userNode.key;
+          userNode.forEach((rechargeNode) => {
+            const data = rechargeNode.val();
+            const rechargeId = rechargeNode.key;
+            const div = document.createElement("div");
+            div.className = "item";
+            div.innerHTML = `
+              <p><b>User:</b> ${userId} <br/><b>Amount:</b> ₹${data.amount} <br/><b>Status:</b> ${data.status}</p>
+              ${data.status === "pending" ? `
+                <button onclick="updateRechargeStatus('${userId}', '${rechargeId}', ${data.amount}, 'approved')">Approve</button>
+                <button onclick="updateRechargeStatus('${userId}', '${rechargeId}', ${data.amount}, 'rejected')">Reject</button>
+              ` : ''}
+            `;
+            container.appendChild(div);
+          });
+        });
+      });
+    }
+
+    function updateRechargeStatus(userId, rechargeId, amount, status) {
+      const rechargeRef = db.ref("recharges/" + userId + "/" + rechargeId);
+      rechargeRef.update({ status }).then(() => {
+        if (status === "approved") {
+          const walletRef = db.ref("users/" + userId + "/wallet");
+          walletRef.transaction(current => (current || 0) + amount);
+        }
+        loadRecharges();
+      });
+    }
+
+    function loadWithdraws() {
+      db.ref("withdraws").once("value").then((snap) => {
+        const container = document.getElementById("withdrawList");
+        container.innerHTML = '';
+        snap.forEach((userSnap) => {
+          const userId = userSnap.key;
+          userSnap.forEach((reqSnap) => {
+            const data = reqSnap.val();
+            const withdrawId = reqSnap.key;
+            const div = document.createElement("div");
+            div.className = "item";
+            div.innerHTML = `
+              <p>
+                <b>User:</b> ${userId} <br/>
+                <b>Amount:</b> ₹${data.amount} <br/>
+                <b>UPI ID:</b> ${data.upi || 'N/A'} <br/>
+                <b>Account No:</b> ${data.account || 'N/A'} <br/>
+                <b>Status:</b> ${data.status}
+              </p>
+              ${data.status === "pending" ? `
+                <button onclick="updateWithdrawStatus('${userId}', '${withdrawId}', '${data.amount}', 'approved')">Approve</button>
+                <button onclick="updateWithdrawStatus('${userId}', '${withdrawId}', '${data.amount}', 'rejected')">Reject</button>
+              ` : ''}
+            `;
+            container.appendChild(div);
+          });
+        });
+      });
+    }
+
+    function updateWithdrawStatus(userId, withdrawId, amount, status) {
+      const withdrawRef = db.ref("withdraws/" + userId + "/" + withdrawId);
+      withdrawRef.update({ status }).then(() => {
+        if (status === "approved") {
+          const walletRef = db.ref("users/" + userId + "/wallet");
+          walletRef.transaction(current => (current || 0) - parseFloat(amount));
+        }
+        loadWithdraws();
+      });
+    }
+
+    function loadUsers() {
+      db.ref("users").once("value").then((snap) => {
+        const container = document.getElementById("users");
+        container.innerHTML = '';
+        snap.forEach((child) => {
+          const user = child.val();
+          const div = document.createElement("div");
+          div.className = "item";
+          div.innerHTML = `
+            <p><b>${child.key}</b> - Wallet: ₹${user.wallet || 0} ${user.isBanned ? '(BANNED)' : ''}</p>
+            <button onclick="updateBan('${child.key}', ${!user.isBanned})">${user.isBanned ? 'Unban' : 'Ban'}</button>
+          `;
+          container.appendChild(div);
+        });
+      });
+    }
+
+    function updateBan(uid, state) {
+      db.ref("users/" + uid).update({ isBanned: state }).then(() => loadUsers());
+    }
+  </script>
+</body>
+</html>

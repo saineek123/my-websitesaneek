@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Head or Tail Game</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #e0f7fa, #ffffff);
+      text-align: center;
+      padding: 30px;
+      color: #333;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+
+    .coin {
+      width: 160px;
+      height: 160px;
+      margin: 30px auto;
+      transition: transform 1s ease;
+      border-radius: 50%;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    }
+
+    .bet-buttons button, #reset-btn {
+      font-size: 18px;
+      padding: 12px 24px;
+      margin: 10px;
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      background-color: #00796b;
+      color: white;
+      transition: background 0.3s ease;
+    }
+
+    .bet-buttons button:hover, #reset-btn:hover {
+      background-color: #004d40;
+    }
+
+    .result {
+      font-size: 22px;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+
+    .stats {
+      margin-top: 20px;
+      font-size: 16px;
+      color: #555;
+    }
+
+    .flip {
+      animation: flip 1s ease forwards;
+    }
+
+    @keyframes flip {
+      0% { transform: rotateY(0); }
+      50% { transform: rotateY(180deg); }
+      100% { transform: rotateY(360deg); }
+    }
+
+    .input-section {
+      margin: 15px;
+    }
+
+    input[type="number"] {
+      padding: 8px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      width: 120px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Head or Tail Game</h1>
+
+  <div>
+    <img id="coin" class="coin" src="head.png.jpg" alt="coin">
+  </div>
+
+  <div class="input-section">
+    <label>Enter Bet Amount: ₹</label>
+    <input type="number" id="betAmount" placeholder="e.g. 100" min="1">
+  </div>
+
+  <div class="bet-buttons">
+    <button onclick="flipCoin('HEAD')">Bet on HEAD</button>
+    <button onclick="flipCoin('TAIL')">Bet on TAIL</button>
+    <button id="reset-btn" onclick="resetGame()">Reset</button>
+  </div>
+
+  <div class="result" id="result">Place your bet to start!</div>
+
+  <div class="stats" id="stats">
+    Total Games: 0 | Wins: 0 | Losses: 0 | Balance: ₹<span id="walletBalance">0</span>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+      authDomain: "betting-app-43800.firebaseapp.com",
+      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+      projectId: "betting-app-43800",
+      storageBucket: "betting-app-43800.appspot.com",
+      messagingSenderId: "752263307747",
+      appId: "1:752263307747:web:183e06d62bc5920fc700d6"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const userId = localStorage.getItem("userId");
+    if (!userId) {
+      alert("User not logged in.");
+      window.location.href = "login.html";
+    }
+
+    const coin = document.getElementById("coin");
+    const resultDiv = document.getElementById("result");
+    const statsDiv = document.getElementById("stats");
+    const betInput = document.getElementById("betAmount");
+    const walletSpan = document.getElementById("walletBalance");
+
+    let totalGames = 0;
+    let wins = 0;
+    let losses = 0;
+    let walletBalance = 0;
+
+    // Load wallet from Firebase
+    function loadWallet() {
+      db.ref("users/" + userId).once("value")
+        .then(snapshot => {
+          const userData = snapshot.val();
+          walletBalance = userData?.wallet || 0;
+          walletSpan.textContent = walletBalance;
+        })
+        .catch(error => {
+          console.error("Wallet load error:", error.message);
+        });
+    }
+
+    function updateWalletInFirebase(newBalance) {
+      db.ref("users/" + userId).update({ wallet: newBalance })
+        .then(() => {
+          walletSpan.textContent = newBalance;
+        })
+        .catch(err => {
+          alert("Error updating wallet!");
+          console.error(err);
+        });
+    }
+
+    function flipCoin(userBet) {
+      const bet = parseInt(betInput.value);
+      if (isNaN(bet) || bet <= 0) {
+        alert("Please enter a valid bet amount!");
+        return;
+      }
+
+      if (bet > walletBalance) {
+        alert("Insufficient balance!");
+        return;
+      }
+
+      // Mid-animation: show random face
+      const midFace = Math.random() < 0.5 ? "head.png.jpg" : "tail.png.jpg";
+      coin.src = midFace;
+
+      coin.classList.remove("flip");
+      void coin.offsetWidth;
+      coin.classList.add("flip");
+
+      setTimeout(() => {
+        const outcome = Math.random() < 0.5 ? "HEAD" : "TAIL";
+        const outcomeImage = outcome === "HEAD" ? "head.png.jpg" : "tail.png.jpg";
+        coin.src = outcomeImage;
+
+        totalGames++;
+        if (userBet === outcome) {
+          wins++;
+          walletBalance += bet;
+          resultDiv.textContent = `🎉 You WON ₹${bet}! It was ${outcome}`;
+          resultDiv.style.color = "green";
+        } else {
+          losses++;
+          walletBalance -= bet;
+          resultDiv.textContent = `😞 You LOST ₹${bet}! It was ${outcome}`;
+          resultDiv.style.color = "red";
+        }
+
+        updateWalletInFirebase(walletBalance);
+        updateStats();
+      }, 1000);
+    }
+
+    function updateStats() {
+      statsDiv.innerHTML = `Total Games: ${totalGames} | Wins: ${wins} | Losses: ${losses} | Balance: ₹<span id="walletBalance">${walletBalance}</span>`;
+    }
+
+    function resetGame() {
+      totalGames = 0;
+      wins = 0;
+      losses = 0;
+      resultDiv.textContent = "Place your bet to start!";
+      resultDiv.style.color = "#333";
+      coin.src = "head.png.jpg";
+      betInput.value = "";
+      updateStats();
+      loadWallet();
+    }
+
+    // Initial load
+    loadWallet();
+  </script>
+</body>
+</html>

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🎯 Pro Color Betting</title>
+  <style>
+    :root {
+      --primary: #00e5ff;
+      --dark-bg: #0f0f0f;
+      --card-bg: #1a1a1a;
+      --button-radius: 12px;
+      --transition-speed: 0.3s;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      color: #fff;
+    }
+
+    .game-box {
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 229, 255, 0.2);
+      width: 380px;
+      text-align: center;
+    }
+
+    h1 {
+      color: var(--primary);
+    }
+
+    .wallet {
+      background: linear-gradient(90deg, #00e5ff, #00bcd4);
+      color: #000;
+      font-size: 20px;
+      font-weight: bold;
+      border-radius: var(--button-radius);
+      padding: 12px;
+      margin-bottom: 15px;
+    }
+
+    input {
+      padding: 12px;
+      width: 100%;
+      border: none;
+      border-radius: var(--button-radius);
+      font-size: 16px;
+      margin-bottom: 20px;
+      background: #2a2a2a;
+      color: white;
+      text-align: center;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .buttons button {
+      flex: 1;
+      padding: 14px 0;
+      font-size: 18px;
+      font-weight: bold;
+      border: none;
+      border-radius: var(--button-radius);
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .buttons button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 229, 255, 0.4);
+    }
+
+    .red { background-color: #e74c3c; color: #fff; }
+    .green { background-color: #2ecc71; color: #fff; }
+    .violet { background-color: #9b59b6; color: #fff; }
+
+    .result {
+      font-size: 24px;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+
+    .message {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .win { color: #2ecc71; }
+    .lose { color: #e74c3c; }
+
+    .timer {
+      font-size: 20px;
+      color: var(--primary);
+    }
+
+    audio { display: none; }
+  </style>
+</head>
+<body>
+<div class="game-box">
+  <h1>🎯 Color Betting</h1>
+  <div class="wallet">Wallet: ₹<span id="wallet">0</span></div>
+  <input type="number" id="betAmount" placeholder="Enter bet amount" min="1" />
+  <div class="buttons">
+    <button class="red" onclick="placeBet('Red')">🔴</button>
+    <button class="green" onclick="placeBet('Green')">🟢</button>
+    <button class="violet" onclick="placeBet('Violet')">🟣</button>
+  </div>
+  <div class="timer">⏳ Time left: <span id="timer">15</span>s</div>
+  <div class="result" id="result">Result: --</div>
+  <div class="message" id="message"></div>
+</div>
+
+<audio id="bgm" loop>
+  <source src="" type="audio/mpeg" />
+</audio>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+    authDomain: "betting-app-43800.firebaseapp.com",
+    databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+    projectId: "betting-app-43800",
+    storageBucket: "betting-app-43800.appspot.com",
+    messagingSenderId: "752263307747",
+    appId: "1:752263307747:web:183e06d62bc5920fc700d6"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  let userId = localStorage.getItem("userId");
+  if (!userId) {
+    userId = "user_" + Math.floor(Math.random() * 1000000);
+    localStorage.setItem("userId", userId);
+  }
+
+  let wallet = 0;
+  let timer = 15;
+  let intervalId;
+  let currentBet = null;
+
+  const walletEl = document.getElementById("wallet");
+  const betInput = document.getElementById("betAmount");
+  const timerEl = document.getElementById("timer");
+  const resultEl = document.getElementById("result");
+  const messageEl = document.getElementById("message");
+  const audio = document.getElementById("bgm");
+
+  const payoutRates = { Red: 2, Green: 2, Violet: 5 };
+
+  function updateWalletDisplay() {
+    walletEl.innerText = wallet;
+  }
+
+  function loadWallet() {
+    db.ref("users/" + userId).once("value").then(snapshot => {
+      wallet = snapshot.val()?.wallet || 1000;
+      updateWalletDisplay();
+      startTimer();
+    });
+  }
+
+  function saveWallet(newBalance) {
+    wallet = newBalance;
+    db.ref("users/" + userId + "/wallet").set(wallet);
+    updateWalletDisplay();
+  }
+
+  function toggleInputs(enable) {
+    document.querySelectorAll(".buttons button").forEach(btn => btn.disabled = !enable);
+    betInput.disabled = !enable;
+  }
+
+  function placeBet(color) {
+    const amount = parseInt(betInput.value);
+    if (!amount || amount <= 0 || amount > wallet) {
+      alert("Invalid amount or insufficient balance!");
+      return;
+    }
+    currentBet = { color, amount };
+    wallet -= amount;
+    saveWallet(wallet);
+    toggleInputs(false);
+    messageEl.innerText = `You bet ₹${amount} on ${color}`;
+  }
+
+  function getWeightedColorForWin() {
+    const weights = [
+      { color: "Red", weight: 22.5 },
+      { color: "Green", weight: 22.5 },
+      { color: "Violet", weight: 5 }
+    ];
+    const total = weights.reduce((a, b) => a + b.weight, 0);
+    let rand = Math.random() * total;
+    for (let item of weights) {
+      if (rand < item.weight) return item.color;
+      rand -= item.weight;
+    }
+    return "Red";
+  }
+
+  function getRandomColorExclude(exclude) {
+    const colors = ["Red", "Green", "Violet"].filter(c => c !== exclude);
+    return colors[Math.floor(Math.random() * colors.length)];
+  }
+
+  function getRoundResult() {
+    const userWins = Math.random() < 0.5;
+    if (userWins && currentBet) {
+      return getWeightedColorForWin();
+    } else {
+      if (!currentBet) {
+        const colors = ["Red", "Green", "Violet"];
+        return colors[Math.floor(Math.random() * colors.length)];
+      }
+      return getRandomColorExclude(currentBet.color);
+    }
+  }
+
+  function startTimer() {
+    timer = 15;
+    timerEl.innerText = timer;
+    audio.play().catch(() => {}); // start bg music
+
+    intervalId = setInterval(() => {
+      timer--;
+      timerEl.innerText = timer > 0 ? timer : 0;
+      if (timer <= 0) {
+        clearInterval(intervalId);
+        audio.pause(); // stop music
+
+        const resultColor = getRoundResult();
+        resultEl.innerText = "Result: " + resultColor;
+
+        if (currentBet) {
+          if (currentBet.color === resultColor) {
+            const winAmt = currentBet.amount * payoutRates[resultColor];
+            wallet += winAmt;
+            saveWallet(wallet);
+            messageEl.innerHTML = `<span class="win">🎉 You won ₹${winAmt}!</span>`;
+          } else {
+            messageEl.innerHTML = `<span class="lose">❌ You lost ₹${currentBet.amount}!</span>`;
+          }
+          currentBet = null;
+        } else {
+          messageEl.innerText = "No bet placed this round.";
+        }
+
+        setTimeout(() => {
+          resultEl.innerText = "Result: --";
+          messageEl.innerText = "";
+          toggleInputs(true);
+          betInput.value = "";
+          startTimer();
+        }, 5000);
+      }
+    }, 1000);
+  }
+
+  loadWallet();
+</script>
+</body>
+</html>

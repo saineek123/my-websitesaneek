@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Invite & Earn</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0f0f0f;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 50px auto;
+      background-color: #1c1c1c;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #00e5ff;
+    }
+
+    .code-box {
+      background-color: #2a2a2a;
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 18px;
+      word-break: break-word;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #00e5ff;
+      color: #000;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background-color: #00bcd4;
+    }
+
+    .info {
+      font-size: 14px;
+      margin-top: 20px;
+      text-align: center;
+      color: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>🏱 Invite & Earn</h2>
+    <div class="code-box" id="referralCode">Loading...</div>
+    <button onclick="copyCode()">Copy Referral Code</button>
+    <button onclick="shareCode()">📤 Share Referral</button>
+    <div class="info" id="rewardInfo">
+      Share your referral code with friends. When they sign up and login, you earn ₹100 per referral!
+    </div>
+    <div class="info" id="teamInfo">
+      Loading your team...
+    </div>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+      authDomain: "betting-app-43800.firebaseapp.com",
+      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+      projectId: "betting-app-43800",
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Save referral code if user came via link
+    const urlParams = new URLSearchParams(window.location.search);
+    const incomingRef = urlParams.get("ref");
+    if (incomingRef) {
+      localStorage.setItem("referredBy", incomingRef);
+    }
+
+    const userId = localStorage.getItem("userId");
+    if (!userId) {
+      alert("Please login first.");
+      window.location.href = "login.html";
+    } else {
+      const userRef = db.ref("users/" + userId);
+      userRef.once("value").then((snap) => {
+        let userData = snap.val();
+        let code = userData.referralCode;
+
+        if (!code) {
+          code = generateReferralCode();
+          userRef.update({ referralCode: code });
+        }
+
+        document.getElementById("referralCode").innerText = code;
+
+        // Fetch team
+        db.ref("users").once("value").then((allUsersSnap) => {
+          let count = 0;
+          let teamList = [];
+          allUsersSnap.forEach((userSnap) => {
+            let user = userSnap.val();
+            if (user.referredBy === code && user.loginCompleted === true) {
+              count++;
+              teamList.push(user.name || "Unnamed User");
+            }
+          });
+
+          const teamInfo = document.getElementById("teamInfo");
+          if (count === 0) {
+            teamInfo.innerText = "No one has joined your team yet.";
+          } else {
+            teamInfo.innerHTML = `👥 You referred <strong>${count}</strong> people.<br>Team: ${teamList.join(", ")}`;
+          }
+        });
+      });
+    }
+
+    function generateReferralCode() {
+      return Math.random().toString(36).substring(2, 8).toUpperCase();
+    }
+
+    function copyCode() {
+      const code = document.getElementById("referralCode").innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        alert("Referral code copied!");
+      });
+    }
+
+    function shareCode() {
+      const code = document.getElementById("referralCode").innerText;
+      const shareUrl = `https://saineek123.github.io/my-websitesaineek/betting-app/invite.html?ref=${code}`;
+      const message = `Join this awesome app & earn rewards!\nUse my referral code: ${code}\nSign up here: ${shareUrl}`;
+
+      if (navigator.share) {
+        navigator.share({
+          title: "Join & Earn",
+          text: message,
+          url: shareUrl,
+        }).catch((error) => {
+          alert("Sharing failed. Please copy manually.");
+          console.error(error);
+        });
+      } else {
+        navigator.clipboard.writeText(message).then(() => {
+          alert("Sharing not supported. Referral message copied to clipboard!");
+        });
+      }
+    }
+  </script>
+</body>
+</html>

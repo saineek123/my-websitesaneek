@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Live Betting System</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #111; color: white; padding: 30px; }
+    h2 { text-align: center; }
+    .section { max-width: 800px; margin: auto; }
+    .card {
+      background: #1f2c3b;
+      padding: 20px;
+      border-radius: 10px;
+      margin: 20px 0;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    }
+    input, button {
+      width: 100%; padding: 10px; margin: 10px 0; font-size: 16px;
+      border-radius: 6px; border: none;
+    }
+    button { background: #00c6ff; color: black; font-weight: bold; cursor: pointer; }
+    .team-btn {
+      display: flex; justify-content: space-between; background: #263545;
+      padding: 12px; margin: 10px 0; border-radius: 6px; cursor: pointer;
+    }
+    .team-btn:hover { background: #35597c; }
+    .rate { background: #00c6ff; padding: 4px 8px; border-radius: 4px; color: black; font-weight: bold; }
+    .delete-btn { background: red; color: white; margin-top: 10px; }
+  </style>
+</head>
+<body>
+<div class="section">
+
+  <h2>🏁 Admin Panel - Add Live Match</h2>
+  <div class="card">
+    <input id="team1" placeholder="Team 1 Name" />
+    <input id="team2" placeholder="Team 2 Name" />
+    <input id="rate1" placeholder="Rate for Team 1" type="number" step="0.01" />
+    <input id="rate2" placeholder="Rate for Team 2" type="number" step="0.01" />
+    <button onclick="addMatch()">Add Match</button>
+  </div>
+
+  <h2>🔥 User Panel - Live Matches</h2>
+  <div style="text-align:center; font-size:18px; margin-bottom:10px;">
+    Current Balance: ₹<span id="liveUserBalance">0</span>
+  </div>
+  <div id="matchesContainer"></div>
+</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+    authDomain: "betting-app-43800.firebaseapp.com",
+    databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+    projectId: "betting-app-43800"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const userId = localStorage.getItem("userId") || "demoUser";
+  const currentUser = JSON.parse(localStorage.getItem("loggedInUser")) || { username: "Guest", balance: 1000, bets: [] };
+  localStorage.setItem("loggedInUser", JSON.stringify(currentUser));
+  db.ref("users/" + userId + "/wallet").on("value", snap => {
+    document.getElementById("liveUserBalance").innerText = snap.val() || currentUser.balance;
+  });
+
+  function addMatch() {
+    const team1 = document.getElementById("team1").value;
+    const team2 = document.getElementById("team2").value;
+    const rate1 = parseFloat(document.getElementById("rate1").value);
+    const rate2 = parseFloat(document.getElementById("rate2").value);
+    if (!team1 || !team2 || isNaN(rate1) || isNaN(rate2)) return alert("Fill all fields");
+    const newRef = db.ref("liveMatches").push();
+    newRef.set({ team1, team2, rate1, rate2, status: "live" });
+    alert("✅ Match Added");
+  }
+
+  const selectedBets = {};
+  db.ref("liveMatches").on("value", snap => {
+    const data = snap.val() || {};
+    const container = document.getElementById("matchesContainer");
+    container.innerHTML = "";
+    Object.entries(data).forEach(([id, match]) => {
+      if (match.status !== "live") return;
+      const div = document.createElement("div");
+      div.className = "card";
+      div.innerHTML = `
+        <h3>${match.team1} vs ${match.team2}</h3>
+        <div class="team-btn" onclick="selectTeam('${id}', '${match.team1}', ${match.rate1})">
+          <span>${match.team1}</span><span class="rate">@${match.rate1}</span>
+        </div>
+        <div class="team-btn" onclick="selectTeam('${id}', '${match.team2}', ${match.rate2})">
+          <span>${match.team2}</span><span class="rate">@${match.rate2}</span>
+        </div>
+        <input type="number" id="amount-${id}" placeholder="Enter amount">
+        <button onclick="placeBet('${id}')">Place Bet</button>
+        <div id="selected-${id}" style="margin-top: 6px; font-size: 14px;"></div>
+        <button class="delete-btn" onclick="deleteMatch('${id}')">🗑 Delete Match</button>
+      `;
+      container.appendChild(div);
+    });
+  });
+
+  function selectTeam(matchId, team, rate) {
+    selectedBets[matchId] = { team, rate };
+    document.getElementById(`selected-${matchId}`).innerText = `Selected: ${team} @${rate}`;
+  }
+
+  function placeBet(matchId) {
+    const amt = parseFloat(document.getElementById(`amount-${matchId}`).value);
+    const sel = selectedBets[matchId];
+    if (!sel || isNaN(amt) || amt <= 0) return alert("Select team and valid amount");
+    db.ref("users/" + userId + "/wallet").once("value", snap => {
+      const bal = snap.val() || currentUser.balance;
+      if (bal < amt) return alert("Insufficient balance");
+      const retAmt = (amt * sel.rate).toFixed(2);
+      const bet = { matchId, team: sel.team, rate: sel.rate, amount: amt, return: retAmt, time: new Date().toLocaleString(), result: "pending" };
+      currentUser.bets.push(bet);
+      db.ref("users/" + userId + "/wallet").set(bal - amt);
+      localStorage.setItem("loggedInUser", JSON.stringify(currentUser));
+      alert(`✅ Bet on ${sel.team} placed. Return: ₹${retAmt}`);
+    });
+  }
+
+  function deleteMatch(matchId) {
+    if (confirm("Are you sure you want to delete this match?")) {
+      db.ref("liveMatches/" + matchId).remove().then(() => {
+        alert("🗑 Match deleted");
+      });
+    }
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>History</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0f0f0f;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+    }
+
+    nav {
+      background: #222;
+      padding: 10px;
+      text-align: center;
+    }
+
+    nav a {
+      color: white;
+      margin: 10px;
+      text-decoration: none;
+    }
+
+    nav a:hover {
+      text-decoration: underline;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 50px auto;
+      background-color: #1c1c1c;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #00e5ff;
+    }
+
+    .history-item {
+      background-color: #2a2a2a;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      box-shadow: 0 0 5px #00e5ff;
+    }
+
+    .history-item .date {
+      font-size: 0.9em;
+      color: #a0eaff;
+    }
+
+    .history-item .desc {
+      margin-top: 6px;
+      font-weight: bold;
+      font-size: 1.1em;
+      color: #00e5ff;
+    }
+
+    .back-link {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .back-link a {
+      color: #00e5ff;
+      text-decoration: none;
+    }
+
+    .back-link a:hover {
+      text-decoration: underline;
+    }
+
+    #loading {
+      text-align: center;
+      font-style: italic;
+      color: #00e5ff;
+    }
+
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="recharge.html">Recharge</a>
+    <a href="withdraw.html">Withdraw</a>
+    <a href="history.html">History</a>
+    <a href="account.html">Account</a>
+    <a href="support.html">Support</a>
+    <a href="#" onclick="logout()">Logout</a>
+  </nav>
+
+  <div class="container">
+    <h2>Your Transaction History</h2>
+    <div id="history-list">
+      <p id="loading">Loading history...</p>
+    </div>
+
+    <div class="back-link">
+      <a href="index.html">← Back to Dashboard</a>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+      authDomain: "betting-app-43800.firebaseapp.com",
+      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+      projectId: "betting-app-43800",
+      storageBucket: "betting-app-43800.appspot.com",
+      messagingSenderId: "752263307747",
+      appId: "1:752263307747:web:183e06d62bc5920fc700d6"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const userId = localStorage.getItem("userId");
+    if (!userId) {
+      alert("User not logged in.");
+      window.location.href = "login.html";
+    }
+
+    const historyList = document.getElementById("history-list");
+    const loadingText = document.getElementById("loading");
+
+    function logout() {
+      localStorage.removeItem("userId");
+      window.location.href = "login.html";
+    }
+
+    function loadHistory() {
+      Promise.all([
+        db.ref("withdraws/" + userId).once("value"),
+        db.ref("recharges/" + userId).once("value")
+      ])
+      .then(([withdrawSnapshot, rechargeSnapshot]) => {
+        loadingText.style.display = "none";
+        historyList.innerHTML = "";
+
+        const items = [];
+
+        if (withdrawSnapshot.exists()) {
+          Object.entries(withdrawSnapshot.val()).forEach(([key, value]) => {
+            items.push({
+              type: "Withdraw",
+              date: value.date || "Unknown Date",
+              amount: value.amount || 0,
+              status: value.status || "PENDING",
+              upi: value.upi || "N/A"
+            });
+          });
+        }
+
+        if (rechargeSnapshot.exists()) {
+          Object.entries(rechargeSnapshot.val()).forEach(([key, value]) => {
+            items.push({
+              type: "Recharge",
+              date: value.date || "Unknown Date",
+              amount: value.amount || 0,
+              status: value.status || "PENDING",
+              method: value.method || "N/A"
+            });
+          });
+        }
+
+        if (items.length === 0) {
+          historyList.innerHTML = "<p>No history found.</p>";
+          return;
+        }
+
+        items.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        items.forEach(item => {
+          const itemDiv = document.createElement("div");
+          itemDiv.className = "history-item";
+
+          let desc = "";
+          if (item.type === "Withdraw") {
+            desc = `Amount: ₹${item.amount} | UPI: ${item.upi} | Status: ${item.status.toUpperCase()}`;
+          } else {
+            desc = `Amount: ₹${item.amount} | Method: ${item.method} | Status: ${item.status.toUpperCase()}`;
+          }
+
+          itemDiv.innerHTML = `
+            <div class="date">${item.date}</div>
+            <div class="desc">${item.type}: ${desc}</div>
+          `;
+
+          historyList.appendChild(itemDiv);
+        });
+      })
+      .catch(error => {
+        loadingText.style.display = "none";
+        historyList.innerHTML = `<p>Error loading history: ${error.message}</p>`;
+      });
+    }
+
+    loadHistory();
+  </script>
+</body>
+</html>

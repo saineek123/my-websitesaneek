@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Spin Roller Game</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      color: white;
+    }
+    .roller-container {
+      width: 300px;
+      height: 60px;
+      overflow: hidden;
+      border: 4px solid #fff;
+      border-radius: 12px;
+      background: #000;
+      position: relative;
+      margin-bottom: 20px;
+    }
+    .roller {
+      display: flex;
+      /* Remove transition here, we'll do it dynamically */
+    }
+    .item {
+      flex: 0 0 300px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: bold;
+      background: #222;
+      border-right: 2px solid #444;
+      user-select: none;
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+    }
+    button {
+      background-color: #27ae60;
+      color: white;
+      cursor: pointer;
+      user-select: none;
+    }
+    button:hover {
+      background-color: #219150;
+    }
+    #hitDisplay {
+      font-size: 22px;
+      font-weight: bold;
+      color: #00ffff;
+      min-height: 28px;
+    }
+    #result {
+      margin-top: 10px;
+      font-size: 20px;
+      color: #f1c40f;
+      min-height: 28px;
+    }
+  </style>
+</head>
+<body>
+  <div class="roller-container">
+    <div class="roller" id="roller">
+      <div class="item">0x</div>
+      <div class="item">4x</div>
+      <div class="item">5x</div>
+      <div class="item">10x</div>
+      <div class="item">50x</div>
+      <div class="item">100x</div>
+      <!-- duplicate items for seamless loop -->
+      <div class="item">0x</div>
+      <div class="item">4x</div>
+      <div class="item">5x</div>
+      <div class="item">10x</div>
+      <div class="item">50x</div>
+      <div class="item">100x</div>
+    </div>
+  </div>
+
+  <p style="font-size: 18px;">Welcome, <span id="userName">User</span> | Balance: ₹<span id="userBalance">0</span></p>
+  <input type="number" id="betAmount" placeholder="Enter your bet" min="1" />
+  <button id="spinBtn">Spin Roller</button>
+  <div id="hitDisplay"></div>
+  <div id="result"></div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+      authDomain: "betting-app-43800.firebaseapp.com",
+      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+      projectId: "betting-app-43800"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const user = JSON.parse(localStorage.getItem("loggedInUser"));
+    if (user) {
+      document.getElementById("userName").innerText = user.username || "Guest";
+    }
+
+    const userId = localStorage.getItem("userId");
+    const walletEl = document.getElementById("userBalance");
+    const roller = document.getElementById("roller");
+    const spinBtn = document.getElementById("spinBtn");
+    const segments = ["0x", "4x", "5x", "10x", "50x", "100x"];
+    let currentBalance = 0;
+
+    if (userId) {
+      db.ref("users/" + userId + "/wallet").on("value", (snap) => {
+        currentBalance = snap.val() || 0;
+        walletEl.innerText = currentBalance;
+      });
+    }
+
+    let isSpinning = false;
+
+    spinBtn.addEventListener("click", () => {
+      if (isSpinning) return;
+      spinRoller();
+    });
+
+    function spinRoller() {
+      const bet = parseInt(document.getElementById('betAmount').value);
+      if (!bet || bet <= 0) {
+        alert("Please enter a valid bet amount.");
+        return;
+      }
+
+      if (bet > currentBalance) {
+        alert("Insufficient balance!");
+        return;
+      }
+
+      isSpinning = true;
+      spinBtn.disabled = true;
+
+      // 10% chance to win
+      let win = Math.random() < 0.10;
+      let index;
+
+      if (win) {
+        const winIndices = [1, 2, 3, 4, 5]; // not 0x
+        index = winIndices[Math.floor(Math.random() * winIndices.length)];
+      } else {
+        index = 0; // force 0x
+      }
+
+      const totalItems = segments.length * 2; // 12 items
+      // We'll spin multiple rounds (random between 3 to 5 full spins)
+      const fullSpins = Math.floor(Math.random() * 3) + 3;
+      const finalIndex = fullSpins * segments.length + index;
+      const offset = -finalIndex * 300;
+
+      roller.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.83, 0.67)';
+      roller.style.transform = `translateX(${offset}px)`;
+
+      document.getElementById('hitDisplay').innerText = "Rolling...";
+      document.getElementById('result').innerText = "";
+
+      // After animation ends, reset position to the visible item to allow repeated spins
+      roller.addEventListener('transitionend', onTransitionEnd);
+
+      function onTransitionEnd() {
+        roller.style.transition = 'none';
+        const resetOffset = -index * 300;
+        roller.style.transform = `translateX(${resetOffset}px)`;
+
+        roller.removeEventListener('transitionend', onTransitionEnd);
+
+        const multiplier = segments[index];
+        const value = parseInt(multiplier) || 0;
+        const wonAmount = bet * value;
+
+        document.getElementById('hitDisplay').innerText = `🎯 You rolled: ${multiplier}`;
+        if (value > 0) {
+          document.getElementById('result').innerText = `🎉 You won ₹${wonAmount}!`;
+          updateWallet(currentBalance - bet + wonAmount);
+        } else {
+          document.getElementById('result').innerText = `💥 You lost ₹${bet}.`;
+          updateWallet(currentBalance - bet);
+        }
+
+        isSpinning = false;
+        spinBtn.disabled = false;
+      }
+    }
+
+    function updateWallet(newBalance) {
+      if (userId) {
+        db.ref("users/" + userId + "/wallet").set(newBalance);
+      }
+    }
+  </script>
+</body>
+</html>

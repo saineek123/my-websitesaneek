@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Slot Machine</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #111;
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+    }
+    .container {
+      max-width: 400px;
+      margin: auto;
+      background: #1c1c1c;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,255,255,0.2);
+    }
+    .slots {
+      font-size: 50px;
+      margin: 20px 0;
+    }
+    button {
+      padding: 12px;
+      font-size: 16px;
+      background-color: #00e5ff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      color: black;
+      width: 100%;
+    }
+    input {
+      padding: 10px;
+      font-size: 16px;
+      width: 100px;
+      border-radius: 6px;
+    }
+    .result {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .back-link {
+      margin-top: 30px;
+    }
+    .back-link a {
+      color: #00e5ff;
+      text-decoration: none;
+    }
+    .back-link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <nav style="background: #222; padding: 10px; text-align: center;">
+    <a href="index.html" style="color:white; margin:10px;">Home</a>
+    <a href="recharge.html" style="color:white; margin:10px;">Recharge</a>
+    <a href="withdraw.html" style="color:white; margin:10px;">Withdraw</a>
+    <a href="history.html" style="color:white; margin:10px;">History</a>
+    <a href="account.html" style="color:white; margin:10px;">Account</a>
+    <a href="support.html" style="color:white; margin:10px;">Support</a>
+    <a href="login.html" style="color:white; margin:10px;">Logout</a>
+  </nav>
+
+  <div class="container">
+    <h2>Slot Machine</h2>
+    <p><strong>Balance:</strong> ₹<span id="balance">0</span></p>
+    <p>
+      <strong>Bet Amount:</strong>
+      <input type="number" id="betAmount" value="10" min="1" />
+    </p>
+
+    <div class="slots" id="slots">🍒 🍋 🍇</div>
+    <button onclick="spinSlot()">Spin</button>
+
+    <div class="result" id="resultMessage"></div>
+    <div class="back-link">
+      <a href="index.html">← Back to Dashboard</a>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+      authDomain: "betting-app-43800.firebaseapp.com",
+      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+      projectId: "betting-app-43800"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const userId = localStorage.getItem("userId");
+    const balanceEl = document.getElementById("balance");
+    const slotsEl = document.getElementById("slots");
+    const resultMessage = document.getElementById("resultMessage");
+
+    let balance = 0;
+
+    if (!userId) {
+      alert("User not logged in.");
+      window.location.href = "login.html";
+    } else {
+      db.ref("users/" + userId + "/wallet").on("value", snap => {
+        balance = snap.val() || 0;
+        balanceEl.innerText = balance;
+      });
+    }
+
+    function spinSlot() {
+      const bet = parseInt(document.getElementById("betAmount").value);
+      if (isNaN(bet) || bet <= 0) {
+        alert("Please enter a valid bet amount.");
+        return;
+      }
+      if (balance < bet) {
+        alert("Insufficient balance!");
+        return;
+      }
+
+      balance -= bet;
+
+      const symbols = ["🍒", "🍋", "🍇", "🍊", "🍉"];
+      let s1, s2, s3;
+
+      if (Math.random() < 0.10) {
+        const winSymbol = symbols[Math.floor(Math.random() * symbols.length)];
+        s1 = s2 = s3 = winSymbol;
+      } else {
+        do {
+          s1 = symbols[Math.floor(Math.random() * symbols.length)];
+          s2 = symbols[Math.floor(Math.random() * symbols.length)];
+          s3 = symbols[Math.floor(Math.random() * symbols.length)];
+        } while (s1 === s2 && s2 === s3);
+      }
+
+      slotsEl.innerText = `${s1} ${s2} ${s3}`;
+
+      if (s1 === s2 && s2 === s3) {
+        const multiplier = 10;
+        const reward = bet * multiplier;
+        balance += reward;
+        resultMessage.style.color = '#00ff99';
+        resultMessage.innerText = `🎉 Jackpot! You won ₹${reward} (×${multiplier})`;
+      } else {
+        resultMessage.style.color = '#ff5555';
+        resultMessage.innerText = `😞 You lost! Try again.`;
+      }
+
+      balanceEl.innerText = balance;
+      db.ref("users/" + userId + "/wallet").set(balance);
+    }
+  </script>
+</body>
+</html>

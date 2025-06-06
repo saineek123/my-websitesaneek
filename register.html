@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>User Registration</title>
+  <style>
+    body {
+      background: #121212;
+      color: #fff;
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .box {
+      background: #1e1e1e;
+      padding: 30px;
+      border-radius: 10px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 0 10px rgba(0, 229, 255, 0.1);
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 6px;
+      background: #2a2a2a;
+      color: #fff;
+    }
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      background: #00e5ff;
+      border: none;
+      border-radius: 6px;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .login-btn {
+      background: transparent;
+      border: 1px solid #00e5ff;
+      color: #00e5ff;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>Register</h2>
+    <input type="text" id="phone" placeholder="Phone Number" required />
+    <input type="text" id="name" placeholder="Name" required />
+    <input type="text" id="referralCodeInput" placeholder="Referral Code (optional)" />
+    <input type="password" id="password" placeholder="Password" required />
+    <button onclick="registerUser()">Register</button>
+    <button class="login-btn" onclick="goToLogin()">Login</button>
+    <p id="msg" style="color: lightgreen; margin-top: 10px;"></p>
+  </div>
+
+  <!-- Firebase with Modular Syntax -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getDatabase, ref, set, push, get, update, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+      authDomain: "betting-app-43800.firebaseapp.com",
+      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+      projectId: "betting-app-43800",
+      storageBucket: "betting-app-43800.firebasestorage.app",
+      messagingSenderId: "752263307747",
+      appId: "1:752263307747:web:183e06d62bc5920fc700d6",
+      measurementId: "G-Y452BY8453"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase();
+
+    function generateReferralCode(length = 6) {
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      let code = "";
+      for (let i = 0; i < length; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return code;
+    }
+
+    window.registerUser = async function () {
+      const phone = document.getElementById("phone").value.trim();
+      const name = document.getElementById("name").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const referralCodeInput = document.getElementById("referralCodeInput").value.trim();
+      const msg = document.getElementById("msg");
+
+      if (!/^\d{10}$/.test(phone)) {
+        alert("Please enter a valid 10-digit phone number.");
+        return;
+      }
+
+      if (!phone || !name || !password) {
+        alert("Please fill all required fields.");
+        return;
+      }
+
+      const referralCode = generateReferralCode();
+      const userId = push(ref(db, 'users')).key;
+
+      const userData = {
+        phone,
+        name,
+        password,
+        referralCode,
+        wallet: 0,
+        referredBy: referralCodeInput || null
+      };
+
+      try {
+        await set(ref(db, 'users/' + userId), userData);
+        msg.innerText = "Registered successfully ✔";
+
+        // Handle referral bonus
+        if (referralCodeInput) {
+          const refQuery = query(ref(db, "users"), orderByChild("referralCode"), equalTo(referralCodeInput));
+          const snapshot = await get(refQuery);
+          if (snapshot.exists()) {
+            const data = snapshot.val();
+            const referrerKey = Object.keys(data)[0];
+            const referrer = data[referrerKey];
+            const updatedWallet = (referrer.wallet || 0) + 10;
+            await update(ref(db, "users/" + referrerKey), { wallet: updatedWallet });
+          }
+        }
+
+      } catch (error) {
+        msg.innerText = "Error: " + error.message;
+      }
+    }
+
+    window.goToLogin = function () {
+      window.location.href = "login.html";
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Account</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #121212;
+      color: #fff;
+    }
+
+    header {
+      background-color: #1e1e1e;
+      padding: 20px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: #1c1c1c;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+
+    .info {
+      margin-bottom: 20px;
+    }
+
+    .info p {
+      font-size: 18px;
+      margin: 10px 0;
+    }
+
+    .buttons {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      background: #00bcd4;
+      border: none;
+      border-radius: 5px;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0097a7;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>👤 My Account</h1>
+  </header>
+
+  <div class="container">
+    <div class="info">
+      <p><strong>Username:</strong> <span id="userName">Loading...</span></p>
+      <p><strong>Email:</strong> <span id="userEmail">N/A</span></p>
+      <p><strong>Balance:</strong> ₹<span id="userBalance">0</span></p>
+      
+    </div>
+
+    <div class="buttons">
+      <button onclick="window.location.href='edit-profile.html'">✏️ Edit Profile</button>
+      <button onclick="window.location.href='change-password.html'">🔐 Change Password</button>
+      <button onclick="window.location.href='recharge.history.HTML.html'">📜 Recharge History</button>
+      <button onclick="window.location.href='withdraw.History.HTML'">📜 Withdraw History</button>
+      <button onclick="window.location.href='support.html'">📞 Customer Support</button>
+      <button onclick="window.location.href='settings.html'">⚙️ Settings</button>
+      <button onclick="window.location.href='withdraw.html'">💸 Withdraw</button>
+      <button onclick="logout()">🚪 Logout</button>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+      authDomain: "betting-app-43800.firebaseapp.com",
+      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+      projectId: "betting-app-43800"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+  </script>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem("loggedInUser"));
+    if (!user) {
+      window.location.href = "login.html";
+    } else {
+      document.getElementById("userName").innerText = user.username || "Guest";
+      document.getElementById("userEmail").innerText = user.email || "Not Provided";
+    }
+
+    const userId = localStorage.getItem("userId");
+    if (userId) {
+      const walletEl = document.getElementById("userBalance");
+      db.ref("users/" + userId + "/wallet").on("value", (snap) => {
+        const balance = snap.val() || 0;
+        walletEl.innerText = balance;
+      });
+    }
+
+    function logout() {
+      localStorage.removeItem("loggedInUser");
+      window.location.href = "login.html";
+    }
+  </script>
+</body>
+</html>

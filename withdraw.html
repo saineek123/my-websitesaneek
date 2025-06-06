@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Withdraw Wallet</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0f0f0f;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 400px;
+      margin: 50px auto;
+      background-color: #1c1c1c;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 15px;
+      color: #00e5ff;
+    }
+
+    #balanceDisplay {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 18px;
+      color: #00e5ff;
+    }
+
+    label {
+      font-size: 14px;
+      margin-top: 10px;
+      display: block;
+    }
+
+    input[type="number"],
+    input[type="text"],
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      margin-bottom: 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    input[type="number"],
+    input[type="text"] {
+      background-color: #2a2a2a;
+      color: #fff;
+    }
+
+    button {
+      background-color: #00e5ff;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background-color: #00bcd4;
+    }
+
+    .back-link {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .back-link a {
+      color: #00e5ff;
+      text-decoration: none;
+    }
+
+    .back-link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <nav style="background: #222; padding: 10px; text-align: center;">
+    <a href="index.html" style="color:white; margin:10px;">Home</a>
+    <a href="recharge.html" style="color:white; margin:10px;">Recharge</a>
+    <a href="withdraw.html" style="color:white; margin:10px;">Withdraw</a>
+    <a href="history.html" style="color:white; margin:10px;">History</a>
+    <a href="account.html" style="color:white; margin:10px;">Account</a>
+    <a href="support.html" style="color:white; margin:10px;">Support</a>
+    <a href="#" onclick="logout()" style="color:white; margin:10px;">Logout</a>
+  </nav>
+
+  <br>
+  <strong>👉Note:</strong> Please ensure that your UPI ID or bank details are correct to avoid any issues with the withdrawal process. <br>
+  <strong>👉Important:</strong> Withdrawals are processed within 24-48 hours. <br>
+  <strong>👉Disclaimer:</strong> The company is not responsible for any errors in the provided information. <br>
+  <br>
+  <strong>👉Contact Customer Service:</strong> If you have any questions or need assistance, please contact our customer service team. <br>
+
+  <div class="container">
+    <h2>Withdraw Request</h2>
+
+    <div id="balanceDisplay">
+      Current Balance: ₹<span id="balanceAmount">Loading...</span>
+    </div>
+
+    <form id="withdrawForm">
+      <label>Enter Amount (Min ₹100)</label>
+      <input type="number" id="amount" min="100" required />
+
+      <label>Your UPI ID (if withdrawing via UPI)</label>
+      <input type="text" id="upi" placeholder="example@upi" />
+      <h1 style="text-align: center; color: #888;">OR</h1>
+
+      <label>Account Number</label>
+      <input type="text" id="accountNumber" placeholder="Account Number" />
+
+      <label>IFSC Code</label>
+      <input type="text" id="ifsc" placeholder="IFSC Code" />
+
+      <label>Account Holder Name</label>
+      <input type="text" id="accountHolderName" placeholder="Account Holder Name" />
+
+      <button type="submit">Submit Withdraw</button>
+    </form>
+
+    <div class="back-link">
+      <a href="index.html">← Back to Dashboard</a>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+      authDomain: "betting-app-43800.firebaseapp.com",
+      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+      projectId: "betting-app-43800",
+      storageBucket: "betting-app-43800.appspot.com",
+      messagingSenderId: "752263307747",
+      appId: "1:752263307747:web:183e06d62bc5920fc700d6"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const userId = localStorage.getItem("userId");
+    if (!userId) {
+      alert("User not logged in.");
+      window.location.href = "login.html";
+    }
+
+    let currentBalance = 0;
+
+    // Get balance from wallet
+    db.ref("users/" + userId + "/wallet").once("value")
+      .then(snapshot => {
+        currentBalance = parseFloat(snapshot.val()) || 0;
+        document.getElementById("balanceAmount").textContent = currentBalance.toFixed(2);
+      })
+      .catch(error => {
+        console.error("Error fetching balance:", error);
+        document.getElementById("balanceAmount").textContent = "Error";
+      });
+
+    document.getElementById("withdrawForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const amount = parseFloat(document.getElementById("amount").value);
+      const upi = document.getElementById("upi").value.trim();
+      const accountNumber = document.getElementById("accountNumber").value.trim();
+      const ifsc = document.getElementById("ifsc").value.trim();
+      const holder = document.getElementById("accountHolderName").value.trim();
+
+      if (!amount || isNaN(amount)) {
+        alert("Please enter a valid amount.");
+        return;
+      }
+
+      if (amount < 100) {
+        alert("❌ Minimum withdrawal amount is ₹100.");
+        return;
+      }
+
+      if (amount > currentBalance) {
+        alert("❌ Insufficient balance in wallet.");
+        return;
+      }
+
+      if (!upi && (!accountNumber || !ifsc || !holder)) {
+        alert("Please enter either UPI ID or full bank details.");
+        return;
+      }
+
+      const withdrawRequest = {
+        amount: amount,
+        upi: upi || '',
+        account: accountNumber || '',
+        ifsc: ifsc || '',
+        holder: holder || '',
+        date: new Date().toLocaleString(),
+        status: "pending"
+      };
+
+      db.ref("withdraws/" + userId).push(withdrawRequest)
+        .then(() => {
+          const newBalance = currentBalance - amount;
+          return db.ref("users/" + userId + "/wallet").set(newBalance)
+            .then(() => {
+              currentBalance = newBalance;
+              document.getElementById("balanceAmount").textContent = currentBalance.toFixed(2);
+              alert("✅ Withdraw request submitted successfully!");
+              document.getElementById("withdrawForm").reset();
+            });
+        })
+        .catch((error) => {
+          alert("Error: " + error.message);
+        });
+    });
+
+    function logout() {
+      localStorage.removeItem("userId");
+      window.location.href = "login.html";
+    }
+  </script>
+</body>
+</html>

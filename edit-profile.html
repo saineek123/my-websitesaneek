@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Profile</title>
+  <style>
+    body {
+      background: #121212;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 60px auto;
+      background: #1e1e1e;
+      padding: 30px;
+      border-radius: 12px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      background: #2a2a2a;
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+    }
+
+    button {
+      margin-top: 25px;
+      padding: 12px;
+      width: 100%;
+      background: #00bcd4;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      color: #000;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0097a7;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>✏️ Edit Profile</h2>
+    <label for="username">Username:</label>
+    <input type="text" id="username" placeholder="Enter your username">
+
+    <label for="email">Email:</label>
+    <input type="email" id="email" placeholder="Enter your email">
+
+    <button onclick="saveProfile()">Save Changes</button>
+  </div>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem("loggedInUser"));
+    if (!user) {
+      window.location.href = "login.html";
+    } else {
+      document.getElementById("username").value = user.username || "";
+      document.getElementById("email").value = user.email || "";
+    }
+
+    function saveProfile() {
+      user.username = document.getElementById("username").value;
+      user.email = document.getElementById("email").value;
+      localStorage.setItem("loggedInUser", JSON.stringify(user));
+      alert("Profile updated successfully!");
+      window.location.href = "account.html";
+    }
+  </script>
+  <script src="script.js"></script>
+
+</body>
+</html>

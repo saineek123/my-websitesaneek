@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dragon vs Tiger Game</title>
+  <style>
+    body {
+      background: linear-gradient(to bottom, #0f0f0f, #1a1a1a);
+      color: white;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    h1 {
+      color: #00e5ff;
+      margin-top: 20px;
+      font-size: 2rem;
+      text-shadow: 0 0 10px #00e5ff;
+    }
+    .game-container {
+      max-width: 700px;
+      margin: 30px auto;
+      padding: 25px;
+      background: #1e1e1e;
+      border-radius: 20px;
+      box-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+    }
+    .balance {
+      font-size: 20px;
+      margin-bottom: 15px;
+      color: #ffdd57;
+      text-shadow: 0 0 5px #ffdd57;
+    }
+    .cards {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      margin-top: 20px;
+      gap: 10px;
+    }
+    .card {
+      width: 120px;
+      height: 180px;
+      border-radius: 12px;
+      background: linear-gradient(145deg, #292929, #1a1a1a);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      font-weight: bold;
+      color: #fff;
+      box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card.winner {
+      box-shadow: 0 0 20px 5px limegreen;
+      transform: scale(1.05);
+    }
+    .card-label {
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    .bet-section {
+      margin-top: 30px;
+    }
+    select, input[type="number"], button {
+      padding: 12px;
+      margin: 10px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+    select, input[type="number"] {
+      background: #333;
+      color: white;
+    }
+    button {
+      background-color: #00e5ff;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 0 10px #00e5ff;
+    }
+    button:hover {
+      background-color: #00cde6;
+    }
+    .result {
+      margin-top: 20px;
+      font-size: 22px;
+      color: #00e5ff;
+      font-weight: bold;
+      text-shadow: 0 0 6px #00e5ff;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔥 Dragon vs 🐯 Tiger vs 🎴 Tie</h1>
+  <div class="game-container">
+    <div class="balance">Wallet Balance: ₹<span id="balance">Loading...</span></div>
+    <div class="cards">
+      <div class="card" id="dragonBox">
+        <div id="dragonCard">?</div>
+        <div class="card-label">🐉 Dragon</div>
+      </div>
+      <div class="card" id="tigerBox">
+        <div id="tigerCard">?</div>
+        <div class="card-label">🐯 Tiger</div>
+      </div>
+      <div class="card" id="tieBox">
+        <div id="tieCard">-</div>
+        <div class="card-label">🎴 Tie</div>
+      </div>
+    </div>
+
+    <div class="bet-section">
+      <label>Choose Side:</label>
+      <select id="choice">
+        <option value="dragon">Dragon</option>
+        <option value="tiger">Tiger</option>
+        <option value="tie">Tie</option>
+      </select>
+      <br>
+      <label>Bet Amount:</label>
+      <input type="number" id="betAmount" min="10" placeholder="Enter amount" />
+      <br>
+      <button onclick="playGame()">Place Bet</button>
+    </div>
+
+    <div class="result" id="resultMsg"></div>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+      authDomain: "betting-app-43800.firebaseapp.com",
+      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+      projectId: "betting-app-43800"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const userId = localStorage.getItem("userId");
+    if (!userId) window.location.href = "login.html";
+
+    const balanceSpan = document.getElementById("balance");
+    const resultDiv = document.getElementById("resultMsg");
+
+    function updateBalanceDisplay() {
+      db.ref("users/" + userId + "/wallet").once("value").then(snap => {
+        const bal = parseFloat(snap.val()) || 0;
+        balanceSpan.textContent = bal.toFixed(2);
+      });
+    }
+
+    updateBalanceDisplay();
+
+    function getRandomCard() {
+      return Math.floor(Math.random() * 13) + 1;
+    }
+
+    let timerInterval;
+
+    function playGame() {
+      const choice = document.getElementById("choice").value;
+      const bet = parseFloat(document.getElementById("betAmount").value);
+
+      if (!bet || bet < 10) return alert("Minimum bet is ₹10");
+
+      clearInterval(timerInterval);
+
+      let timeLeft = 10;
+      resultDiv.textContent = `⏳ Time Left: ${timeLeft}s`;
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        if (timeLeft > 0) {
+          resultDiv.textContent = `⏳ Time Left: ${timeLeft}s`;
+        } else {
+          clearInterval(timerInterval);
+          resultDiv.textContent = "🎰 Bet Closed!";
+          runGameLogic(choice, bet);
+        }
+      }, 1000);
+    }
+
+    function runGameLogic(choice, bet) {
+      db.ref("users/" + userId + "/wallet").once("value").then((snap) => {
+        let balance = parseFloat(snap.val()) || 0;
+        if (bet > balance) return alert("❌ Insufficient balance");
+
+        const dragon = getRandomCard();
+        const tiger = getRandomCard();
+
+        const dragonBox = document.getElementById("dragonBox");
+        const tigerBox = document.getElementById("tigerBox");
+        const tieBox = document.getElementById("tieBox");
+
+        dragonBox.classList.remove("winner");
+        tigerBox.classList.remove("winner");
+        tieBox.classList.remove("winner");
+
+        document.getElementById("dragonCard").textContent = dragon;
+        document.getElementById("tigerCard").textContent = tiger;
+
+        let result = "";
+        let won = false;
+        let winAmount = 0;
+
+        const winChance = Math.random(); // User win chance logic
+        const allowWin = winChance <= 0.2;
+
+        if (dragon > tiger) {
+          result = "Dragon Wins";
+          if (choice === "dragon" && allowWin) {
+            won = true;
+            winAmount = bet;
+            dragonBox.classList.add("winner");
+          }
+        } else if (tiger > dragon) {
+          result = "Tiger Wins";
+          if (choice === "tiger" && allowWin) {
+            won = true;
+            winAmount = bet;
+            tigerBox.classList.add("winner");
+          }
+        } else {
+          result = "It's a Tie!";
+          if (choice === "tie" && allowWin) {
+            won = true;
+            winAmount = bet * 9;
+            tieBox.classList.add("winner");
+          }
+        }
+
+        resultDiv.textContent = `${result} - You ${won ? 'Win ₹' + winAmount : 'Lose'}!`;
+
+        let newBalance = won ? balance + winAmount : balance - bet;
+        db.ref("users/" + userId + "/wallet").set(newBalance).then(updateBalanceDisplay);
+
+        const gameLog = {
+          choice,
+          dragon,
+          tiger,
+          result,
+          amount: bet,
+          win: won,
+          payout: winAmount,
+          date: new Date().toLocaleString()
+        };
+        db.ref("history/" + userId).push(gameLog);
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Settings</title>
+  <style>
+    body {
+      background-color: #111;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background-color: #1e1e1e;
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    h2 {
+      text-align: center;
+      color: gold;
+    }
+
+    label {
+      display: block;
+      margin: 10px 0 5px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      margin-bottom: 15px;
+      background-color: #2a2a2a;
+      color: #fff;
+    }
+
+    .switch {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 10px 0;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: gold;
+      border: none;
+      color: #000;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #e6b800;
+    }
+
+    .logout {
+      margin-top: 20px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>⚙️ Settings</h2>
+
+    <label>User Name</label>
+    <input type="text" id="username" disabled>
+
+    <label>Mobile Number</label>
+    <input type="text" id="mobile" disabled>
+
+    <label>Email</label>
+    <input type="email" placeholder="Enter email">
+
+    <div class="switch">
+      <span>🌙 Dark Mode</span>
+      <input type="checkbox" id="darkMode" />
+    </div>
+
+    <div class="switch">
+      <span>🔔 Notifications</span>
+      <input type="checkbox" id="notifications" checked />
+    </div>
+
+    <label>Change Password</label>
+    <input type="password" placeholder="Old Password">
+    <input type="password" placeholder="New Password">
+
+    <button onclick="saveSettings()">Save Settings</button>
+
+    <div class="logout">
+      <button onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem("loggedInUser"));
+    if (user) {
+      document.getElementById("username").value = user.username || "";
+      document.getElementById("mobile").value = user.mobile || "";
+    } else {
+      window.location.href = "login.html";
+    }
+
+    function saveSettings() {
+      alert("✅ Settings saved successfully (demo only)");
+    }
+
+    function logout() {
+      localStorage.removeItem("loggedInUser");
+      window.location.href = "login.html";
+    }
+  </script>
+  <script src="script.js"></script>
+
+</body>
+</html>

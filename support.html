@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Customer Support</title>
+  <style>
+    body {
+      background-color: #111;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    h2 {
+      color: gold;
+    }
+    input, textarea, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: none;
+    }
+    button {
+      background-color: gold;
+      color: #000;
+      cursor: pointer;
+    }
+    .container {
+      max-width: 400px;
+      margin: auto;
+      background: #222;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    .success {
+      color: lightgreen;
+      margin-top: 10px;
+    }
+    .contact-links {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .contact-links a {
+      display: inline-block;
+      margin: 0 10px;
+      font-size: 18px;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <nav style="background: #222; padding: 10px; text-align: center;">
+    <a href="index.html" style="color:white; margin:10px;">Home</a>
+    <a href="recharge.html" style="color:white; margin:10px;">Recharge</a>
+    <a href="withdraw.html" style="color:white; margin:10px;">Withdraw</a>
+    <a href="history.html" style="color:white; margin:10px;">History</a>
+    <a href="account.html" style="color:white; margin:10px;">Account</a>
+    <a href="support.html" style="color:white; margin:10px;">Support</a>
+    <a href="login.html" style="color:white; margin:10px;">Logout</a>
+  </nav>
+
+  <div class="container">
+    <h2>📞 Customer Support</h2>
+
+    <div class="contact-links">
+      <h3>Connect with us:</h3>
+      <a href="https://t.me/@Manxamit" target="_blank" style="color: #0088cc;">📱 Telegram</a>
+      <a href="https://wa.me/9792368894" target="_blank" style="color: #25D366;">💬 WhatsApp</a>
+    </div>
+
+    <input type="text" id="name" placeholder="Your Name" required>
+    <input type="text" id="mobile" placeholder="Mobile Number" required>
+    <textarea id="message" rows="4" placeholder="Your Message" required></textarea>
+    <button onclick="submitSupport()">Submit</button>
+    <div id="response" class="success"></div>
+  </div>
+
+  <script>
+    function submitSupport() {
+      const name = document.getElementById('name').value.trim();
+      const mobile = document.getElementById('mobile').value.trim();
+      const message = document.getElementById('message').value.trim();
+
+      if (!name || !mobile || !message) {
+        alert("Please fill all fields.");
+        return;
+      }
+
+      const supportData = {
+        name,
+        mobile,
+        message,
+        time: new Date().toLocaleString()
+      };
+
+      let allMessages = JSON.parse(localStorage.getItem('supportMessages')) || [];
+      allMessages.push(supportData);
+      localStorage.setItem('supportMessages', JSON.stringify(allMessages));
+
+      document.getElementById('response').innerText = "Your message has been submitted ✅";
+      document.getElementById('name').value = '';
+      document.getElementById('mobile').value = '';
+      document.getElementById('message').value = '';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const user = JSON.parse(localStorage.getItem("loggedInUser"));
+      if (!user) {
+        window.location.href = "login.html";
+      }
+    });
+  </script>
+  <script src="script.js"></script>
+</body>
+</html>
