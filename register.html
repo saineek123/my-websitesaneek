@@ -63,7 +63,6 @@
     <p id="msg" style="color: lightgreen; margin-top: 10px;"></p>
   </div>
 
-  <!-- Firebase with Modular Syntax -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
     import { getDatabase, ref, set, push, get, update, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
@@ -73,7 +72,7 @@
       authDomain: "betting-app-43800.firebaseapp.com",
       databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
       projectId: "betting-app-43800",
-      storageBucket: "betting-app-43800.firebasestorage.app",
+      storageBucket: "betting-app-43800.appspot.com",
       messagingSenderId: "752263307747",
       appId: "1:752263307747:web:183e06d62bc5920fc700d6",
       measurementId: "G-Y452BY8453"
@@ -124,7 +123,7 @@
         await set(ref(db, 'users/' + userId), userData);
         msg.innerText = "Registered successfully ✔";
 
-        // Handle referral bonus
+        // Referral bonus logic
         if (referralCodeInput) {
           const refQuery = query(ref(db, "users"), orderByChild("referralCode"), equalTo(referralCodeInput));
           const snapshot = await get(refQuery);
@@ -136,6 +135,11 @@
             await update(ref(db, "users/" + referrerKey), { wallet: updatedWallet });
           }
         }
+
+        // Redirect to login page after 1.5 seconds
+        setTimeout(() => {
+          window.location.href = "login.html";
+        }, 1500);
 
       } catch (error) {
         msg.innerText = "Error: " + error.message;
