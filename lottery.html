@@ -280,7 +280,7 @@ function runResult() {
   let winChance = Math.random();
   let winningBet = null;
 
-  if (pendingBets.length > 0 && winChance < 0.4) {
+  if (pendingBets.length > 0 && winChance < 0.2) {
     winningBet = pendingBets[Math.floor(Math.random() * pendingBets.length)];
   }
 
