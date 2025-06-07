@@ -78,14 +78,14 @@
       <div class="item">0x</div>
       <div class="item">4x</div>
       <div class="item">5x</div>
-      <div class="item">2x</div>
       <div class="item">10x</div>
-      <div class="item">2x</div>
+      <div class="item">10x</div> <!-- Changed from 50x -->
+      <div class="item">2x</div>  <!-- Changed from 100x -->
       <!-- duplicate items for seamless loop -->
       <div class="item">0x</div>
       <div class="item">4x</div>
       <div class="item">5x</div>
-      <div class="item">2x</div>
+      <div class="item">10x</div>
       <div class="item">10x</div>
       <div class="item">2x</div>
     </div>
@@ -120,7 +120,8 @@
     const walletEl = document.getElementById("userBalance");
     const roller = document.getElementById("roller");
     const spinBtn = document.getElementById("spinBtn");
-    const segments = ["0x", "4x", "5x", "10x", "2x", 2x"];
+    // Updated segments with new multipliers
+    const segments = ["0x", "4x", "5x", "10x", "10x", "2x"];
     let currentBalance = 0;
 
     if (userId) {
@@ -157,14 +158,15 @@
       let index;
 
       if (win) {
-        const winIndices = [1, 2, 3, 4, 5]; // not 0x
+        // winning indices exclude 0x (index 0)
+        const winIndices = [1, 2, 3, 4, 5];
         index = winIndices[Math.floor(Math.random() * winIndices.length)];
       } else {
         index = 0; // force 0x
       }
 
       const totalItems = segments.length * 2; // 12 items
-      // We'll spin multiple rounds (random between 3 to 5 full spins)
+      // Spin between 3 to 5 full rotations
       const fullSpins = Math.floor(Math.random() * 3) + 3;
       const finalIndex = fullSpins * segments.length + index;
       const offset = -finalIndex * 300;
@@ -175,7 +177,6 @@
       document.getElementById('hitDisplay').innerText = "Rolling...";
       document.getElementById('result').innerText = "";
 
-      // After animation ends, reset position to the visible item to allow repeated spins
       roller.addEventListener('transitionend', onTransitionEnd);
 
       function onTransitionEnd() {
