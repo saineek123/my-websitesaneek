@@ -2,98 +2,82 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Wallet</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #0f0f0f;
-      color: #ffffff;
       margin: 0;
       padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f0f0f;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
     }
-    nav {
-      background-color: #1e1e1e;
-      padding: 12px 0;
-      text-align: center;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-    nav a {
-      color: #00e5ff;
-      margin: 0 15px;
-      text-decoration: none;
-      font-weight: bold;
-    }
-    nav a:hover {
-      text-decoration: underline;
-    }
-    .container {
-      max-width: 500px;
-      margin: 40px auto;
-      padding: 30px;
-      background-color: #1c1c1c;
-      border-radius: 16px;
-      box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
-      text-align: center;
-    }
-    h2 {
-      margin-bottom: 20px;
-      color: #00e5ff;
-    }
-    .balanceCard {
-      font-size: 22px;
-      font-weight: bold;
-      background: linear-gradient(to right, #00e5ff, #00bcd4);
-      color: #000;
-      padding: 16px;
-      border-radius: 12px;
-      margin-bottom: 15px;
-      box-shadow: 0 0 10px rgba(0,255,255,0.2);
-    }
-    .wallet-btn {
+
+    .wallet-card {
       width: 100%;
-      padding: 14px;
-      margin-top: 12px;
+      max-width: 350px;
+      background: #1c1c1c;
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0, 255, 255, 0.1);
+      text-align: center;
+    }
+
+    .wallet-header h2 {
+      margin: 0;
+      font-size: 24px;
+      color: #00e5ff;
+    }
+
+    .wallet-balance {
+      font-size: 28px;
+      font-weight: bold;
+      color: #00e5ff;
+      margin: 10px 0 20px 0;
+    }
+
+    .wallet-actions button {
+      display: block;
+      width: 100%;
+      margin: 8px 0;
+      padding: 12px;
       font-size: 16px;
-      background-color: #00e5ff;
       border: none;
+      border-radius: 10px;
+      background-color: #00e5ff;
       color: #000;
       font-weight: bold;
-      border-radius: 8px;
       cursor: pointer;
       transition: background 0.3s;
     }
-    .wallet-btn:hover {
+
+    .wallet-actions button:hover {
       background-color: #00bcd4;
     }
   </style>
-</head>
-<body>
 
-  <nav>
-    <a href="index.html">Home</a>
-    <a href="recharge.html">Recharge</a>
-    <a href="withdraw.html">Withdraw</a>
-    <a href="history.html">History</a>
-    <a href="wallet.html">Wallet</a>
-    <a href="account.html">Account</a>
-    <a href="#" onclick="logout()">Logout</a>
-  </nav>
-
-  <div class="container">
-    <h2>My Wallet</h2>
-    <div class="balanceCard">💰 Total Balance: ₹<span id="totalBalance">--</span></div>
-    <div class="balanceCard">🏆 Winning Balance: ₹<span id="winningBalance">--</span></div>
-    <div class="balanceCard">➕ Recharge/Bonus: ₹<span id="rechargeBalance">--</span></div>
-    <button class="wallet-btn" onclick="goToRecharge()">➕ Recharge Wallet</button>
-    <button class="wallet-btn" onclick="goToWithdraw()">➖ Withdraw Money</button>
-  </div>
-
-  <!-- Firebase SDK -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+</head>
+<body>
+  <div class="wallet-card">
+    <div class="wallet-header">
+      <h2>My Wallet</h2>
+      <p class="wallet-balance">₹ <span id="walletBalance">Loading...</span></p>
+    </div>
+    <div class="wallet-actions">
+      <button onclick="openRecharge()">➕Recharge</button>
+      <button onclick="openWithdraw()">➖Withdraw</button>
+    </div>
+  </div>
 
   <script>
+    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
       authDomain: "betting-app-43800.firebaseapp.com",
@@ -107,51 +91,29 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const userId = localStorage.getItem("userId") || "04LX9WI3x0a7nvFqS7Bq8IyIzEr2"; // fallback
-
+    const userId = localStorage.getItem("userId");
     if (!userId) {
       alert("User not logged in.");
       window.location.href = "login.html";
     }
 
-    const walletRef = db.ref("users/" + userId + "/wallet");
+    db.ref("users/" + userId + "/wallet/winning").once("value")
+      .then(snapshot => {
+        const balance = parseFloat(snapshot.val()) || 0;
+        document.getElementById("walletBalance").textContent = balance.toFixed(2);
+      })
+      .catch(error => {
+        console.error("Error fetching balance:", error);
+        document.getElementById("walletBalance").textContent = "Error";
+      });
 
-    walletRef.once("value").then(snapshot => {
-      const wallet = snapshot.val();
-      console.log("📦 wallet data:", wallet);
-
-      if (!wallet) {
-        document.getElementById("totalBalance").innerText = "0.00";
-        document.getElementById("winningBalance").innerText = "0.00";
-        document.getElementById("rechargeBalance").innerText = "0.00";
-        return;
-      }
-
-      const winning = parseFloat(wallet.winning || 0);
-      const recharge = parseFloat(wallet.recharge || 0);
-      const total = winning + recharge;
-
-      document.getElementById("totalBalance").innerText = total.toFixed(2);
-      document.getElementById("winningBalance").innerText = winning.toFixed(2);
-      document.getElementById("rechargeBalance").innerText = recharge.toFixed(2);
-    }).catch(error => {
-      console.error("❌ Error fetching wallet data:", error);
-      alert("Error fetching wallet data.");
-    });
-
-    function goToRecharge() {
+    function openRecharge() {
       window.location.href = "recharge.html";
     }
 
-    function goToWithdraw() {
+    function openWithdraw() {
       window.location.href = "withdraw.html";
     }
-
-    function logout() {
-      localStorage.removeItem("userId");
-      window.location.href = "login.html";
-    }
   </script>
-
 </body>
 </html>
