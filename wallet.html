@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>My Wallet</title>
   <style>
-    /* tumhara styling same hi rahega */
     body {
       font-family: 'Segoe UI', sans-serif;
       background-color: #0f0f0f;
@@ -84,9 +83,9 @@
   <div class="container">
     <h2>My Wallet</h2>
 
-    <div class="balanceCard">💰 Total Balance: ₹<span id="totalBalance">0</span></div>
-    <div class="balanceCard">🏆 Winning Balance: ₹<span id="winningBalance">0</span></div>
-    <div class="balanceCard">➕ Recharge/Bonus: ₹<span id="rechargeBalance">0</span></div>
+    <div class="balanceCard">💰 Total Balance: ₹<span id="totalBalance">0.00</span></div>
+    <div class="balanceCard">🏆 Winning Balance: ₹<span id="winningBalance">0.00</span></div>
+    <div class="balanceCard">➕ Recharge/Bonus: ₹<span id="rechargeBalance">0.00</span></div>
 
     <button class="wallet-btn" onclick="goToRecharge()">➕ Recharge Wallet</button>
     <button class="wallet-btn" onclick="goToWithdraw()">➖ Withdraw Money</button>
@@ -111,21 +110,34 @@
     const db = firebase.database();
 
     const userId = localStorage.getItem("userId");
-    console.log("Debug: userId from localStorage =", userId);
+
     if (!userId) {
       alert("User not logged in.");
       window.location.href = "login.html";
     }
 
-    db.ref("users/" + userId + "/wallet").once("value")
-      .then(snapshot => {
-        if (!snapshot.exists()) {
-          alert("No wallet data found. Please recharge your wallet.");
-          console.log("Debug: wallet node not found for user:", userId);
-          return;
-        }
+    const walletRef = db.ref("users/" + userId + "/wallet");
+
+    walletRef.once("value").then(snapshot => {
+      if (!snapshot.exists()) {
+        walletRef.set({
+          winning: 0,
+          recharge: 0
+        }).then(() => {
+          console.log("✅ Wallet initialized for user:", userId);
+          loadWallet();
+        });
+      } else {
+        loadWallet();
+      }
+    }).catch(error => {
+      console.error("Error accessing wallet:", error.message);
+      alert("Error accessing wallet.");
+    });
+
+    function loadWallet() {
+      walletRef.once("value").then(snapshot => {
         const wallet = snapshot.val();
-        console.log("Debug: wallet data fetched", wallet);
         const winning = parseFloat(wallet.winning || 0);
         const recharge = parseFloat(wallet.recharge || 0);
         const total = winning + recharge;
@@ -133,11 +145,11 @@
         document.getElementById("totalBalance").innerText = total.toFixed(2);
         document.getElementById("winningBalance").innerText = winning.toFixed(2);
         document.getElementById("rechargeBalance").innerText = recharge.toFixed(2);
-      })
-      .catch(error => {
+      }).catch(error => {
         console.error("Error loading wallet data:", error.message);
-        alert("Error fetching wallet data. Check console for details.");
+        alert("Failed to load wallet data.");
       });
+    }
 
     function goToRecharge() {
       window.location.href = "recharge.html";
