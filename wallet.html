@@ -94,66 +94,80 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
-  <script>
-    // Firebase Config
-    const firebaseConfig = {
-      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
-      authDomain: "betting-app-43800.firebaseapp.com",
-      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
-      projectId: "betting-app-43800",
-      storageBucket: "betting-app-43800.appspot.com",
-      messagingSenderId: "752263307747",
-      appId: "1:752263307747:web:183e06d62bc5920fc700d6"
-    };
+ <script>
+  // Firebase Config
+  const firebaseConfig = {
+    apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+    authDomain: "betting-app-43800.firebaseapp.com",
+    databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+    projectId: "betting-app-43800",
+    storageBucket: "betting-app-43800.appspot.com",
+    messagingSenderId: "752263307747",
+    appId: "1:752263307747:web:183e06d62bc5920fc700d6"
+  };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-    // Hardcoded User ID (for testing/demo purpose)
-    const userId = "04LX9WI3x0a7nvFqS7Bq8IyIzEr2";
+  // Use this user ID
+  const userId = "04LX9WI3x0a7nvFqS7Bq8IyIzEr2";
+  const walletRef = db.ref("users/" + userId + "/wallet");
 
-    // Optional: Save to localStorage if needed
-    localStorage.setItem("userId", userId);
+  walletRef.once("value").then(snapshot => {
+    const walletData = snapshot.val();
+    console.log("💥 walletData:", walletData);
 
-    const walletRef = db.ref("users/" + userId + "/wallet");
-
-    walletRef.once("value").then(snapshot => {
-      if (!snapshot.exists()) {
-        walletRef.set({
-          winning: 0,
-          recharge: 0
-        }).then(() => updateUI(0, 0));
-      } else {
-        const wallet = snapshot.val();
-        const winning = parseFloat(wallet.winning || 0);
-        const recharge = parseFloat(wallet.recharge || 0);
-        updateUI(winning, recharge);
-      }
-    }).catch(error => {
-      console.error("Wallet error:", error);
-      alert("Wallet load failed.");
-    });
-
-    function updateUI(winning, recharge) {
-      const total = winning + recharge;
-      document.getElementById("totalBalance").innerText = total.toFixed(2);
-      document.getElementById("winningBalance").innerText = winning.toFixed(2);
-      document.getElementById("rechargeBalance").innerText = recharge.toFixed(2);
+    if (!walletData) {
+      // Wallet not present, create with default 0s
+      walletRef.set({
+        winning: 0,
+        recharge: 0
+      });
+      updateUI(0, 0);
+      return;
     }
 
-    function goToRecharge() {
-      window.location.href = "recharge.html";
+    let winning = 0;
+    let recharge = 0;
+
+    // Handle direct format OR nested object
+    if (walletData.winning !== undefined && walletData.recharge !== undefined) {
+      winning = parseFloat(walletData.winning || 0);
+      recharge = parseFloat(walletData.recharge || 0);
+    } else {
+      // Possibly nested under a random key
+      const firstKey = Object.keys(walletData)[0];
+      const nested = walletData[firstKey];
+      winning = parseFloat(nested.winning || 0);
+      recharge = parseFloat(nested.recharge || 0);
     }
 
-    function goToWithdraw() {
-      window.location.href = "withdraw.html";
-    }
+    updateUI(winning, recharge);
+  }).catch(error => {
+    console.error("❌ Wallet load error:", error);
+    alert("Error loading wallet data.");
+  });
 
-    function logout() {
-      localStorage.removeItem("userId");
-      window.location.href = "login.html";
-    }
-  </script>
+  function updateUI(winning, recharge) {
+    const total = winning + recharge;
+    document.getElementById("totalBalance").innerText = total.toFixed(2);
+    document.getElementById("winningBalance").innerText = winning.toFixed(2);
+    document.getElementById("rechargeBalance").innerText = recharge.toFixed(2);
+  }
+
+  function goToRecharge() {
+    window.location.href = "recharge.html";
+  }
+
+  function goToWithdraw() {
+    window.location.href = "withdraw.html";
+  }
+
+  function logout() {
+    localStorage.removeItem("userId");
+    window.location.href = "login.html";
+  }
+</script>
 
 </body>
 </html>
