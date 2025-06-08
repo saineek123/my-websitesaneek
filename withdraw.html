@@ -100,19 +100,19 @@
   <strong>👉Note:</strong> Please ensure that your UPI ID or bank details are correct to avoid any issues with the withdrawal process. <br>
   <strong>👉Important:</strong> Withdrawals are processed within 24-48 hours. <br>
   <strong>👉Disclaimer:</strong> The company is not responsible for any errors in the provided information. <br>
-  <br>  <strong>👉withdrawal charges:</strong> Please note that a fee of 7% will be deducted from your withdrawal amount. <br> 
+  <strong>👉withdrawal charges:</strong> Please note that a fee of 7% will be deducted from your withdrawal amount. <br> 
   <strong>👉Contact Customer Service:</strong> If you have any questions or need assistance, please contact our customer service team. <br>
 
   <div class="container">
     <h2>Withdraw Request</h2>
 
     <div id="balanceDisplay">
-      Current Balance: ₹<span id="balanceAmount">Loading...</span>
+      Winning Balance: ₹<span id="balanceAmount">Loading...</span>
     </div>
 
     <form id="withdrawForm">
-      <label>Enter Amount (Min ₹110)</label>
-      <input type="number" id="amount" min="110" required />
+      <label>Enter Amount (Min ₹100)</label>
+      <input type="number" id="amount" min="100" required />
 
       <label>Your UPI ID (if withdrawing via UPI)</label>
       <input type="text" id="upi" placeholder="example@upi" />
@@ -159,13 +159,12 @@
       window.location.href = "login.html";
     }
 
-    let currentBalance = 0;
+    let winningBalance = 0;
 
-    // Get balance from wallet
-    db.ref("users/" + userId + "/wallet").once("value")
+    db.ref("users/" + userId + "/wallet/winning").once("value")
       .then(snapshot => {
-        currentBalance = parseFloat(snapshot.val()) || 0;
-        document.getElementById("balanceAmount").textContent = currentBalance.toFixed(2);
+        winningBalance = parseFloat(snapshot.val()) || 0;
+        document.getElementById("balanceAmount").textContent = winningBalance.toFixed(2);
       })
       .catch(error => {
         console.error("Error fetching balance:", error);
@@ -186,13 +185,13 @@
         return;
       }
 
-      if (amount < 110) {
-        alert("❌ Minimum withdrawal amount is ₹110.");
+      if (amount < 100) {
+        alert("❌ Minimum withdrawal amount is ₹100.");
         return;
       }
 
-      if (amount > currentBalance) {
-        alert("❌ Insufficient balance in wallet.");
+      if (amount > winningBalance) {
+        alert("❌ You can only withdraw from your winning balance.");
         return;
       }
 
@@ -213,11 +212,11 @@
 
       db.ref("withdraws/" + userId).push(withdrawRequest)
         .then(() => {
-          const newBalance = currentBalance - amount;
-          return db.ref("users/" + userId + "/wallet").set(newBalance)
+          const newBalance = winningBalance - amount;
+          return db.ref("users/" + userId + "/wallet/winning").set(newBalance)
             .then(() => {
-              currentBalance = newBalance;
-              document.getElementById("balanceAmount").textContent = currentBalance.toFixed(2);
+              winningBalance = newBalance;
+              document.getElementById("balanceAmount").textContent = winningBalance.toFixed(2);
               alert("✅ Withdraw request submitted successfully!");
               document.getElementById("withdrawForm").reset();
             });
