@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>My Wallet</title>
   <style>
+    /* tumhara styling same hi rahega */
     body {
       font-family: 'Segoe UI', sans-serif;
       background-color: #0f0f0f;
@@ -12,25 +13,21 @@
       margin: 0;
       padding: 0;
     }
-
     nav {
       background-color: #1e1e1e;
       padding: 12px 0;
       text-align: center;
       box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
-
     nav a {
       color: #00e5ff;
       margin: 0 15px;
       text-decoration: none;
       font-weight: bold;
     }
-
     nav a:hover {
       text-decoration: underline;
     }
-
     .container {
       max-width: 500px;
       margin: 40px auto;
@@ -40,12 +37,10 @@
       box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
       text-align: center;
     }
-
     h2 {
       margin-bottom: 20px;
       color: #00e5ff;
     }
-
     .balanceCard {
       font-size: 24px;
       font-weight: bold;
@@ -56,7 +51,6 @@
       margin-bottom: 20px;
       box-shadow: 0 0 10px rgba(0,255,255,0.2);
     }
-
     .wallet-btn {
       width: 100%;
       padding: 14px;
@@ -70,7 +64,6 @@
       cursor: pointer;
       transition: background 0.3s;
     }
-
     .wallet-btn:hover {
       background-color: #00bcd4;
     }
@@ -118,15 +111,21 @@
     const db = firebase.database();
 
     const userId = localStorage.getItem("userId");
+    console.log("Debug: userId from localStorage =", userId);
     if (!userId) {
       alert("User not logged in.");
       window.location.href = "login.html";
     }
 
-    // Load winning & recharge balance from Firebase
     db.ref("users/" + userId + "/wallet").once("value")
       .then(snapshot => {
-        const wallet = snapshot.val() || {};
+        if (!snapshot.exists()) {
+          alert("No wallet data found. Please recharge your wallet.");
+          console.log("Debug: wallet node not found for user:", userId);
+          return;
+        }
+        const wallet = snapshot.val();
+        console.log("Debug: wallet data fetched", wallet);
         const winning = parseFloat(wallet.winning || 0);
         const recharge = parseFloat(wallet.recharge || 0);
         const total = winning + recharge;
@@ -137,6 +136,7 @@
       })
       .catch(error => {
         console.error("Error loading wallet data:", error.message);
+        alert("Error fetching wallet data. Check console for details.");
       });
 
     function goToRecharge() {
