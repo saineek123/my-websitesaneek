@@ -41,13 +41,13 @@
       color: #00e5ff;
     }
     .balanceCard {
-      font-size: 24px;
+      font-size: 22px;
       font-weight: bold;
       background: linear-gradient(to right, #00e5ff, #00bcd4);
       color: #000;
       padding: 16px;
       border-radius: 12px;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
       box-shadow: 0 0 10px rgba(0,255,255,0.2);
     }
     .wallet-btn {
@@ -82,10 +82,9 @@
 
   <div class="container">
     <h2>My Wallet</h2>
-    <div class="balanceCard">💰 Total Balance: ₹<span id="totalBalance">0.00</span></div>
-    <div class="balanceCard">🏆 Winning Balance: ₹<span id="winningBalance">0.00</span></div>
-    <div class="balanceCard">➕ Recharge/Bonus: ₹<span id="rechargeBalance">0.00</span></div>
-
+    <div class="balanceCard">💰 Total Balance: ₹<span id="totalBalance">--</span></div>
+    <div class="balanceCard">🏆 Winning Balance: ₹<span id="winningBalance">--</span></div>
+    <div class="balanceCard">➕ Recharge/Bonus: ₹<span id="rechargeBalance">--</span></div>
     <button class="wallet-btn" onclick="goToRecharge()">➕ Recharge Wallet</button>
     <button class="wallet-btn" onclick="goToWithdraw()">➖ Withdraw Money</button>
   </div>
@@ -94,80 +93,65 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
- <script>
-  // Firebase Config
-  const firebaseConfig = {
-    apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
-    authDomain: "betting-app-43800.firebaseapp.com",
-    databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
-    projectId: "betting-app-43800",
-    storageBucket: "betting-app-43800.appspot.com",
-    messagingSenderId: "752263307747",
-    appId: "1:752263307747:web:183e06d62bc5920fc700d6"
-  };
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+      authDomain: "betting-app-43800.firebaseapp.com",
+      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+      projectId: "betting-app-43800",
+      storageBucket: "betting-app-43800.appspot.com",
+      messagingSenderId: "752263307747",
+      appId: "1:752263307747:web:183e06d62bc5920fc700d6"
+    };
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-  // Use this user ID
-  const userId = "04LX9WI3x0a7nvFqS7Bq8IyIzEr2";
-  const walletRef = db.ref("users/" + userId + "/wallet");
+    const userId = localStorage.getItem("userId") || "04LX9WI3x0a7nvFqS7Bq8IyIzEr2"; // fallback
 
-  walletRef.once("value").then(snapshot => {
-    const walletData = snapshot.val();
-    console.log("💥 walletData:", walletData);
-
-    if (!walletData) {
-      // Wallet not present, create with default 0s
-      walletRef.set({
-        winning: 0,
-        recharge: 0
-      });
-      updateUI(0, 0);
-      return;
+    if (!userId) {
+      alert("User not logged in.");
+      window.location.href = "login.html";
     }
 
-    let winning = 0;
-    let recharge = 0;
+    const walletRef = db.ref("users/" + userId + "/wallet");
 
-    // Handle direct format OR nested object
-    if (walletData.winning !== undefined && walletData.recharge !== undefined) {
-      winning = parseFloat(walletData.winning || 0);
-      recharge = parseFloat(walletData.recharge || 0);
-    } else {
-      // Possibly nested under a random key
-      const firstKey = Object.keys(walletData)[0];
-      const nested = walletData[firstKey];
-      winning = parseFloat(nested.winning || 0);
-      recharge = parseFloat(nested.recharge || 0);
+    walletRef.once("value").then(snapshot => {
+      const wallet = snapshot.val();
+      console.log("📦 wallet data:", wallet);
+
+      if (!wallet) {
+        document.getElementById("totalBalance").innerText = "0.00";
+        document.getElementById("winningBalance").innerText = "0.00";
+        document.getElementById("rechargeBalance").innerText = "0.00";
+        return;
+      }
+
+      const winning = parseFloat(wallet.winning || 0);
+      const recharge = parseFloat(wallet.recharge || 0);
+      const total = winning + recharge;
+
+      document.getElementById("totalBalance").innerText = total.toFixed(2);
+      document.getElementById("winningBalance").innerText = winning.toFixed(2);
+      document.getElementById("rechargeBalance").innerText = recharge.toFixed(2);
+    }).catch(error => {
+      console.error("❌ Error fetching wallet data:", error);
+      alert("Error fetching wallet data.");
+    });
+
+    function goToRecharge() {
+      window.location.href = "recharge.html";
     }
 
-    updateUI(winning, recharge);
-  }).catch(error => {
-    console.error("❌ Wallet load error:", error);
-    alert("Error loading wallet data.");
-  });
+    function goToWithdraw() {
+      window.location.href = "withdraw.html";
+    }
 
-  function updateUI(winning, recharge) {
-    const total = winning + recharge;
-    document.getElementById("totalBalance").innerText = total.toFixed(2);
-    document.getElementById("winningBalance").innerText = winning.toFixed(2);
-    document.getElementById("rechargeBalance").innerText = recharge.toFixed(2);
-  }
-
-  function goToRecharge() {
-    window.location.href = "recharge.html";
-  }
-
-  function goToWithdraw() {
-    window.location.href = "withdraw.html";
-  }
-
-  function logout() {
-    localStorage.removeItem("userId");
-    window.location.href = "login.html";
-  }
-</script>
+    function logout() {
+      localStorage.removeItem("userId");
+      window.location.href = "login.html";
+    }
+  </script>
 
 </body>
 </html>
