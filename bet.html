@@ -135,15 +135,20 @@
   }
 
   // 🔄 Load Matches from Firebase
-  db.ref("matches").on("value", (snapshot) => {
-    matches.length = 0;
-    snapshot.forEach((child) => {
-      const data = child.val();
+ db.ref("matches").on("value", (snapshot) => {
+  matches.length = 0;
+  snapshot.forEach((child) => {
+    const data = child.val();
+
+    // ✅ Yeh line check karegi ki result nahi hona chahiye
+    if (!data.result) {
       data.id = child.key;
       matches.push(data);
-    });
-    renderMatches();
+    }
   });
+  renderMatches();
+});
+
 
   function renderMatches() {
     const container = document.getElementById("matchesContainer");
