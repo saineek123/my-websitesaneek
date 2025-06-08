@@ -2,29 +2,33 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>Admin - Match Result</title>
+  <title>Admin - Add Match Result</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 30px;
-      background-color: #111;
+      padding: 40px;
+      background-color: #121212;
       color: #fff;
     }
     h2 {
       color: #00e5ff;
     }
-    select, button {
+    select {
+      width: 320px;
       padding: 10px;
-      font-size: 16px;
-      margin-top: 10px;
+      margin: 10px 0;
       border-radius: 6px;
       border: none;
-      width: 300px;
+      font-size: 16px;
     }
     button {
       background-color: #00e5ff;
       color: black;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
       font-weight: bold;
+      font-size: 16px;
       cursor: pointer;
     }
     button:hover {
@@ -33,111 +37,89 @@
   </style>
 </head>
 <body>
-  <h2>🏁 Declare Match Result</h2>
+  <h2>🏁 Admin - Add Match Result</h2>
+
+  <label for="matchSelect">Select Match:</label><br>
   <select id="matchSelect">
-    <option disabled selected>-- Select Match --</option>
-  </select><br><br>
+    <option value="">-- Select a Match --</option>
+  </select><br>
 
-  <select id="winnerSelect">
-    <option disabled selected>-- Select Winner --</option>
-  </select><br><br>
+  <label for="result">Select Result:</label><br>
+  <select id="result">
+    <option value="">-- Select Result --</option>
+    <option value="team1">Team 1 Wins</option>
+    <option value="team2">Team 2 Wins</option>
+  </select><br>
 
-  <button onclick="declareResult()">✔️ Declare Result</button>
+  <button onclick="addResult()">✅ Submit Result</button>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 
   <script>
+    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
       authDomain: "betting-app-43800.firebaseapp.com",
       databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
       projectId: "betting-app-43800"
     };
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const matchSelect = document.getElementById("matchSelect");
-    const winnerSelect = document.getElementById("winnerSelect");
-
-    // Load matches
-    db.ref("matches").once("value", (snap) => {
-      snap.forEach(match => {
-        const data = match.val();
-        const option = document.createElement("option");
-        option.value = match.key;
-        option.textContent = `${data.team1} vs ${data.team2}`;
-        matchSelect.appendChild(option);
+    // 🔐 Auto login admin
+    firebase.auth().signInWithEmailAndPassword("admin@gmail.com", "admin123")
+      .then(() => {
+        console.log("✅ Admin logged in");
+        loadMatches(); // Only load matches after login
+      })
+      .catch((error) => {
+        console.error("❌ Login error:", error.message);
+        alert("Admin login failed.");
       });
-    });
 
-    // Load teams into winner selector
-    matchSelect.addEventListener("change", () => {
-      const matchId = matchSelect.value;
-      winnerSelect.innerHTML = `<option disabled selected>-- Select Winner --</option>`;
-      db.ref("matches/" + matchId).once("value").then(snap => {
-        const match = snap.val();
-        if (match) {
-          const opt1 = document.createElement("option");
-          opt1.value = match.team1;
-          opt1.textContent = match.team1;
-          const opt2 = document.createElement("option");
-          opt2.value = match.team2;
-          opt2.textContent = match.team2;
-          winnerSelect.appendChild(opt1);
-          winnerSelect.appendChild(opt2);
+    let matchesMap = {};
+
+    function loadMatches() {
+      db.ref("matches").once("value").then((snapshot) => {
+        const matches = snapshot.val();
+        const matchSelect = document.getElementById("matchSelect");
+
+        for (let id in matches) {
+          const match = matches[id];
+          const label = `${match.team1} vs ${match.team2}`;
+          const option = document.createElement("option");
+          option.value = id;
+          option.textContent = label;
+          matchesMap[id] = match;
+          matchSelect.appendChild(option);
         }
       });
-    });
+    }
 
-    function declareResult() {
-      const matchId = matchSelect.value;
-      const winner = winnerSelect.value;
+    function addResult() {
+      const matchId = document.getElementById("matchSelect").value;
+      const resultValue = document.getElementById("result").value;
 
-      if (!matchId || !winner) {
-        alert("Please select match and winner.");
+      if (!matchId || !resultValue) {
+        alert("❌ Please select a match and result.");
         return;
       }
 
-      // 1. Save result
-      db.ref("matches/" + matchId + "/result").set(winner).then(() => {
-
-        // 2. Process user bets
-        db.ref("users").once("value").then(usersSnap => {
-          usersSnap.forEach(userSnap => {
-            const uid = userSnap.key;
-            const user = userSnap.val();
-            const bets = user.bets || {};
-
-            Object.keys(bets).forEach(betId => {
-              const bet = bets[betId];
-
-              // Match title check
-              if (bet.match.includes(winner) && bet.result === "pending" && bet.team === winner) {
-                const winAmt = parseFloat(bet.return);
-                const updatedWallet = (user.wallet || 0) + winAmt;
-
-                // Update wallet
-                db.ref("users/" + uid + "/wallet").set(updatedWallet);
-
-                // Update bet status
-                db.ref("users/" + uid + "/bets/" + betId + "/result").set("won");
-              } else if (bet.result === "pending") {
-                db.ref("users/" + uid + "/bets/" + betId + "/result").set("lost");
-              }
-            });
-          });
-
-          // 3. Auto delete match after result
-          db.ref("matches/" + matchId).remove().then(() => {
-            alert("✅ Result declared, users updated, and match removed from Firebase.");
-            matchSelect.selectedIndex = 0;
-            winnerSelect.innerHTML = `<option disabled selected>-- Select Winner --</option>`;
-          });
-
+      db.ref("matches/" + matchId + "/result").set(resultValue)
+        .then(() => {
+          const match = matchesMap[matchId];
+          alert(`✅ Result updated for match: ${match.team1} vs ${match.team2}`);
+          document.getElementById("matchSelect").value = "";
+          document.getElementById("result").value = "";
+        })
+        .catch((err) => {
+          console.error("❌ Error updating result:", err);
+          alert("⚠️ Failed to update result.");
         });
-      });
     }
   </script>
 </body>
