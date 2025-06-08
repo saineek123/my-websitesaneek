@@ -71,8 +71,8 @@
       <p class="wallet-balance">₹ <span id="walletBalance">Loading...</span></p>
     </div>
     <div class="wallet-actions">
-      <button onclick="openRecharge()">➕Recharge</button>
-      <button onclick="openWithdraw()">➖Withdraw</button>
+      <button onclick="openRecharge()">Recharge</button>
+      <button onclick="openWithdraw()">Withdraw</button>
     </div>
   </div>
 
@@ -97,7 +97,7 @@
       window.location.href = "login.html";
     }
 
-    db.ref("users/" + userId + "/wallet/winning").once("value")
+    db.ref("users/" + userId + "/wallet/balance").once("value")
       .then(snapshot => {
         const balance = parseFloat(snapshot.val()) || 0;
         document.getElementById("walletBalance").textContent = balance.toFixed(2);
