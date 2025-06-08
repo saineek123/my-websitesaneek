@@ -135,6 +135,11 @@
       alert("Error accessing wallet.");
     });
 
+    function cleanAmount(value) {
+      const num = parseFloat(value || 0);
+      return (Object.is(num, -0) ? 0 : num).toFixed(2);
+    }
+
     function loadWallet() {
       walletRef.once("value").then(snapshot => {
         const wallet = snapshot.val();
@@ -142,9 +147,9 @@
         const recharge = parseFloat(wallet.recharge || 0);
         const total = winning + recharge;
 
-        document.getElementById("totalBalance").innerText = total.toFixed(2);
-        document.getElementById("winningBalance").innerText = winning.toFixed(2);
-        document.getElementById("rechargeBalance").innerText = recharge.toFixed(2);
+        document.getElementById("totalBalance").innerText = cleanAmount(total);
+        document.getElementById("winningBalance").innerText = cleanAmount(winning);
+        document.getElementById("rechargeBalance").innerText = cleanAmount(recharge);
       }).catch(error => {
         console.error("Error loading wallet data:", error.message);
         alert("Failed to load wallet data.");
