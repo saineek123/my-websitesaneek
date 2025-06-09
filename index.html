@@ -183,8 +183,9 @@
     if (userId) {
       const walletEl = document.getElementById("userBalance");
       db.ref("users/" + userId + "/wallet").on("value", (snap) => {
-        const balance = snap.val() || 0;
-        walletEl.innerText = balance;
+        const balance = snap.val() 
+        const balances = parseFloat(wallet?.balance || 0);
+        walletEl.innerText = balance.toFixed(2);
       });
     }
 
