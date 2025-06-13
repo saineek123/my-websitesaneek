@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
+  <title>🏁 BIG WIN - Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BIG WIN - Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -13,89 +13,63 @@
       color: #fff;
       padding-bottom: 80px;
     }
-    header {
-      background: linear-gradient(to right, #00c6ff, #0072ff);
-      padding: 20px;
-      text-align: center;
-    }
+    header { background: linear-gradient(to right, #00c6ff, #0072ff); padding: 20px; text-align: center; }
     header h1 { font-size: 24px; color: #fff; }
     nav {
-      display: flex;
-      justify-content: space-around;
-      background: #1c1c1c;
-      padding: 12px 0;
-      position: sticky;
-      top: 0;
-      z-index: 1000;
+      display: flex; flex-wrap: wrap; justify-content: center;
+      background: #1c1c1c; padding: 12px 0; position: sticky; top: 0; z-index: 1000;
     }
     nav a {
-      color: #00e5ff;
-      font-weight: 600;
-      text-decoration: none;
-      font-size: 14px;
+      color: #00e5ff; font-weight: 600; text-decoration: none; font-size: 14px; margin: 4px 8px;
     }
+    .dashboard { max-width: 1000px; margin: 30px auto; padding: 20px; }
     .info {
-      text-align: center;
-      background: #1f1f1f;
-      padding: 20px;
-      border-radius: 10px;
-      margin: 16px;
+      background: #1f1f1f; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px;
     }
     .info h2 { font-size: 20px; margin-bottom: 8px; }
     .info p span { color: #00e5ff; font-weight: bold; }
     .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 12px;
-      padding: 0 16px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px;
     }
     .card {
-      background: #1a1a1a;
-      border: 1px solid #333;
-      border-radius: 12px;
-      padding: 16px 10px;
-      text-align: center;
-      transition: 0.3s;
+      background: #1a1a1a; border: 1px solid #333; border-radius: 12px;
+      padding: 16px; text-align: center; transition: 0.3s;
     }
     .card:hover {
-      background: #2c2c2c;
-      transform: translateY(-4px);
+      background: #2c2c2c; transform: translateY(-4px);
     }
     .card h3 {
-      font-size: 16px;
-      margin-bottom: 10px;
-      color: #00c6ff;
+      font-size: 16px; margin-bottom: 10px; color: #00c6ff;
     }
     .card button {
-      padding: 8px 16px;
-      font-size: 14px;
-      border: none;
-      background: #00e5ff;
-      color: #000;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
+      padding: 8px 16px; font-size: 14px; border: none;
+      background: #00e5ff; color: #000; border-radius: 6px;
+      font-weight: bold; cursor: pointer;
+    }
+    .betting-section { margin-top: 40px; }
+    .team-btn {
+      display: flex; justify-content: space-between; background: #263545;
+      padding: 10px; margin: 5px 0; border-radius: 8px; cursor: pointer;
+    }
+    .team-btn:hover { background: #35597c; }
+    .rate {
+      background: #00c6ff; padding: 2px 6px; border-radius: 4px; color: #000; font-weight: bold;
+    }
+    input[type="number"] {
+      width: 100%; padding: 10px; margin-top: 10px; border-radius: 6px; border: none;
     }
     .logout {
-      margin: 20px auto;
-      text-align: center;
+      margin: 30px auto; text-align: center;
     }
     .logout button {
-      padding: 10px 20px;
-      font-size: 15px;
-      background: #ff1744;
-      border: none;
-      border-radius: 6px;
-      color: #fff;
-      cursor: pointer;
-      font-weight: bold;
+      padding: 10px 20px; font-size: 15px; background: #ff1744;
+      border: none; border-radius: 6px; color: #fff; cursor: pointer; font-weight: bold;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>🏁 BIG WIN</h1>
-  </header>
+
+  <header><h1>🏁 BIG WIN</h1></header>
 
   <nav>
     <a href="index.html">Home</a>
@@ -104,33 +78,44 @@
     <a href="history.html">History</a>
     <a href="account.html">Account</a>
     <a href="support.html">Support</a>
+    <a href="invite.html">Invite Friends</a>
     <a href="login.html" onclick="logout()">Logout</a>
   </nav>
 
-  <div class="info">
-    <h2>Welcome, <span id="userName">User</span></h2>
-    <p>Current Balance: ₹<span id="userBalance">0</span></p>
+  <div class="dashboard">
+    <div class="info">
+      <h2>Welcome, <span id="userName">User</span></h2>
+      <p>Balance: ₹<span id="userBalance">0.00</span></p>
+    </div>
+
+    <div class="cards">
+      <div class="card"><h3>⚽ Sports Betting</h3><button onclick="go('bet.html')">Play Now</button></div>
+      <div class="card"><h3>🎰 Slots</h3><button onclick="go('slots.html')">Play Now</button></div>
+      <div class="card"><h3>🎰 Lucky Spin</h3><button onclick="go('spin.html')">Play Now</button></div>
+      <div class="card"><h3>💰 Lottery</h3><button onclick="go('lottery.html')">Play Now</button></div>
+      <div class="card"><h3>🎮 Mines Game</h3><button onclick="go('mines.html')">Play Now</button></div>
+      <div class="card"><h3>🎮 Head or Tail</h3><button onclick="go('head_tail_game.html')">Play Now</button></div>
+      <div class="card"><h3>🎮 Andar Bahar</h3><button onclick="go('andar-bahar.html')">Play Now</button></div>
+      <div class="card"><h3>🎮 Dragon vs Tiger</h3><button onclick="go('dragon.html')">Play Now</button></div>
+      <div class="card"><h3>🎮 Red & Black Spin</h3><button onclick="go('red.html')">Play Now</button></div>
+      <div class="card"><h3>🎮 Aviator</h3><button onclick="go('aviator.html')">Play Now</button></div>
+      <div class="card"><h3>💳 Wallet</h3><button onclick="go('wallet.html')">Check</button></div>
+      <div class="card"><h3>💳 Recharge</h3><button onclick="go('recharge.html')">Add</button></div>
+      <div class="card"><h3>👤 Profile</h3><button onclick="go('account.html')">View</button></div>
+      <div class="card"><h3>⚙️ Settings</h3><button onclick="go('settings.html')">Settings</button></div>
+    </div>
+
+    <div class="betting-section">
+      <h2 style="text-align:center; margin-bottom:20px;">🔥 Live Matches</h2>
+      <div class="cards" id="matchesContainer"></div>
+    </div>
+
+    <div class="logout">
+      <button onclick="logout()">Logout</button>
+    </div>
   </div>
 
-  <div class="cards">
-    <div class="card"><h3>⚽ Sports</h3><button onclick="go('bet.html')">Play</button></div>
-    <div class="card"><h3>🎰 Slots</h3><button onclick="go('slots.html')">Play</button></div>
-    <div class="card"><h3>🎯 Spin</h3><button onclick="go('spin.html')">Play</button></div>
-    <div class="card"><h3>Dragon_Tiger</h3><button onclick="go('dragon.html')">Play</button></div>
-    <div class="card"><h3>mines</h3><button onclick="go('mines.html')">Play</button></div>
-    <div class="card"><h3>Head_Tail</h3><button onclick="go('head_tail_game.html')">Play</button></div>
-    <div class="card"><h3> andar-bahar</h3><button onclick="go('andar-bahar.html')">Play</button></div>
-    <div class="card"><h3>💰 Lottery</h3><button onclick="go('lottery.html')">Play</button></div>
-    <div class="card"><h3>💳 Wallet</h3><button onclick="go('wallet.html')">Check</button></div>
-    <div class="card"><h3>📥 Recharge</h3><button onclick="go('recharge.html')">Add</button></div>
-    <div class="card"><h3>👤 Profile</h3><button onclick="go('account.html')">View</button></div>
-    <div class="card"><h3>⚙️ Settings</h3><button onclick="go('settings.html')">Edit</button></div>
-  </div>
-
-  <div class="logout">
-    <button onclick="logout()">Logout</button>
-  </div>
-
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script>
@@ -144,27 +129,81 @@
     const db = firebase.database();
 
     const user = JSON.parse(localStorage.getItem("loggedInUser"));
-    if (!user) window.location.href = "login.html";
+    if (!user) return window.location.href = "login.html";
     document.getElementById("userName").innerText = user.username || "Guest";
 
-    const userId = localStorage.getItem("userId");
-    if (userId) {
-      const walletEl = document.getElementById("userBalance");
-      db.ref("users/" + userId + "/wallet/balance").on("value", (snap) => {
-        const balance = parseFloat(snap.val() || 0);
-        walletEl.innerText = balance.toFixed(2);
-      });
-    }
-
-    function go(link) {
-      window.location.href = link;
-    }
-
+    function go(path) { window.location.href = path; }
     function logout() {
       localStorage.removeItem("loggedInUser");
       localStorage.removeItem("userId");
       window.location.href = "login.html";
     }
+
+    const userId = localStorage.getItem("userId");
+    if (userId) {
+      const walletEl = document.getElementById("userBalance");
+      db.ref(`users/${userId}/wallet/balance`).on("value", snap => {
+        const bal = parseFloat(snap.val() || 0);
+        walletEl.innerText = bal.toFixed(2);
+        user.balance = bal; // sync local object
+      });
+    }
+
+    // Betting & live matches
+    const matches = JSON.parse(localStorage.getItem("matchRates")) || [];
+    const selectedBets = {};
+
+    function renderMatches() {
+      const container = document.getElementById("matchesContainer");
+      container.innerHTML = '';
+      matches.forEach(match => {
+        const c = document.createElement('div');
+        c.className = 'card';
+        c.innerHTML = `
+          <h3>${match.team1} vs ${match.team2}</h3>
+          <div class="team-btn" onclick="selectTeam(${match.id}, '${match.team1}', ${match.rate1})">
+            <span>${match.team1}</span><span class="rate">@${match.rate1}</span>
+          </div>
+          <div class="team-btn" onclick="selectTeam(${match.id}, '${match.team2}', ${match.rate2})">
+            <span>${match.team2}</span><span class="rate">@${match.rate2}</span>
+          </div>
+          <input type="number" id="amount-${match.id}" placeholder="Enter Amount">
+          <button onclick="placeBet(${match.id})">Place Bet</button>
+          <div id="selected-${match.id}" style="font-size:14px; margin-top:5px;"></div>
+        `;
+        container.appendChild(c);
+      });
+    }
+
+    function selectTeam(id, team, rate) {
+      selectedBets[id] = { team, rate };
+      document.getElementById(`selected-${id}`).innerText = `Selected: ${team} @${rate}`;
+    }
+
+    function placeBet(matchId) {
+      const amt = parseFloat(document.getElementById(`amount-${matchId}`).value);
+      const sel = selectedBets[matchId];
+      const bal = parseFloat(user.balance || 0);
+      if (!sel || isNaN(amt) || amt <= 0) return alert("Select team & valid amount.");
+      if (amt > bal) return alert("Insufficient balance!");
+      const ret = (amt * sel.rate).toFixed(2);
+      const m = matches.find(mm => mm.id === matchId);
+      const bet = { match: `${m.team1} vs ${m.team2}`, team: sel.team, rate: sel.rate, amount: amt, return: ret, time: new Date().toLocaleString(), result: "pending" };
+      user.bets = user.bets || [];
+      user.bets.push(bet);
+      user.balance = bal - amt;
+
+      let allUsers = JSON.parse(localStorage.getItem("users")) || [];
+      const idx = allUsers.findIndex(u => u.number === user.number);
+      if (idx !== -1) { allUsers[idx] = user; localStorage.setItem("users", JSON.stringify(allUsers)); }
+      localStorage.setItem("loggedInUser", JSON.stringify(user));
+
+      alert(`✅ Bet placed on ${sel.team}. Return: ₹${ret}`);
+      window.location.href = "history.html";
+    }
+
+    renderMatches();
   </script>
+
 </body>
 </html>
