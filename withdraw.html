@@ -128,10 +128,7 @@
       apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
       authDomain: "betting-app-43800.firebaseapp.com",
       databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
-      projectId: "betting-app-43800",
-      storageBucket: "betting-app-43800.appspot.com",
-      messagingSenderId: "752263307747",
-      appId: "1:752263307747:web:183e06d62bc5920fc700d6"
+      projectId: "betting-app-43800"
     };
 
     firebase.initializeApp(firebaseConfig);
@@ -143,16 +140,13 @@
       window.location.href = "login.html";
     }
 
-    // Fetch and show balance
-    db.ref("users/" + userId + "/wallet/balance").once("value")
-      .then(snapshot => {
-        const balance = parseFloat(snapshot.val()) || 0;
-        document.getElementById("balanceAmount").textContent = balance.toFixed(2);
-      })
-      .catch(error => {
-        console.error("Error fetching balance:", error);
-        document.getElementById("balanceAmount").textContent = "Error";
-      });
+    // ✅ LIVE Balance from Firebase (like index.html)
+    const balanceEl = document.getElementById("balanceAmount");
+    db.ref("users/" + userId + "/wallet").on("value", (snap) => {
+      const wallet = snap.val();
+      const currentBalance = parseFloat(wallet?.balance || 0);
+      balanceEl.innerText = currentBalance.toFixed(2);
+    });
 
     document.getElementById("withdrawForm").addEventListener("submit", function (e) {
       e.preventDefault();
