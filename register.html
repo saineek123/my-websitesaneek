@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>User Registration with OTP</title>
+  <title>User Registration</title>
   <style>
     body {
       background: #121212;
@@ -55,144 +55,94 @@
   <div class="box">
     <h2>Register</h2>
     <input type="text" id="phone" placeholder="Phone Number" required />
-    <button onclick="sendOTP()">Send OTP</button>
-    <div id="recaptcha-container"></div>
-    <input type="text" id="otp" placeholder="Enter OTP" style="display: none;" />
-    <button id="verifyBtn" onclick="verifyOTP()" style="display: none;">Verify OTP</button>
-
     <input type="text" id="name" placeholder="Name" required />
     <input type="text" id="referralCodeInput" placeholder="Referral Code (optional)" />
     <input type="password" id="password" placeholder="Password" required />
-    <button id="registerBtn" onclick="registerUser()" disabled>Register</button>
+    <button id="registerBtn" onclick="registerUser()">Register</button>
     <button class="login-btn" onclick="goToLogin()">Login</button>
     <p id="msg" style="color: lightgreen; margin-top: 10px;"></p>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-    import { getDatabase, ref, set, push, get, update, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
-    import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+  import { getDatabase, ref, set, push, get, update, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
-      authDomain: "betting-app-43800.firebaseapp.com",
-      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
-      projectId: "betting-app-43800",
-      storageBucket: "betting-app-43800.appspot.com",
-      messagingSenderId: "752263307747",
-      appId: "1:752263307747:web:183e06d62bc5920fc700d6",
-      measurementId: "G-Y452BY8453"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+    authDomain: "betting-app-43800.firebaseapp.com",
+    databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+    projectId: "betting-app-43800",
+    storageBucket: "betting-app-43800.appspot.com",
+    messagingSenderId: "752263307747",
+    appId: "1:752263307747:web:183e06d62bc5920fc700d6",
+    measurementId: "G-Y452BY8453"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase();
-    const auth = getAuth();
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase();
 
-    window.sendOTP = function () {
-      const phone = document.getElementById("phone").value.trim();
-      if (!/^\d{10}$/.test(phone)) {
-        alert("Please enter a valid 10-digit phone number.");
-        return;
-      }
+  function generateReferralCode(length = 6) {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let code = "";
+    for (let i = 0; i < length; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  }
 
-      window.recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
-        'size': 'invisible',
-        'callback': (response) => {}
-      }, auth);
+  window.registerUser = async function () {
+    const phone = document.getElementById("phone").value.trim();
+    const name = document.getElementById("name").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const referralCodeInput = document.getElementById("referralCodeInput").value.trim();
+    const msg = document.getElementById("msg");
 
-      const fullPhone = "+91" + phone;
-      signInWithPhoneNumber(auth, fullPhone, window.recaptchaVerifier)
-        .then((confirmationResult) => {
-          window.confirmationResult = confirmationResult;
-          document.getElementById("otp").style.display = "block";
-          document.getElementById("verifyBtn").style.display = "block";
-          alert("OTP sent to your phone!");
-        })
-        .catch((error) => {
-          alert("Error sending OTP: " + error.message);
-        });
-    };
-
-    window.verifyOTP = function () {
-      const code = document.getElementById("otp").value.trim();
-      if (!code) {
-        alert("Please enter the OTP.");
-        return;
-      }
-
-      window.confirmationResult.confirm(code)
-        .then((result) => {
-          alert("Phone number verified successfully!");
-          document.getElementById("registerBtn").disabled = false;
-        })
-        .catch((error) => {
-          alert("Invalid OTP: " + error.message);
-        });
-    };
-
-    function generateReferralCode(length = 6) {
-      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-      let code = "";
-      for (let i = 0; i < length; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      return code;
+    if (!phone || !name || !password) {
+      alert("Please fill all required fields.");
+      return;
     }
 
-    window.registerUser = async function () {
-      const phone = document.getElementById("phone").value.trim();
-      const name = document.getElementById("name").value.trim();
-      const password = document.getElementById("password").value.trim();
-      const referralCodeInput = document.getElementById("referralCodeInput").value.trim();
-      const msg = document.getElementById("msg");
+    const referralCode = generateReferralCode();
+    const userId = push(ref(db, 'users')).key;
 
-      if (!phone || !name || !password) {
-        alert("Please fill all required fields.");
-        return;
-      }
+    const userData = {
+      phone,
+      name,
+      password,
+      referralCode,
+      wallet: 0,
+      referredBy: referralCodeInput || null
+    };
 
-      const referralCode = generateReferralCode();
-      const userId = push(ref(db, 'users')).key;
+    try {
+      await set(ref(db, 'users/' + userId), userData);
+      msg.innerText = "Registered successfully ✔";
 
-      const userData = {
-        phone,
-        name,
-        password,
-        referralCode,
-        wallet: 0,
-        referredBy: referralCodeInput || null
-      };
-
-      try {
-        await set(ref(db, 'users/' + userId), userData);
-        msg.innerText = "Registered successfully ✔";
-
-        // Referral bonus logic
-        if (referralCodeInput) {
-          const refQuery = query(ref(db, "users"), orderByChild("referralCode"), equalTo(referralCodeInput));
-          const snapshot = await get(refQuery);
-          if (snapshot.exists()) {
-            const data = snapshot.val();
-            const referrerKey = Object.keys(data)[0];
-            const referrer = data[referrerKey];
-            const updatedWallet = (referrer.wallet || 0) + 10;
-            await update(ref(db, "users/" + referrerKey), { wallet: updatedWallet });
-          }
+      if (referralCodeInput) {
+        const refQuery = query(ref(db, "users"), orderByChild("referralCode"), equalTo(referralCodeInput));
+        const snapshot = await get(refQuery);
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          const referrerKey = Object.keys(data)[0];
+          const referrer = data[referrerKey];
+          const updatedWallet = (referrer.wallet || 0) + 10;
+          await update(ref(db, "users/" + referrerKey), { wallet: updatedWallet });
         }
-
-        // Redirect to login page after 1.5 seconds
-        setTimeout(() => {
-          window.location.href = "login.html";
-        }, 1500);
-
-      } catch (error) {
-        msg.innerText = "Error: " + error.message;
       }
-    }
 
-    window.goToLogin = function () {
-      window.location.href = "login.html";
-    };
-  </script>
+      setTimeout(() => {
+        window.location.href = "login.html";
+      }, 1500);
+
+    } catch (error) {
+      msg.innerText = "Error: " + error.message;
+    }
+  };
+
+  window.goToLogin = function () {
+    window.location.href = "login.html";
+  };
+</script>
+
 </body>
 </html>
