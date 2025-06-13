@@ -1,152 +1,144 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BIG WIN - Betting Dashboard</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BIG WIN - Stylish Betting Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #0d0d0d;
+      font-family: 'Poppins', sans-serif;
+      background: radial-gradient(circle at top, #101820, #000);
       color: #fff;
-      line-height: 1.6;
     }
     header {
-      background-color: #1e1e1e;
-      padding: 20px 10px;
+      background: linear-gradient(90deg, #0f0c29, #302b63, #24243e);
+      padding: 20px;
       text-align: center;
-      font-size: 1.5rem;
-      font-weight: bold;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.4);
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      font-size: 2rem;
+      font-weight: 700;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
     }
     nav {
-      background: #141414;
-      padding: 12px 8px;
-      text-align: center;
-      overflow-x: auto;
-      white-space: nowrap;
-      position: sticky;
-      top: 72px;
-      z-index: 99;
+      background: #1a1a2e;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px;
     }
     nav a {
-      display: inline-block;
-      color: #fff;
-      margin: 8px 10px;
+      color: #00f7ff;
       text-decoration: none;
-      font-weight: 500;
-      padding: 6px 12px;
-      border-radius: 6px;
+      font-weight: 600;
+      padding: 8px 16px;
+      background: #0f3460;
+      border-radius: 20px;
       transition: 0.3s ease;
     }
     nav a:hover {
-      background-color: #00c6ff22;
-      color: #00c6ff;
+      background: #00f7ff;
+      color: #000;
     }
     .dashboard {
       max-width: 1200px;
-      margin: 20px auto;
-      padding: 0 15px;
+      margin: 30px auto;
+      padding: 0 20px;
     }
     .info {
-      background: linear-gradient(135deg, #1e1e1e, #2a2a2a);
-      padding: 20px;
-      border-radius: 15px;
+      background: linear-gradient(145deg, #1f1f2f, #2e2e3e);
+      padding: 25px;
+      border-radius: 20px;
       text-align: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      margin-bottom: 25px;
+      margin-bottom: 30px;
     }
     .cards {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
+      gap: 25px;
     }
     .card {
-      background: rgba(255, 255, 255, 0.03);
-      backdrop-filter: blur(8px);
-      border: 1px solid #333;
-      border-radius: 15px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
       padding: 20px;
       text-align: center;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      backdrop-filter: blur(12px);
+      transition: 0.3s ease;
     }
     .card:hover {
       transform: translateY(-6px);
-      box-shadow: 0 6px 20px rgba(0, 198, 255, 0.2);
+      box-shadow: 0 10px 30px rgba(0, 255, 255, 0.25);
     }
     .card h3 {
-      margin: 15px 0;
-      font-size: 1.1rem;
-      color: #00c6ff;
+      margin: 16px 0;
+      font-size: 1.2rem;
+      color: #00f7ff;
     }
     button {
       padding: 10px 20px;
-      background: #00bcd4;
+      background: #00f7ff;
       border: none;
-      border-radius: 8px;
+      border-radius: 30px;
       color: #000;
       font-weight: bold;
+      font-size: 1rem;
       cursor: pointer;
-      margin-top: 10px;
       transition: 0.3s ease;
     }
     button:hover {
-      background: #00e0ff;
+      background: #a0f9ff;
     }
     .team-btn {
       display: flex;
       justify-content: space-between;
-      background: #1c2a3a;
-      padding: 10px 15px;
-      margin: 8px 0;
-      border-radius: 10px;
-      font-weight: 500;
-      font-size: 0.95rem;
+      background: #14213d;
+      padding: 12px 16px;
+      margin: 10px 0;
+      border-radius: 15px;
+      font-size: 1rem;
       cursor: pointer;
       transition: 0.3s ease;
     }
     .team-btn:hover {
-      background: #29445f;
+      background: #1f2f4d;
     }
     .rate {
-      background: #00c6ff;
-      padding: 4px 8px;
-      border-radius: 6px;
+      background: #00f7ff;
       color: #000;
-      font-weight: bold;
-      font-size: 0.9rem;
+      padding: 6px 10px;
+      border-radius: 8px;
     }
     input[type="number"] {
       width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 8px;
-      border: none;
-      font-size: 1rem;
-      background-color: #1e1e1e;
+      padding: 12px;
+      border-radius: 10px;
+      background-color: #1a1a2e;
+      border: 1px solid #00f7ff44;
       color: #fff;
+      margin-top: 10px;
     }
     .logout {
-      margin: 40px auto;
+      margin: 50px auto;
       text-align: center;
     }
+    .logout button {
+      background-color: #ff4b5c;
+      color: #fff;
+      border-radius: 30px;
+    }
+    .logout button:hover {
+      background-color: #ff7b87;
+    }
     @media (max-width: 600px) {
-      header { font-size: 1.2rem; }
-      nav a { font-size: 0.85rem; margin: 6px; }
-      .card h3 { font-size: 1rem; }
-      .info h2, .info p { font-size: 1rem; }
+      nav { gap: 8px; padding: 10px; }
+      nav a { font-size: 0.9rem; padding: 6px 12px; }
     }
   </style>
 </head>
 <body>
-
   <header>🏁 BIG WIN</header>
-
   <nav>
     <a href="index.html">Home</a>
     <a href="recharge.html">Recharge</a>
@@ -157,13 +149,11 @@
     <a href="invite.html">Invite Friends</a>
     <a href="login.html">Logout</a>
   </nav>
-
   <div class="dashboard">
     <div class="info">
       <h2>Welcome, <span id="userName">User</span></h2>
       <p>Balance: ₹<span id="userBalance">0</span></p>
     </div>
-
     <div class="cards">
       <div class="card"><h3>⚽ Sports Betting</h3><button onclick="window.location.href='bet.html'">Play Now</button></div>
       <div class="card"><h3>🎰 Slots</h3><button onclick="window.location.href='slots.html'">Play Now</button></div>
@@ -180,12 +170,10 @@
       <div class="card"><h3>🎮 Red & Black Spin</h3><button onclick="window.location.href='red.html'">Play Now</button></div>
       <div class="card"><h3>🎮 Aviator</h3><button onclick="window.location.href='aviator.html'">Play Now</button></div>
     </div>
-
     <div class="betting-section">
-      <h2 style="text-align:center; margin: 40px 0 20px;">🔥 Live Matches</h2>
+      <h2 style="text-align:center; margin:30px 0 20px;">🔥 Live Matches</h2>
       <div class="cards" id="matchesContainer"></div>
     </div>
-
     <div class="logout">
       <button onclick="logout()">Logout</button>
     </div>
@@ -220,7 +208,6 @@
       db.ref("users/" + userId + "/wallet").on("value", (snap) => {
         const balance = snap.val() || 0;
         walletEl.innerText = balance;
-        user.balance = balance;
       });
     }
 
