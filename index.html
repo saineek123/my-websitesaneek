@@ -1,113 +1,151 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Betting Dashboard</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BIG WIN - Betting Dashboard</title>
   <style>
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
-      background-color: #0f0f0f;
+      background-color: #0d0d0d;
       color: #fff;
+      line-height: 1.6;
     }
     header {
       background-color: #1e1e1e;
-      padding: 20px;
+      padding: 20px 10px;
       text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
     nav {
-      background: #222;
-      padding: 10px;
+      background: #141414;
+      padding: 12px 8px;
       text-align: center;
+      overflow-x: auto;
+      white-space: nowrap;
+      position: sticky;
+      top: 72px;
+      z-index: 99;
     }
     nav a {
-      color: white;
-      margin: 10px;
+      display: inline-block;
+      color: #fff;
+      margin: 8px 10px;
       text-decoration: none;
-      font-weight: bold;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: 0.3s ease;
+    }
+    nav a:hover {
+      background-color: #00c6ff22;
+      color: #00c6ff;
     }
     .dashboard {
-      max-width: 1000px;
-      margin: 30px auto;
-      padding: 20px;
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 15px;
     }
     .info {
-      background: #222;
-      padding: 15px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      text-align: center;
-    }
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 20px;
-    }
-    .card {
-      background-color: #1a1a1a;
+      background: linear-gradient(135deg, #1e1e1e, #2a2a2a);
       padding: 20px;
       border-radius: 15px;
       text-align: center;
-      transition: 0.3s;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      margin-bottom: 25px;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(8px);
       border: 1px solid #333;
+      border-radius: 15px;
+      padding: 20px;
+      text-align: center;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
     .card:hover {
-      background-color: #2a2a2a;
-      transform: translateY(-5px);
+      transform: translateY(-6px);
+      box-shadow: 0 6px 20px rgba(0, 198, 255, 0.2);
     }
     .card h3 {
-      margin: 10px 0;
-      font-size: 20px;
+      margin: 15px 0;
+      font-size: 1.1rem;
       color: #00c6ff;
     }
     button {
       padding: 10px 20px;
       background: #00bcd4;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;
       color: #000;
       font-weight: bold;
       cursor: pointer;
+      margin-top: 10px;
+      transition: 0.3s ease;
+    }
+    button:hover {
+      background: #00e0ff;
     }
     .team-btn {
       display: flex;
       justify-content: space-between;
-      background: #263545;
-      padding: 10px;
-      margin: 5px 0;
-      border-radius: 8px;
+      background: #1c2a3a;
+      padding: 10px 15px;
+      margin: 8px 0;
+      border-radius: 10px;
+      font-weight: 500;
+      font-size: 0.95rem;
       cursor: pointer;
+      transition: 0.3s ease;
     }
     .team-btn:hover {
-      background: #35597c;
+      background: #29445f;
     }
     .rate {
       background: #00c6ff;
-      padding: 2px 6px;
-      border-radius: 4px;
+      padding: 4px 8px;
+      border-radius: 6px;
       color: #000;
       font-weight: bold;
+      font-size: 0.9rem;
     }
-    input {
+    input[type="number"] {
       width: 100%;
       padding: 10px;
       margin-top: 10px;
-      border-radius: 6px;
+      border-radius: 8px;
       border: none;
+      font-size: 1rem;
+      background-color: #1e1e1e;
+      color: #fff;
     }
     .logout {
-      margin-top: 30px;
+      margin: 40px auto;
       text-align: center;
     }
-    .betting-section {
-      margin-top: 40px;
+    @media (max-width: 600px) {
+      header { font-size: 1.2rem; }
+      nav a { font-size: 0.85rem; margin: 6px; }
+      .card h3 { font-size: 1rem; }
+      .info h2, .info p { font-size: 1rem; }
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>🏁BIG WIN</h1>
-  </header>
+
+  <header>🏁 BIG WIN</header>
 
   <nav>
     <a href="index.html">Home</a>
@@ -132,11 +170,11 @@
       <div class="card"><h3>🎰 Lucky Spin</h3><button onclick="window.location.href='spin.html'">Play Now</button></div>
       <div class="card"><h3>💰 Lottery</h3><button onclick="window.location.href='lottery.html'">Play Now</button></div>
       <div class="card"><h3>💳 Wallet</h3><button onclick="window.location.href='wallet.html'">Withdraw</button></div>
-      <div class="card"><h3>💳Recharge</h3><button onclick="window.location.href='recharge.html'">Recharge</button></div>
+      <div class="card"><h3>💳 Recharge</h3><button onclick="window.location.href='recharge.html'">Recharge</button></div>
       <div class="card"><h3>👤 My Account</h3><button onclick="window.location.href='account.html'">View Profile</button></div>
       <div class="card"><h3>⚙️ Settings</h3><button onclick="window.location.href='settings.html'">Settings</button></div>
       <div class="card"><h3>🎮 Mines Game</h3><button onclick="window.location.href='mines.html'">Play Now</button></div>
-      <div class="card"><h3> 🎮Head or Tail</h3><button onclick="window.location.href='head_tail_game.html'">Play Now</button></div>
+      <div class="card"><h3>🎮 Head or Tail</h3><button onclick="window.location.href='head_tail_game.html'">Play Now</button></div>
       <div class="card"><h3>🎮 Andar Bahar</h3><button onclick="window.location.href='andar-bahar.html'">Play Now</button></div>
       <div class="card"><h3>🎮 Dragon vs Tiger</h3><button onclick="window.location.href='dragon.html'">Play Now</button></div>
       <div class="card"><h3>🎮 Red & Black Spin</h3><button onclick="window.location.href='red.html'">Play Now</button></div>
@@ -144,11 +182,8 @@
     </div>
 
     <div class="betting-section">
-      <h2 style="text-align:center; margin-bottom:20px;">🔥 Live Matches</h2>
+      <h2 style="text-align:center; margin: 40px 0 20px;">🔥 Live Matches</h2>
       <div class="cards" id="matchesContainer"></div>
-    </div>
-
-
     </div>
 
     <div class="logout">
@@ -185,6 +220,7 @@
       db.ref("users/" + userId + "/wallet").on("value", (snap) => {
         const balance = snap.val() || 0;
         walletEl.innerText = balance;
+        user.balance = balance;
       });
     }
 
