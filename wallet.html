@@ -74,8 +74,8 @@
       <h2>My Wallet</h2>
     </div>
     <div class="balance-box">
-      <div>Recharge Balance</div>
-      <span id="rechargeBalance">Loading...</span>
+      <div>Current Balance</div>
+      <span id="balanceAmount">Loading...</span>
     </div>
     <div class="wallet-actions">
       <button onclick="openRecharge()">Recharge</button>
@@ -83,53 +83,41 @@
     </div>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
+  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
       authDomain: "betting-app-43800.firebaseapp.com",
       databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
-      projectId: "betting-app-43800",
-      storageBucket: "betting-app-43800.appspot.com",
-      messagingSenderId: "752263307747",
-      appId: "1:752263307747:web:183e06d62bc5920fc700d6"
+      projectId: "betting-app-43800"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
     const userId = localStorage.getItem("userId");
-
     if (!userId) {
       alert("User not logged in.");
       window.location.href = "login.html";
     }
 
-    try {
-      const balanceRef = ref(db, "users/" + userId + "/wallet");
-      const snapshot = await get(balanceRef);
+    // ✅ Live balance like index.html
+    const balanceEl = document.getElementById("balanceAmount");
+    db.ref("users/" + userId + "/wallet").on("value", (snap) => {
+      const wallet = snap.val();
+      const balance = parseFloat(wallet?.balance || 0);
+      balanceEl.innerText = balance.toFixed(2);
+    });
 
-      if (snapshot.exists()) {
-        const wallet = snapshot.val();
-        const balance = parseFloat(wallet.balance || 0);
-        document.getElementById("rechargeBalance").textContent = balance.toFixed(2);
-      } else {
-        console.warn("Wallet data not found.");
-      }
-    } catch (err) {
-      console.error("Error fetching balances:", err);
-      document.getElementById("rechargeBalance").textContent = "Error";
+    function openRecharge() {
+      window.location.href = "recharge.html";
     }
 
-    window.openRecharge = function () {
-      window.location.href = "recharge.html";
-    };
-
-    window.openWithdraw = function () {
+    function openWithdraw() {
       window.location.href = "withdraw.html";
-    };
+    }
   </script>
 </body>
 </html>
