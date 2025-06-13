@@ -86,28 +86,12 @@
   </style>
 </head>
 <body>
-  <nav style="background: #222; padding: 10px; text-align: center;">
-    <a href="index.html" style="color:white; margin:10px;">Home</a>
-    <a href="recharge.html" style="color:white; margin:10px;">Recharge</a>
-    <a href="withdraw.html" style="color:white; margin:10px;">Withdraw</a>
-    <a href="history.html" style="color:white; margin:10px;">History</a>
-    <a href="account.html" style="color:white; margin:10px;">Account</a>
-    <a href="support.html" style="color:white; margin:10px;">Support</a>
-    <a href="#" onclick="logout()" style="color:white; margin:10px;">Logout</a>
-  </nav>
-
-  <br>
-  <strong>👉Note:</strong> Please ensure that your UPI ID or bank details are correct to avoid any issues with the withdrawal process. <br>
-  <strong>👉Important:</strong> Withdrawals are processed within 24-48 hours. <br>
-  <strong>👉Disclaimer:</strong> The company is not responsible for any errors in the provided information. <br>
-  <strong>👉withdrawal charges:</strong> Please note that a fee of 7% will be deducted from your withdrawal amount. <br> 
-  <strong>👉Contact Customer Service:</strong> If you have any questions or need assistance, please contact our customer service team. <br>
 
   <div class="container">
     <h2>Withdraw Request</h2>
 
     <div id="balanceDisplay">
-      Winning Balance: ₹<span id="balanceAmount">Loading...</span>
+      Current Balance: ₹<span id="balanceAmount">Loading...</span>
     </div>
 
     <form id="withdrawForm">
@@ -159,12 +143,11 @@
       window.location.href = "login.html";
     }
 
-    let winningBalance = 0;
-
-    db.ref("users/" + userId + "/wallet/winning").once("value")
+    // Fetch and show balance
+    db.ref("users/" + userId + "/wallet/balance").once("value")
       .then(snapshot => {
-        winningBalance = parseFloat(snapshot.val()) || 0;
-        document.getElementById("balanceAmount").textContent = winningBalance.toFixed(2);
+        const balance = parseFloat(snapshot.val()) || 0;
+        document.getElementById("balanceAmount").textContent = balance.toFixed(2);
       })
       .catch(error => {
         console.error("Error fetching balance:", error);
@@ -190,46 +173,30 @@
         return;
       }
 
-      if (amount > winningBalance) {
-        alert("❌ You can only withdraw from your winning balance.");
-        return;
-      }
-
       if (!upi && (!accountNumber || !ifsc || !holder)) {
         alert("Please enter either UPI ID or full bank details.");
         return;
       }
 
       const withdrawRequest = {
-        amount: amount,
-        upi: upi || '',
-        account: accountNumber || '',
-        ifsc: ifsc || '',
-        holder: holder || '',
+        amount,
+        upi,
+        account: accountNumber,
+        ifsc,
+        holder,
         date: new Date().toLocaleString(),
         status: "pending"
       };
 
       db.ref("withdraws/" + userId).push(withdrawRequest)
         .then(() => {
-          const newBalance = winningBalance - amount;
-          return db.ref("users/" + userId + "/wallet/winning").set(newBalance)
-            .then(() => {
-              winningBalance = newBalance;
-              document.getElementById("balanceAmount").textContent = winningBalance.toFixed(2);
-              alert("✅ Withdraw request submitted successfully!");
-              document.getElementById("withdrawForm").reset();
-            });
+          alert("✅ Withdraw request submitted successfully!");
+          document.getElementById("withdrawForm").reset();
         })
         .catch((error) => {
           alert("Error: " + error.message);
         });
     });
-
-    function logout() {
-      localStorage.removeItem("userId");
-      window.location.href = "login.html";
-    }
   </script>
 </body>
 </html>
