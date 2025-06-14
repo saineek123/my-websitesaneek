@@ -5,22 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>User Registration</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
     body {
       background: #121212;
       color: #fff;
       font-family: sans-serif;
+      margin: 0;
+      padding: 0;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
-      margin: 0;
+      min-height: 100vh;
     }
     .box {
       background: #1e1e1e;
       padding: 30px;
       border-radius: 10px;
       max-width: 400px;
-      width: 100%;
+      width: 90%;
       box-shadow: 0 0 10px rgba(0, 229, 255, 0.1);
     }
     input {
@@ -31,6 +35,7 @@
       border-radius: 6px;
       background: #2a2a2a;
       color: #fff;
+      font-size: 16px;
     }
     button {
       margin-top: 20px;
@@ -41,6 +46,7 @@
       border-radius: 6px;
       color: #000;
       font-weight: bold;
+      font-size: 16px;
       cursor: pointer;
     }
     .login-btn {
@@ -98,7 +104,15 @@
     const msg = document.getElementById("msg");
 
     if (!phone || !name || !password) {
-      alert("Please fill all required fields.");
+      alert("Kripya sabhi zaruri field bharein.");
+      return;
+    }
+
+    // ✅ Check: Kya phone number already hai?
+    const phoneQuery = query(ref(db, "users"), orderByChild("phone"), equalTo(phone));
+    const phoneSnapshot = await get(phoneQuery);
+    if (phoneSnapshot.exists()) {
+      msg.innerText = "Phone number already registered ❌";
       return;
     }
 
@@ -116,8 +130,9 @@
 
     try {
       await set(ref(db, 'users/' + userId), userData);
-      msg.innerText = "Registered successfully ✔";
+      msg.innerText = "Safalta se register ho gaya ✔";
 
+      // ✅ Agar referral code diya hai toh wallet update karo
       if (referralCodeInput) {
         const refQuery = query(ref(db, "users"), orderByChild("referralCode"), equalTo(referralCodeInput));
         const snapshot = await get(refQuery);
