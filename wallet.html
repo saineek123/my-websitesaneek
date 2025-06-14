@@ -103,11 +103,10 @@
       window.location.href = "login.html";
     }
 
-    // ✅ Live balance like index.html
+    // ✅ Fetch balance like index.html & withdraw.html
     const balanceEl = document.getElementById("balanceAmount");
     db.ref("users/" + userId + "/wallet").on("value", (snap) => {
-      const wallet = snap.val();
-      const balance = parseFloat(wallet?.balance || 0);
+      const balance = parseFloat(snap.val() || 0);
       balanceEl.innerText = balance.toFixed(2);
     });
 
