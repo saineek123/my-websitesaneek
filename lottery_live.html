@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WinGo Live Multiplayer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; font-family: 'Roboto', sans-serif; }
+    body {
+      margin: 0;
+      background: linear-gradient(to bottom right, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      width: 420px;
+      background: #1e1e2f;
+      border-radius: 16px;
+      box-shadow: 0 0 30px rgba(0,0,0,0.6);
+      padding: 20px;
+      position: relative;
+    }
+    h1 {
+      text-align: center;
+      color: gold;
+      margin-bottom: 10px;
+    }
+    .status-bar {
+      text-align: center;
+      margin: 10px 0;
+      font-weight: bold;
+    }
+    .bet-section { margin: 20px 0; }
+    .label { margin-bottom: 8px; font-weight: 600; }
+    .grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    .number-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .btn {
+      padding: 10px 0;
+      width: 80px;
+      border-radius: 10px;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: 0.3s;
+    }
+    .btn.selected { box-shadow: 0 0 10px gold; border: 2px solid gold; }
+    .green { background: #4caf50; color: white; }
+    .violet { background: #9c27b0; color: white; }
+    .red { background: #f44336; color: white; }
+    .big { background: #ff9800; color: black; }
+    .small { background: #2196f3; color: white; }
+    .number-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-weight: bold;
+      border: 2px solid #888;
+      font-size: 1rem;
+    }
+    input[type=number] {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      text-align: center;
+      border-radius: 8px;
+      border: none;
+    }
+    button.place {
+      width: 100%;
+      margin-top: 10px;
+      background: gold;
+      color: black;
+      padding: 12px;
+      border: none;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .result-text {
+      margin: 15px auto;
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: bold;
+      background: #29354d;
+      padding: 10px;
+      border-radius: 10px;
+      transition: all 0.4s ease;
+    }
+    .result-text.win {
+      background-color: #4caf50;
+      color: #fff;
+      animation: flashWin 1s ease;
+    }
+    .result-text.lose {
+      background-color: #f44336;
+      color: #fff;
+      animation: flashLose 1s ease;
+    }
+    @keyframes flashWin {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.2); opacity: 0.8; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes flashLose {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.2); opacity: 0.8; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .history {
+      margin-top: 20px;
+      background: #101727;
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+    }
+    .popup {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #2a2f45;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.7);
+      display: none;
+      flex-direction: column;
+      z-index: 10;
+    }
+    .popup input { margin-top: 10px; }
+    .popup button { margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <audio id="winSound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_11c0a6ed44.mp3"></audio>
+  <audio id="loseSound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_5f3928c89d.mp3"></audio>
+
+  <div class="container">
+    <h1>🎰 WinGo Live</h1>
+    <div class="status-bar" id="timer">⏱ Time Left: --s</div>
+    <div class="status-bar" id="wallet">Wallet: ₹0</div>
+    <div class="status-bar" id="currentBet">Select your bets</div>
+    <div class="bet-section">
+      <div class="label">Colors</div>
+      <div class="grid" id="colorBtns"></div>
+    </div>
+    <div class="bet-section">
+      <div class="label">Numbers</div>
+      <div class="number-grid">
+        <div class="grid" id="numberBtns1"></div>
+        <div class="grid" id="numberBtns2"></div>
+      </div>
+    </div>
+    <div class="bet-section">
+      <div class="label">Multipliers</div>
+      <div class="grid" id="multiplierBtns"></div>
+    </div>
+    <div class="result-text" id="resultDisplay">Waiting for result...</div>
+    <div class="history" id="history">Last 10 Results:</div>
+  </div>
+  <div class="popup" id="betPopup">
+    <label>Enter Bet Amount</label>
+    <input type="number" id="amount" placeholder="Enter Bet Amount" min="1" />
+    <button class="place" id="placeBet">Place Bet</button>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+      authDomain: "betting-app-43800.firebaseapp.com",
+      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+      projectId: "betting-app-43800",
+      storageBucket: "betting-app-43800.appspot.com",
+      messagingSenderId: "752263307747",
+      appId: "1:752263307747:web:183e06d62bc5920fc700d6"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const userId = localStorage.getItem("userId");
+    if (!userId) {
+      alert("User not logged in!");
+      window.location.href = "login.html";
+    }
+
+    let userBalance = 0;
+    let currentBets = [];
+    const winSound = document.getElementById("winSound");
+    const loseSound = document.getElementById("loseSound");
+
+    const timerEl = document.getElementById("timer");
+    const walletEl = document.getElementById("wallet");
+    const currentBetEl = document.getElementById("currentBet");
+    const resultDisplay = document.getElementById("resultDisplay");
+    const historyEl = document.getElementById("history");
+    const betPopup = document.getElementById("betPopup");
+    const amountInput = document.getElementById("amount");
+
+    function renderButtons(type, containerId, values) {
+      const container = document.getElementById(containerId);
+      values.forEach(val => {
+        const btn = document.createElement('button');
+        btn.classList.add('btn');
+        if (type === 'number') {
+          btn.classList.add('number-btn');
+          if (["2","4","6","8"].includes(val)) btn.classList.add('red');
+          else if (["1","3","7","9"].includes(val)) btn.classList.add('green');
+          else btn.classList.add('violet');
+        } else {
+          btn.classList.add(val);
+        }
+        btn.dataset.type = type;
+        btn.dataset.value = val;
+        btn.textContent = val.toUpperCase();
+        btn.addEventListener('click', () => openBetPopup(type, val));
+        container.appendChild(btn);
+      });
+    }
+
+    function openBetPopup(type, value) {
+      betPopup.style.display = 'flex';
+      betPopup.dataset.type = type;
+      betPopup.dataset.value = value;
+      amountInput.value = "";
+      amountInput.focus();
+    }
+
+    document.getElementById("placeBet").addEventListener("click", () => {
+      const amount = parseInt(amountInput.value);
+      const type = betPopup.dataset.type;
+      const value = betPopup.dataset.value;
+      if (!amount || amount < 1) return alert("Enter valid amount");
+      if (amount > userBalance) return alert("Not enough balance");
+
+      userBalance -= amount;
+      updateWalletUI();
+
+      const newBetRef = db.ref("game/bets/" + userId).push();
+      newBetRef.set({ type, value, amount });
+
+      currentBets.push({ type, value, amount });
+      updateCurrentBetsUI();
+      betPopup.style.display = "none";
+    });
+
+    function fetchWallet() {
+      db.ref("users/" + userId).once("value").then(snapshot => {
+        userBalance = snapshot.val()?.wallet || 0;
+        updateWalletUI();
+      });
+    }
+
+    function updateWalletUI() {
+      walletEl.textContent = `Wallet: ₹${userBalance}`;
+    }
+
+    function updateCurrentBetsUI() {
+      currentBetEl.textContent = currentBets.length === 0
+        ? "Select your bets"
+        : `Bets: ${currentBets.map(b => `${b.type}:${b.value} (₹${b.amount})`).join(', ')}`;
+    }
+
+    db.ref("game/timer").on("value", snap => {
+      const timer = snap.val();
+      if (!timer) return timerEl.textContent = "⏱ Waiting for game...";
+      const interval = setInterval(() => {
+        const timeLeft = Math.floor((timer.startTime + timer.duration * 1000 - Date.now()) / 1000);
+        if (timeLeft >= 0) {
+          timerEl.textContent = `⏱ Time Left: ${timeLeft}s`;
+        } else {
+          timerEl.textContent = "Betting closed...";
+          clearInterval(interval);
+        }
+      }, 1000);
+    });
+
+    db.ref("game/result").on("value", snap => {
+      const res = snap.val();
+      if (res && res.number !== undefined && res.color && res.multiplier) {
+        const { number, color, multiplier, wonUserIds = [], history = [] } = res;
+        const win = wonUserIds.includes(userId);
+        resultDisplay.textContent = `🎲 ${number} - ${color.toUpperCase()} - ${multiplier.toUpperCase()} ${win ? '✅ You Won!' : '❌ You Lost'}`;
+        resultDisplay.className = `result-text ${win ? 'win' : 'lose'}`;
+        win ? winSound.play() : loseSound.play();
+        updateHistoryUI(history);
+        currentBets = [];
+        updateCurrentBetsUI();
+        if (win) fetchWallet();
+      } else {
+        resultDisplay.textContent = "⏱ Waiting for result...";
+        resultDisplay.className = "result-text";
+      }
+    });
+
+    function updateHistoryUI(history) {
+      if (!Array.isArray(history)) return;
+      const html = history.slice(0, 10).map(r =>
+        `${r.number ?? "?"} - ${r.color?.toUpperCase() ?? "?"} - ${r.multiplier?.toUpperCase() ?? "?"} ${r.wonUserIds?.includes(userId) ? '✅' : '❌'}`
+      ).join("<br>");
+      historyEl.innerHTML = `<strong>Last 10 Results:</strong><br>` + html;
+    }
+
+    renderButtons('color', 'colorBtns', ['green','violet','red']);
+    renderButtons('number', 'numberBtns1', ['0','1','2','3','4']);
+    renderButtons('number', 'numberBtns2', ['5','6','7','8','9']);
+    renderButtons('multiplier', 'multiplierBtns', ['big','small']);
+    fetchWallet();
+
+    db.ref("users/" + userId + "/wallet").on("value", snap => {
+      const val = snap.val();
+      if (val !== null && val !== userBalance) {
+        userBalance = val;
+        updateWalletUI();
+      }
+    });
+  </script>
+</body>
+</html>
