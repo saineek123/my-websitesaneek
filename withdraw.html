@@ -143,7 +143,7 @@
       window.location.href = "login.html";
     }
 
-    // ✅ Fetch and show balance like index.html
+    // Show real-time wallet balance
     db.ref("users/" + userId + "/wallet").on("value", (snap) => {
       const balance = snap.val() || 0;
       document.getElementById("balanceAmount").textContent = balance.toFixed(2);
@@ -173,24 +173,36 @@
         return;
       }
 
-      const withdrawRequest = {
-        amount,
-        upi,
-        account: accountNumber,
-        ifsc,
-        holder,
-        date: new Date().toLocaleString(),
-        status: "pending"
-      };
+      // Check balance before making request
+      db.ref("users/" + userId + "/wallet").once("value").then((snap) => {
+        const currentBalance = snap.val() || 0;
 
-      db.ref("withdraws/" + userId).push(withdrawRequest)
-        .then(() => {
+        if (currentBalance < amount) {
+          alert("❌ Insufficient balance.");
+          return;
+        }
+
+        const withdrawRequest = {
+          amount,
+          upi,
+          account: accountNumber,
+          ifsc,
+          holder,
+          date: new Date().toLocaleString(),
+          status: "pending"
+        };
+
+        db.ref("withdraws/" + userId).push(withdrawRequest).then(() => {
+          // Deduct from wallet
+          const newBalance = currentBalance - amount;
+          db.ref("users/" + userId + "/wallet").set(newBalance);
+
           alert("✅ Withdraw request submitted successfully!");
           document.getElementById("withdrawForm").reset();
-        })
-        .catch((error) => {
+        }).catch((error) => {
           alert("Error: " + error.message);
         });
+      });
     });
   </script>
 </body>
