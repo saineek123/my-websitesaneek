@@ -99,27 +99,6 @@
       background: #29354d;
       padding: 10px;
       border-radius: 10px;
-      transition: all 0.4s ease;
-    }
-    .result-text.win {
-      background-color: #4caf50;
-      color: #fff;
-      animation: flashWin 1s ease;
-    }
-    .result-text.lose {
-      background-color: #f44336;
-      color: #fff;
-      animation: flashLose 1s ease;
-    }
-    @keyframes flashWin {
-      0% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.2); opacity: 0.8; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    @keyframes flashLose {
-      0% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.2); opacity: 0.8; }
-      100% { transform: scale(1); opacity: 1; }
     }
     .history {
       margin-top: 20px;
@@ -146,9 +125,6 @@
   </style>
 </head>
 <body>
-  <audio id="winSound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_11c0a6ed44.mp3"></audio>
-  <audio id="loseSound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_5f3928c89d.mp3"></audio>
-
   <div class="container">
     <h1>🎰 WinGo Live</h1>
     <div class="status-bar" id="timer">⏱ Time Left: --s</div>
@@ -178,6 +154,7 @@
     <button class="place" id="placeBet">Place Bet</button>
   </div>
 
+  <!-- Firebase + Game Script same as previous confirmed version -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script>
@@ -193,16 +170,9 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const userId = localStorage.getItem("userId");
-    if (!userId) {
-      alert("User not logged in!");
-      window.location.href = "login.html";
-    }
-
+    const userId = "demoUser123"; // Fixed user (no login)
     let userBalance = 0;
     let currentBets = [];
-    const winSound = document.getElementById("winSound");
-    const loseSound = document.getElementById("loseSound");
 
     const timerEl = document.getElementById("timer");
     const walletEl = document.getElementById("wallet");
@@ -271,9 +241,9 @@
     }
 
     function updateCurrentBetsUI() {
-      currentBetEl.textContent = currentBets.length === 0
-        ? "Select your bets"
-        : `Bets: ${currentBets.map(b => `${b.type}:${b.value} (₹${b.amount})`).join(', ')}`;
+      currentBetEl.textContent = currentBets.length ?
+        `Bets: ${currentBets.map(b => b.type + ':' + b.value + ' (₹' + b.amount + ')').join(', ')}` :
+        "Select your bets";
     }
 
     db.ref("game/timer").on("value", snap => {
@@ -281,40 +251,36 @@
       if (!timer) return timerEl.textContent = "⏱ Waiting for game...";
       const interval = setInterval(() => {
         const timeLeft = Math.floor((timer.startTime + timer.duration * 1000 - Date.now()) / 1000);
-        if (timeLeft >= 0) {
-          timerEl.textContent = `⏱ Time Left: ${timeLeft}s`;
-        } else {
-          timerEl.textContent = "Betting closed...";
-          clearInterval(interval);
-        }
+        if (timeLeft >= 0) timerEl.textContent = `⏱ Time Left: ${timeLeft}s`;
+        else { timerEl.textContent = "Betting closed..."; clearInterval(interval); }
       }, 1000);
     });
 
     db.ref("game/result").on("value", snap => {
       const res = snap.val();
-      if (res && res.number !== undefined && res.color && res.multiplier) {
-        const { number, color, multiplier, wonUserIds = [], history = [] } = res;
-        const win = wonUserIds.includes(userId);
+      if (res) {
+        const number = parseInt(res.number);
+        let color = ([1,3,7,9].includes(number)) ? 'green' : ([2,4,6,8].includes(number) ? 'red' : 'violet');
+        const multiplier = number >= 5 ? 'big' : 'small';
+        const win = res.wonUserIds?.includes(userId);
         resultDisplay.textContent = `🎲 ${number} - ${color.toUpperCase()} - ${multiplier.toUpperCase()} ${win ? '✅ You Won!' : '❌ You Lost'}`;
-        resultDisplay.className = `result-text ${win ? 'win' : 'lose'}`;
-        win ? winSound.play() : loseSound.play();
-        updateHistoryUI(history);
+
+        if (res.history) {
+          const historyHTML = res.history.slice(0, 10).map(h => {
+            const n = parseInt(h.number);
+            const c = ([1,3,7,9].includes(n)) ? 'green' : ([2,4,6,8].includes(n) ? 'red' : 'violet');
+            const m = n >= 5 ? 'big' : 'small';
+            const winStatus = h.wonUserIds?.includes(userId) ? '✅' : '❌';
+            return `${n} - ${c.toUpperCase()} - ${m.toUpperCase()} ${winStatus}`;
+          }).join("<br>");
+          historyEl.innerHTML = `<strong>Last 10 Results:</strong><br>` + historyHTML;
+        }
+
         currentBets = [];
         updateCurrentBetsUI();
         if (win) fetchWallet();
-      } else {
-        resultDisplay.textContent = "⏱ Waiting for result...";
-        resultDisplay.className = "result-text";
       }
     });
-
-    function updateHistoryUI(history) {
-      if (!Array.isArray(history)) return;
-      const html = history.slice(0, 10).map(r =>
-        `${r.number ?? "?"} - ${r.color?.toUpperCase() ?? "?"} - ${r.multiplier?.toUpperCase() ?? "?"} ${r.wonUserIds?.includes(userId) ? '✅' : '❌'}`
-      ).join("<br>");
-      historyEl.innerHTML = `<strong>Last 10 Results:</strong><br>` + html;
-    }
 
     renderButtons('color', 'colorBtns', ['green','violet','red']);
     renderButtons('number', 'numberBtns1', ['0','1','2','3','4']);
