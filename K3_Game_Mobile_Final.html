@@ -1,3 +1,4 @@
+<!-- Save this as k3.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,134 +8,29 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <style>
-    body {
-      margin: 0;
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #f857a6, #ff5858);
-      color: white;
-      padding: 0;
-    }
-    .header {
-      text-align: center;
-      padding: 16px;
-      font-size: 22px;
-      font-weight: bold;
-      background: rgba(0,0,0,0.2);
-    }
-    .wallet {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 16px;
-      background: rgba(255,255,255,0.1);
-      font-size: 16px;
-    }
-    .wallet span {
-      font-weight: bold;
-      color: #ffff00;
-    }
-    .wallet button {
-      background: #00e0ff;
-      border: none;
-      color: black;
-      font-weight: bold;
-      padding: 8px 12px;
-      border-radius: 6px;
-      margin-left: 10px;
-      cursor: pointer;
-    }
-    .container {
-      max-width: 420px;
-      margin: auto;
-      padding: 20px;
-    }
-    .dice {
-      text-align: center;
-      font-size: 60px;
-      margin: 20px 0;
-    }
-    .bet-grid {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-    .bet-grid button {
-      padding: 10px;
-      min-width: 70px;
-      font-size: 16px;
-      border-radius: 10px;
-      border: none;
-      background: white;
-      color: #f857a6;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .bet-grid button.active {
-      background: #f857a6;
-      color: white;
-    }
-    .quick-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-    .quick-buttons button {
-      background: #ffe600;
-      color: #000;
-      font-weight: bold;
-      border: none;
-      border-radius: 8px;
-      padding: 8px 14px;
-      cursor: pointer;
-    }
-    input[type='number'], .place-bet {
-      width: 90%;
-      margin: 10px auto;
-      display: block;
-      padding: 10px;
-      border-radius: 10px;
-      font-size: 16px;
-      border: none;
-    }
-    .place-bet {
-      background: #00ffab;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .result, .history, .user-bets {
-      text-align: center;
-      margin-top: 10px;
-    }
-    .history span, .user-bets span {
-      display: inline-block;
-      background: white;
-      color: black;
-      margin: 2px;
-      padding: 4px 10px;
-      border-radius: 8px;
-    }
-    .popup {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: white;
-      color: black;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.3);
-      text-align: center;
-      z-index: 999;
-    }
-    .popup.win { background: #00ffcc; }
-    .popup.lose { background: #ffcccc; }
+    body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #f857a6, #ff5858); margin:0; color:white; }
+    .header { text-align:center; padding:16px; font-size:22px; font-weight:bold; background: rgba(0,0,0,0.2);}
+    .wallet { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background: rgba(255,255,255,0.1); font-size:16px; }
+    .wallet span { font-weight:bold; color:#ffff00; }
+    .wallet button { background:#00e0ff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; }
+    .container { max-width: 420px; margin:auto; padding: 20px; }
+    .dice { text-align:center; font-size:60px; margin:20px 0; }
+    .bet-grid { display: flex; flex-wrap: wrap; justify-content:center; gap:8px; margin-bottom:16px; }
+    .bet-grid button { padding:10px; min-width:70px; font-size:16px; border-radius:10px; border:none; background:white; color:#f857a6; font-weight:bold; cursor:pointer; }
+    .bet-grid button.active { background:#f857a6; color:white; }
+    .quick-buttons { display:flex; justify-content:center; gap:10px; margin-bottom:10px; }
+    .quick-buttons button { background:#ffe600; border:none; border-radius:8px; padding:8px 14px; cursor:pointer; font-weight:bold; }
+    input[type='number'], .place-bet { width:90%; margin:10px auto; display:block; padding:10px; border-radius:10px; font-size:16px; border:none; }
+    .place-bet { background:#00ffab; font-weight:bold; cursor:pointer; }
+    .user-bets, .result, .history { text-align:center; margin-top:10px; }
+    .user-bets span, .history span { background:white; color:black; padding:4px 10px; margin:2px; border-radius:8px; display:inline-block; }
+    .popup { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; color:black; padding:20px; border-radius:10px; box-shadow:0 0 15px rgba(0,0,0,0.3); text-align:center; z-index:999; }
+    .popup.win { background:#00ffcc; }
+    .popup.lose { background:#ffcccc; }
   </style>
 </head>
 <body>
-  <div class="header">🎲 K3 Game </div>
+  <div class="header">🎲 K3 Dice Game</div>
   <div class="wallet">
     Wallet: ₹<span id="wallet">0</span>
     <div>
@@ -142,7 +38,6 @@
       <a href="withdraw.html"><button>Withdraw</button></a>
     </div>
   </div>
-
   <div class="container">
     <div style="text-align:center;">⏳ Time left: <span id="timer">30</span>s</div>
     <div style="text-align:center;">Period: <span id="periodId"></span></div>
@@ -160,7 +55,6 @@
     <div class="result" id="resultBox"></div>
     <div class="history" id="historyBox">History:</div>
   </div>
-
   <div id="popupBox"></div>
 
   <script>
@@ -173,8 +67,8 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let balance = 0;
     let userId = localStorage.getItem("userId") || "guest";
+    let balance = 0;
     let bets = [], currentBets = [], history = [];
 
     const updateWallet = () => {
@@ -198,32 +92,39 @@
     };
 
     const rollDice = () => {
-      const r = () => Math.floor(Math.random() * 6) + 1;
-      const em = ["", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
-      const d1 = r(), d2 = r(), d3 = r(), sum = d1 + d2 + d3;
-      document.getElementById("diceBox").innerText = `${em[d1]} ${em[d2]} ${em[d3]}`;
-      let win = 0;
+      db.ref("k3game/result").once("value").then(snapshot => {
+        const res = snapshot.val();
+        if (!res) return;
 
-      currentBets.forEach(b => {
-        if ((b.choice === 'Small' && sum >= 3 && sum <= 10) || (b.choice === 'Big' && sum >= 11 && sum <= 18)) {
-          if (Math.random() <= 0.2) win += b.amount * 2;
-        } else if (parseInt(b.choice) === sum) {
-          if (Math.random() <= 0.2) win += b.amount * 9;
+        const { dice1, dice2, dice3 } = res;
+        const em = ["", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
+        const sum = dice1 + dice2 + dice3;
+        document.getElementById("diceBox").innerText = `${em[dice1]} ${em[dice2]} ${em[dice3]}`;
+
+        let win = 0;
+        currentBets.forEach(b => {
+          if ((b.choice === 'Small' && sum >= 3 && sum <= 10) || (b.choice === 'Big' && sum >= 11 && sum <= 18)) {
+            win += b.amount * 2;
+          } else if (parseInt(b.choice) === sum) {
+            win += b.amount * 9;
+          }
+        });
+
+        if (win > 0) {
+          db.ref("users/" + userId + "/wallet").transaction(val => (val || 0) + win);
+          showPopup(`🎉 You Won ₹${win.toFixed(2)}!`, 'win');
+        } else {
+          showPopup("😞 You Lost!", 'lose');
         }
+
+        history.unshift(sum);
+        if (history.length > 10) history.pop();
+        document.getElementById("historyBox").innerHTML = "History: " + history.map(x => `<span>${x}</span>`).join('');
+        bets = [];
+        currentBets = [];
+        renderButtons();
+        document.getElementById("userBetsBox").innerHTML = "";
       });
-
-      if (win > 0) {
-        db.ref("users/" + userId + "/wallet").transaction(val => (val || 0) + win);
-        showPopup(`🎉 You Won ₹${win.toFixed(2)}!`, 'win');
-      } else {
-        showPopup("😞 You Lost!", 'lose');
-      }
-
-      history.unshift(sum); if (history.length > 10) history.pop();
-      document.getElementById("historyBox").innerHTML = "History: " + history.map(x => `<span>${x}</span>`).join('');
-      bets = []; currentBets = [];
-      renderButtons();
-      document.getElementById("userBetsBox").innerHTML = "";
     };
 
     const showPopup = (msg, type) => {
@@ -269,4 +170,3 @@
   </script>
 </body>
 </html>
-
