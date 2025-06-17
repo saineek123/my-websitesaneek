@@ -1,3 +1,4 @@
+
 <!-- FINAL: k3.html - Real-Time Multiplayer K3 Dice Game -->
 <!DOCTYPE html>
 <html lang="en">
@@ -8,25 +9,22 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <style>
-    body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #f857a6, #ff5858); margin:0; color:white; }
-    .header { text-align:center; padding:16px; font-size:22px; font-weight:bold; background: rgba(0,0,0,0.2);}
-    .wallet { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background: rgba(255,255,255,0.1); font-size:16px; }
-    .wallet span { font-weight:bold; color:#ffff00; }
-    .wallet button { background:#00e0ff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; }
-    .container { max-width: 420px; margin:auto; padding: 20px; }
-    .dice { text-align:center; font-size:60px; margin:20px 0; }
-    .bet-grid { display: flex; flex-wrap: wrap; justify-content:center; gap:8px; margin-bottom:16px; }
-    .bet-grid button { padding:10px; min-width:70px; font-size:16px; border-radius:10px; border:none; background:white; color:#f857a6; font-weight:bold; cursor:pointer; }
-    .bet-grid button.active { background:#f857a6; color:white; }
-    .quick-buttons { display:flex; justify-content:center; gap:10px; margin-bottom:10px; }
-    .quick-buttons button { background:#ffe600; border:none; border-radius:8px; padding:8px 14px; cursor:pointer; font-weight:bold; }
-    input[type='number'], .place-bet { width:90%; margin:10px auto; display:block; padding:10px; border-radius:10px; font-size:16px; border:none; }
-    .place-bet { background:#00ffab; font-weight:bold; cursor:pointer; }
-    .user-bets, .result, .history { text-align:center; margin-top:10px; }
-    .user-bets span, .history span { background:white; color:black; padding:4px 10px; margin:2px; border-radius:8px; display:inline-block; }
-    .popup { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; color:black; padding:20px; border-radius:10px; box-shadow:0 0 15px rgba(0,0,0,0.3); text-align:center; z-index:999; }
-    .popup.win { background:#00ffcc; }
-    .popup.lose { background:#ffcccc; }
+    body { font-family: 'Poppins', sans-serif; background: #1a1a1a; color:white; margin:0; }
+    .header { padding: 12px; text-align: center; font-size: 22px; background: #333; }
+    .wallet { padding: 10px 16px; display: flex; justify-content: space-between; background: #222; }
+    .wallet span { font-weight: bold; color: #00ff00; }
+    .wallet button { padding: 6px 10px; border: none; background: #00bcd4; color: white; border-radius: 4px; margin-left: 5px; }
+    .container { max-width: 480px; margin:auto; padding: 16px; }
+    .timer, .period { text-align: center; margin: 10px 0; font-size: 18px; }
+    .dice-box { text-align:center; font-size: 48px; margin: 16px 0; }
+    .bets { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+    .bets button { padding: 8px 12px; border-radius: 8px; border: none; background: #eee; color: #000; font-weight: bold; }
+    .bets button.active { background: #00bcd4; color: white; }
+    .amount-input, .place-bet { width: 90%; margin: 12px auto; display: block; padding: 10px; border-radius: 8px; font-size: 16px; border: none; }
+    .place-bet { background: #00e676; color: black; font-weight: bold; cursor: pointer; }
+    .user-bets, .history, .popup { text-align: center; margin-top: 12px; }
+    .user-bets span, .history span { background: #fff; color: #000; padding: 4px 10px; margin: 3px; border-radius: 6px; display: inline-block; }
+    .popup-msg { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; color:black; padding:20px; border-radius:10px; box-shadow:0 0 15px rgba(0,0,0,0.3); text-align:center; z-index:999; }
   </style>
 </head>
 <body>
@@ -39,23 +37,18 @@
     </div>
   </div>
   <div class="container">
-    <div style="text-align:center;">⏳ Time left: <span id="timer">--</span>s</div>
-    <div style="text-align:center;">Period: <span id="periodId"></span></div>
-    <div class="dice" id="diceBox">🎲 🎲 🎲</div>
-    <div class="bet-grid" id="betButtons"></div>
-    <div class="quick-buttons">
-      <button onclick="setAmt(10)">₹10</button>
-      <button onclick="setAmt(50)">₹50</button>
-      <button onclick="setAmt(100)">₹100</button>
-      <button onclick="setAmt(500)">₹500</button>
-    </div>
-    <input type="number" id="amount" placeholder="Enter Amount ₹" />
+    <div class="timer">⏳ Time left: <span id="timer">--</span>s</div>
+    <div class="period">Period: <span id="periodId">--</span></div>
+    <div class="dice-box" id="diceBox">🎲 🎲 🎲</div>
+
+    <div class="bets" id="betButtons"></div>
+    <input type="number" id="amount" placeholder="Enter Amount ₹" class="amount-input" />
     <button class="place-bet" onclick="placeBet()">Place Bet</button>
+
     <div class="user-bets" id="userBetsBox"></div>
-    <div class="result" id="resultBox"></div>
     <div class="history" id="historyBox">History:</div>
+    <div id="popupBox"></div>
   </div>
-  <div id="popupBox"></div>
 
   <script>
     const firebaseConfig = {
@@ -69,7 +62,9 @@
 
     let userId = localStorage.getItem("userId") || "guest";
     let balance = 0;
-    let bets = [], currentBets = [], history = [];
+    let selectedBets = [];
+    let currentBets = [];
+    let history = [];
 
     const updateWallet = () => {
       db.ref("users/" + userId + "/wallet").on("value", snap => {
@@ -78,16 +73,30 @@
       });
     };
 
-    const setAmt = amt => document.getElementById("amount").value = amt;
+    const renderButtons = () => {
+      const box = document.getElementById("betButtons");
+      box.innerHTML = '';
+      ['Small','Big',...Array.from({length:16},(_,i)=>i+3)].forEach(opt => {
+        const btn = document.createElement("button");
+        btn.innerText = opt;
+        if (selectedBets.includes(opt)) btn.classList.add("active");
+        btn.onclick = () => {
+          if (selectedBets.includes(opt)) selectedBets = selectedBets.filter(x => x !== opt);
+          else selectedBets.push(opt);
+          renderButtons();
+        };
+        box.appendChild(btn);
+      });
+    };
 
     const placeBet = () => {
       const amt = parseFloat(document.getElementById("amount").value);
-      if (!amt || amt <= 0 || bets.length === 0 || amt * bets.length > balance) {
+      if (!amt || amt <= 0 || selectedBets.length === 0 || amt * selectedBets.length > balance) {
         alert("Invalid or Insufficient Balance");
         return;
       }
-      currentBets = bets.map(b => ({ choice: b, amount: amt }));
-      db.ref("users/" + userId + "/wallet").transaction(val => (val || 0) - amt * bets.length);
+      currentBets = selectedBets.map(b => ({ choice: b, amount: amt }));
+      db.ref("users/" + userId + "/wallet").transaction(val => (val || 0) - amt * selectedBets.length);
       const matchId = window.currentMatchId;
       currentBets.forEach(b => {
         db.ref("k3game/matches/" + matchId + "/bets/" + userId + "/" + b.choice).set({ amount: amt });
@@ -124,7 +133,7 @@
         history.unshift(sum);
         if (history.length > 10) history.pop();
         document.getElementById("historyBox").innerHTML = "History: " + history.map(x => `<span>${x}</span>`).join('');
-        bets = [];
+        selectedBets = [];
         currentBets = [];
         renderButtons();
         document.getElementById("userBetsBox").innerHTML = "";
@@ -133,24 +142,8 @@
 
     const showPopup = (msg, type) => {
       const box = document.getElementById("popupBox");
-      box.innerHTML = `<div class='popup ${type}'>${msg}</div>`;
+      box.innerHTML = `<div class='popup-msg'>${msg}</div>`;
       setTimeout(() => box.innerHTML = '', 3000);
-    };
-
-    const renderButtons = () => {
-      const box = document.getElementById("betButtons");
-      box.innerHTML = '';
-      ['Small','Big',...Array.from({length:16},(_,i)=>i+3)].forEach(opt => {
-        const btn = document.createElement("button");
-        btn.innerText = opt;
-        if (bets.includes(opt)) btn.classList.add("active");
-        btn.onclick = () => {
-          if (bets.includes(opt)) bets = bets.filter(x => x !== opt);
-          else bets.push(opt);
-          renderButtons();
-        };
-        box.appendChild(btn);
-      });
     };
 
     let gameInterval = null;
