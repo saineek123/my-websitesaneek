@@ -12,8 +12,8 @@
       background: linear-gradient(to bottom right, #0f2027, #203a43, #2c5364);
       color: #fff;
       display: flex;
-      flex-direction: column;
-      align-items: center;
+      justify-content: center;
+      align-items: flex-start;
       min-height: 100vh;
       padding: 20px;
     }
@@ -23,9 +23,9 @@
       border-radius: 16px;
       box-shadow: 0 0 30px rgba(0,0,0,0.6);
       padding: 20px;
-      margin-bottom: 30px;
+      position: relative;
     }
-    h1, h2 {
+    h1 {
       text-align: center;
       color: gold;
       margin-bottom: 10px;
@@ -125,7 +125,6 @@
   </style>
 </head>
 <body>
-  <!-- User Betting UI -->
   <div class="container">
     <h1>🎰 WinGo Live</h1>
     <div class="status-bar" id="timer">⏱ Time Left: --s</div>
@@ -149,29 +148,178 @@
     <div class="result-text" id="resultDisplay">Waiting for result...</div>
     <div class="history" id="history">Last 10 Results:</div>
   </div>
-
-  <!-- Admin Panel -->
-  <div class="container" style="background: #292943;">
-    <h2>👑 Admin Panel</h2>
-    <label><b>Start 3-Minute Timer</b></label><br>
-    <button onclick="startGame()" style="margin: 10px 0; padding: 10px; width: 100%; background: #2196f3; color: white; font-weight: bold;">Start Timer</button>
-
-    <label><b>Set Result Number (0-9)</b></label>
-    <input type="number" id="resultNumber" min="0" max="9" style="margin-top: 10px;" />
-    <button onclick="submitResult()" style="margin-top: 10px; padding: 10px; width: 100%; background: gold; color: black; font-weight: bold;">Submit Result</button>
-  </div>
-
   <div class="popup" id="betPopup">
     <label>Enter Bet Amount</label>
     <input type="number" id="amount" placeholder="Enter Bet Amount" min="1" />
     <button class="place" id="placeBet">Place Bet</button>
   </div>
 
-  <!-- Firebase & JS logic below -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <!-- ✅ Real-time game logic script -->
   <script>
-    // JS logic and Firebase integration goes here
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+      authDomain: "betting-app-43800.firebaseapp.com",
+      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+      projectId: "betting-app-43800",
+      storageBucket: "betting-app-43800.appspot.com",
+      messagingSenderId: "752263307747",
+      appId: "1:752263307747:web:183e06d62bc5920fc700d6"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const userId = "demoUser123"; // Replace with actual logged-in user
+    let userBalance = 0;
+    let currentBets = [];
+    let timerInterval;
+
+    const timerEl = document.getElementById("timer");
+    const walletEl = document.getElementById("wallet");
+    const currentBetEl = document.getElementById("currentBet");
+    const resultDisplay = document.getElementById("resultDisplay");
+    const historyEl = document.getElementById("history");
+    const betPopup = document.getElementById("betPopup");
+    const amountInput = document.getElementById("amount");
+
+    function renderButtons(type, containerId, values) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = "";
+      values.forEach(val => {
+        const btn = document.createElement('button');
+        btn.classList.add('btn');
+        if (type === 'number') {
+          btn.classList.add('number-btn');
+          if (["2","4","6","8"].includes(val)) btn.classList.add('red');
+          else if (["1","3","7","9"].includes(val)) btn.classList.add('green');
+          else btn.classList.add('violet');
+        } else {
+          btn.classList.add(val);
+        }
+        btn.dataset.type = type;
+        btn.dataset.value = val;
+        btn.textContent = val.toUpperCase();
+        btn.addEventListener('click', () => openBetPopup(type, val));
+        container.appendChild(btn);
+      });
+    }
+
+    function openBetPopup(type, value) {
+      betPopup.style.display = 'flex';
+      betPopup.dataset.type = type;
+      betPopup.dataset.value = value;
+      amountInput.value = "";
+      amountInput.focus();
+    }
+
+    document.getElementById("placeBet").addEventListener("click", () => {
+      const amount = parseInt(amountInput.value);
+      const type = betPopup.dataset.type;
+      const value = betPopup.dataset.value;
+      if (!amount || amount < 1) return alert("Enter valid amount");
+      if (amount > userBalance) return alert("Not enough balance");
+
+      userBalance -= amount;
+      updateWalletUI();
+
+      const newBetRef = db.ref("game/bets/" + userId).push();
+      newBetRef.set({ type, value, amount });
+
+      currentBets.push({ type, value, amount });
+      updateCurrentBetsUI();
+      betPopup.style.display = "none";
+    });
+
+    function fetchWallet() {
+      db.ref("users/" + userId).once("value").then(snapshot => {
+        userBalance = snapshot.val()?.wallet || 0;
+        updateWalletUI();
+      });
+    }
+
+    function updateWalletUI() {
+      walletEl.textContent = `Wallet: ₹${userBalance}`;
+    }
+
+    function updateCurrentBetsUI() {
+      currentBetEl.textContent = currentBets.length ?
+        `Bets: ${currentBets.map(b => b.type + ':' + b.value + ' (₹' + b.amount + ')').join(', ')}` :
+        "Select your bets";
+    }
+
+    db.ref("game/timer").on("value", snap => {
+      const timer = snap.val();
+      if (!timer) return timerEl.textContent = "⏱ Waiting for game...";
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        const timeLeft = Math.floor((timer.startTime + timer.duration * 1000 - Date.now()) / 1000);
+        if (timeLeft >= 0) {
+          timerEl.textContent = `⏱ Time Left: ${timeLeft}s`;
+        } else {
+          timerEl.textContent = "Betting closed...";
+          clearInterval(timerInterval);
+        }
+      }, 1000);
+    });
+
+    db.ref("game/result").on("value", snap => {
+      const res = snap.val();
+      if (!res || res.number === undefined) {
+        resultDisplay.textContent = "Waiting for result...";
+        return;
+      }
+      const number = parseInt(res.number);
+      let color = ([1,3,7,9].includes(number)) ? 'green' : ([2,4,6,8].includes(number) ? 'red' : 'violet');
+      const multiplier = number >= 5 ? 'big' : 'small';
+
+      let won = false;
+      if (res.wonUserIds) {
+        if (Array.isArray(res.wonUserIds)) {
+          won = res.wonUserIds.includes(userId);
+        } else {
+          won = Object.keys(res.wonUserIds).includes(userId);
+        }
+      }
+
+      resultDisplay.textContent = `🎲 ${number} - ${color.toUpperCase()} - ${multiplier.toUpperCase()} ${won ? '✅ You Won!' : '❌ You Lost'}`;
+
+      if (res.history && Array.isArray(res.history)) {
+        const historyHTML = res.history.slice(0, 10).map(h => {
+          const n = parseInt(h.number);
+          const c = ([1,3,7,9].includes(n)) ? 'green' : ([2,4,6,8].includes(n) ? 'red' : 'violet');
+          const m = n >= 5 ? 'big' : 'small';
+          let hWon = false;
+          if (h.wonUserIds) {
+            if (Array.isArray(h.wonUserIds)) {
+              hWon = h.wonUserIds.includes(userId);
+            } else {
+              hWon = Object.keys(h.wonUserIds).includes(userId);
+            }
+          }
+          return `${n} - ${c.toUpperCase()} - ${m.toUpperCase()} ${hWon ? "✅" : "❌"}`;
+        }).join("<br>");
+        historyEl.innerHTML = `<strong>Last 10 Results:</strong><br>` + historyHTML;
+      }
+
+      currentBets = [];
+      updateCurrentBetsUI();
+      if (won) fetchWallet();
+    });
+
+    renderButtons('color', 'colorBtns', ['green','violet','red']);
+    renderButtons('number', 'numberBtns1', ['0','1','2','3','4']);
+    renderButtons('number', 'numberBtns2', ['5','6','7','8','9']);
+    renderButtons('multiplier', 'multiplierBtns', ['big','small']);
+    fetchWallet();
+
+    db.ref("users/" + userId + "/wallet").on("value", snap => {
+      const val = snap.val();
+      if (val !== null && val !== userBalance) {
+        userBalance = val;
+        updateWalletUI();
+      }
+    });
   </script>
 </body>
 </html>
