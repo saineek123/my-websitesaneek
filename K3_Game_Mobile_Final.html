@@ -1,0 +1,249 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>K3 Game Final</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #f857a6, #ff5858);
+      color: white;
+      padding: 0;
+    }
+    .header {
+      text-align: center;
+      padding: 16px;
+      font-size: 22px;
+      font-weight: bold;
+      background: rgba(0,0,0,0.2);
+    }
+    .wallet {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.1);
+      font-size: 16px;
+    }
+    .wallet span {
+      font-weight: bold;
+      color: #ffff00;
+    }
+    .wallet button {
+      background: #00e0ff;
+      border: none;
+      color: black;
+      font-weight: bold;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-left: 10px;
+      cursor: pointer;
+    }
+    .container {
+      max-width: 420px;
+      margin: auto;
+      padding: 20px;
+    }
+    .dice {
+      text-align: center;
+      font-size: 60px;
+      margin: 20px 0;
+    }
+    .bet-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .bet-grid button {
+      padding: 10px;
+      min-width: 70px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: none;
+      background: white;
+      color: #f857a6;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .bet-grid button.active {
+      background: #f857a6;
+      color: white;
+    }
+    .quick-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .quick-buttons button {
+      background: #ffe600;
+      color: #000;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      cursor: pointer;
+    }
+    input[type='number'], .place-bet {
+      width: 90%;
+      margin: 10px auto;
+      display: block;
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 16px;
+      border: none;
+    }
+    .place-bet {
+      background: #00ffab;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .result, .history {
+      text-align: center;
+      margin-top: 10px;
+    }
+    .history span {
+      display: inline-block;
+      background: white;
+      color: black;
+      margin: 2px;
+      padding: 4px 10px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">🎲 K3 Mobile Game Final</div>
+  <div class="wallet">
+    Wallet: ₹<span id="wallet">0</span>
+    <div>
+      
+     
+      <a href="recharge.html"><button>Deposit</button></a>
+      <a href="withdraw.html"><button>Withdraw</button></a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div style="text-align:center;">⏳ Time left: <span id="timer">30</span>s</div>
+    <div style="text-align:center;">Period: <span id="periodId"></span></div>
+    <div class="dice" id="diceBox">🎲 🎲 🎲</div>
+    <div class="bet-grid" id="betButtons"></div>
+    <div class="quick-buttons">
+      <button onclick="setAmt(10)">₹10</button>
+      <button onclick="setAmt(50)">₹50</button>
+      <button onclick="setAmt(100)">₹100</button>
+      <button onclick="setAmt(500)">₹500</button>
+    </div>
+    <input type="number" id="amount" placeholder="Enter Amount ₹" />
+    <button class="place-bet" onclick="placeBet()">Place Bet</button>
+    <div class="result" id="resultBox"></div>
+    <div class="history" id="historyBox">History:</div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+      authDomain: "betting-app-43800.firebaseapp.com",
+      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+      projectId: "betting-app-43800"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let balance = 0;
+    let userId = localStorage.getItem("userId") || "guest";
+    let bets = [], currentBets = [], history = [];
+
+    const updateWallet = () => {
+      db.ref("users/" + userId + "/wallet").on("value", snap => {
+        balance = snap.val() || 0;
+        document.getElementById("wallet").innerText = balance.toFixed(2);
+      });
+    };
+
+    const deposit = () => {
+      const amt = parseFloat(prompt("Deposit Amount:")); 
+      if (amt > 0) db.ref("users/" + userId + "/wallet").transaction(val => (val || 0) + amt);
+    };
+
+    const withdraw = () => {
+      const amt = parseFloat(prompt("Withdraw Amount:")); 
+      if (amt > 0 && amt <= balance) db.ref("users/" + userId + "/wallet").transaction(val => (val || 0) - amt);
+    };
+
+    const setAmt = amt => document.getElementById("amount").value = amt;
+
+    const placeBet = () => {
+      const amt = parseFloat(document.getElementById("amount").value);
+      if (!amt || amt <= 0 || bets.length === 0 || amt * bets.length > balance) {
+        alert("Invalid or Insufficient Balance");
+        return;
+      }
+      currentBets = bets.map(b => ({ choice: b, amount: amt }));
+      db.ref("users/" + userId + "/wallet").transaction(val => (val || 0) - amt * bets.length);
+    };
+
+    const rollDice = () => {
+      const r = () => Math.floor(Math.random() * 6) + 1;
+      const em = ["", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
+      const d1 = r(), d2 = r(), d3 = r(), sum = d1 + d2 + d3;
+      document.getElementById("diceBox").innerText = `${em[d1]} ${em[d2]} ${em[d3]}`;
+      let win = 0;
+
+      currentBets.forEach(b => {
+        if ((b.choice === 'Small' && sum >= 3 && sum <= 10) || (b.choice === 'Big' && sum >= 11 && sum <= 18)) win += b.amount * 2;
+        else if (parseInt(b.choice) === sum) win += b.amount * 9;
+      });
+
+      if (win > 0) db.ref("users/" + userId + "/wallet").transaction(val => (val || 0) + win);
+      history.unshift(sum); if (history.length > 10) history.pop();
+      document.getElementById("historyBox").innerHTML = "History: " + history.map(x => `<span>${x}</span>`).join('');
+      bets = []; currentBets = [];
+      renderButtons();
+    };
+
+    const renderButtons = () => {
+      const box = document.getElementById("betButtons");
+      box.innerHTML = '';
+      ['Small','Big',...Array.from({length:16},(_,i)=>i+3)].forEach(opt => {
+        const btn = document.createElement("button");
+        btn.innerText = opt;
+        if (bets.includes(opt)) btn.classList.add("active");
+        btn.onclick = () => {
+          if (bets.includes(opt)) bets = bets.filter(x => x !== opt);
+          else bets.push(opt);
+          renderButtons();
+        };
+        box.appendChild(btn);
+      });
+    };
+
+    const getPeriodId = () => {
+      const d = new Date();
+      return `${d.getFullYear()}${(d.getMonth()+1).toString().padStart(2,'0')}${d.getDate().toString().padStart(2,'0')}${d.getHours().toString().padStart(2,'0')}${d.getMinutes().toString().padStart(2,'0')}${d.getSeconds().toString().padStart(2,'0')}`;
+    };
+
+    let timer = 30;
+    setInterval(() => {
+      document.getElementById("timer").innerText = timer--;
+      if (timer < 0) {
+        document.getElementById("periodId").innerText = getPeriodId();
+        rollDice();
+        timer = 30;
+      }
+    }, 1000);
+
+    updateWallet();
+    renderButtons();
+    document.getElementById("periodId").innerText = getPeriodId();
+  </script>
+</body>
+</html>
