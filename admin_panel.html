@@ -2,192 +2,74 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Admin Panel - WinGo Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin K3 Panel</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
+      font-family: Arial, sans-serif;
       background: #111;
-      color: #fff;
-      padding: 20px;
-      max-width: 700px;
-      margin: auto;
-    }
-    h1, h2 { text-align: center; color: gold; }
-    button {
-      background: #0a74da;
-      border: none;
       color: white;
-      padding: 10px;
-      margin: 5px 0;
-      cursor: pointer;
-      border-radius: 5px;
+      text-align: center;
+      padding: 30px;
     }
-    button:hover { background: #065a9c; }
-    input, select {
-      padding: 10px;
-      margin: 5px 0 15px 0;
-      width: 100%;
+    input {
+      font-size: 20px;
+      padding: 8px;
+      margin: 10px;
+      width: 60px;
+      text-align: center;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 18px;
+      background: #00ffcc;
       border: none;
-      border-radius: 5px;
-    }
-    .bets-list, .history-list {
-      background: #222;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 5px;
-      max-height: 300px;
-      overflow-y: auto;
-    }
-    .item {
-      border-bottom: 1px solid #555;
-      padding: 6px 0;
-    }
-    .edit-group {
-      display: flex;
-      gap: 5px;
-      margin: 5px 0;
-    }
-    .edit-group input {
-      flex: 1;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
+  <h2>🎮 K3 Admin Panel</h2>
+  <p>Set Dice Result (1 to 6):</p>
+  <input type="number" id="dice1" min="1" max="6" />
+  <input type="number" id="dice2" min="1" max="6" />
+  <input type="number" id="dice3" min="1" max="6" />
+  <br/>
+  <button onclick="submitResult()">Submit Result</button>
 
-<h1>🛠 Admin Panel - WinGo Game</h1>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+      authDomain: "betting-app-43800.firebaseapp.com",
+      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+      projectId: "betting-app-43800"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-<h2>🎯 Timer Controls</h2>
-<input type="number" id="timerSeconds" value="30" min="10" max="300" />
-<button onclick="startTimer()">Start Timer</button>
-<button onclick="stopTimer()">Stop Timer</button>
+    function submitResult() {
+      const d1 = parseInt(document.getElementById("dice1").value);
+      const d2 = parseInt(document.getElementById("dice2").value);
+      const d3 = parseInt(document.getElementById("dice3").value);
 
-<h2>🎲 Manual Result</h2>
-<div class="edit-group">
-  <input type="number" id="manualNumber" placeholder="Number (0-9)" min="0" max="9" />
-  <select id="manualColor">
-    <option value="">Color</option>
-    <option value="red">Red</option>
-    <option value="green">Green</option>
-    <option value="violet">Violet</option>
-  </select>
-  <select id="manualMultiplier">
-    <option value="">Multiplier</option>
-    <option value="big">Big</option>
-    <option value="small">Small</option>
-  </select>
-</div>
-<button onclick="setManualResult()">Set Result</button>
+      if ([d1, d2, d3].some(d => isNaN(d) || d < 1 || d > 6)) {
+        alert("All dice must be between 1 and 6");
+        return;
+      }
 
-<h2>🔥 Live Bets</h2>
-<div class="bets-list" id="betsList">Loading...</div>
+      db.ref("k3game/result").set({
+        dice1: d1,
+        dice2: d2,
+        dice3: d3,
+        timestamp: Date.now()
+      });
 
-<h2>📜 Match History</h2>
-<div class="history-list" id="historyList">Loading...</div>
-
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
-  authDomain: "betting-app-43800.firebaseapp.com",
-  databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
-  projectId: "betting-app-43800",
-  storageBucket: "betting-app-43800.appspot.com",
-  messagingSenderId: "752263307747",
-  appId: "1:752263307747:web:183e06d62bc5920fc700d6"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-// Timer Control
-function startTimer() {
-  const seconds = parseInt(document.getElementById('timerSeconds').value);
-  if (isNaN(seconds) || seconds < 10) return alert("Enter valid time");
-  const startTime = Date.now();
-  db.ref('game/timer').set({ startTime, duration: seconds });
-}
-function stopTimer() {
-  db.ref('game/timer').remove();
-}
-
-// Manual Result Set
-function setManualResult() {
-  const number = parseInt(document.getElementById('manualNumber').value);
-  const color = document.getElementById('manualColor').value;
-  const multiplier = document.getElementById('manualMultiplier').value;
-  if (isNaN(number) || !color || !multiplier) return alert("Fill all fields");
-  const result = { number, color, multiplier, timestamp: Date.now(), wonUserIds: [] };
-  db.ref('game/result').set(result);
-  alert("Result set!");
-}
-
-// Bets List
-db.ref("game/bets").on("value", snap => {
-  const bets = snap.val();
-  const container = document.getElementById("betsList");
-  if (!bets) return container.innerHTML = "<i>No bets placed</i>";
-  let html = "";
-  for (const uid in bets) {
-    for (const key in bets[uid]) {
-      const b = bets[uid][key];
-      html += `<div class="item">👤 <b>${uid}</b><br>➡️ ${b.type.toUpperCase()}: ${b.value}<br>💰 ₹${b.amount}</div>`;
+      alert("✅ Result Submitted Successfully!");
     }
-  }
-  container.innerHTML = html;
-});
-
-// History List
-function loadHistory() {
-  db.ref("game/history").once("value").then(snap => {
-    const hist = snap.val() || [];
-    const container = document.getElementById("historyList");
-    let html = "";
-    hist.forEach((h, i) => {
-      html += `<div class="item">
-        #${i+1} ➡️ ${h.number} - ${h.color.toUpperCase()} - ${h.multiplier.toUpperCase()}
-        <br>🕒 ${new Date(h.timestamp).toLocaleTimeString()}
-        <div class="edit-group">
-          <button onclick="editResult(${i})">Edit</button>
-          <button onclick="deleteResult(${i})">Delete</button>
-        </div>
-      </div>`;
-    });
-    container.innerHTML = html;
-  });
-}
-loadHistory();
-
-// Edit Result
-function editResult(index) {
-  const num = prompt("New Number (0-9)?");
-  const color = prompt("New Color (red/green/violet)?");
-  const mult = prompt("Multiplier (big/small)?");
-  if (!num || !color || !mult) return;
-  db.ref("game/history").once("value").then(snap => {
-    const hist = snap.val() || [];
-    if (!hist[index]) return alert("Not found");
-    hist[index].number = parseInt(num);
-    hist[index].color = color;
-    hist[index].multiplier = mult;
-    db.ref("game/history").set(hist);
-    alert("Updated!");
-    loadHistory();
-  });
-}
-
-// Delete Result
-function deleteResult(index) {
-  if (!confirm("Delete this result?")) return;
-  db.ref("game/history").once("value").then(snap => {
-    const hist = snap.val() || [];
-    hist.splice(index, 1);
-    db.ref("game/history").set(hist);
-    alert("Deleted!");
-    loadHistory();
-  });
-}
-</script>
+  </script>
 </body>
 </html>
