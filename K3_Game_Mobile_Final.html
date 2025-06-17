@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -106,11 +104,11 @@
       font-weight: bold;
       cursor: pointer;
     }
-    .result, .history {
+    .result, .history, .user-bets {
       text-align: center;
       margin-top: 10px;
     }
-    .history span {
+    .history span, .user-bets span {
       display: inline-block;
       background: white;
       color: black;
@@ -118,6 +116,21 @@
       padding: 4px 10px;
       border-radius: 8px;
     }
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      color: black;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+      text-align: center;
+      z-index: 999;
+    }
+    .popup.win { background: #00ffcc; }
+    .popup.lose { background: #ffcccc; }
   </style>
 </head>
 <body>
@@ -125,8 +138,6 @@
   <div class="wallet">
     Wallet: ₹<span id="wallet">0</span>
     <div>
-      
-     
       <a href="recharge.html"><button>Deposit</button></a>
       <a href="withdraw.html"><button>Withdraw</button></a>
     </div>
@@ -145,9 +156,12 @@
     </div>
     <input type="number" id="amount" placeholder="Enter Amount ₹" />
     <button class="place-bet" onclick="placeBet()">Place Bet</button>
+    <div class="user-bets" id="userBetsBox"></div>
     <div class="result" id="resultBox"></div>
     <div class="history" id="historyBox">History:</div>
   </div>
+
+  <div id="popupBox"></div>
 
   <script>
     const firebaseConfig = {
@@ -170,16 +184,6 @@
       });
     };
 
-    const deposit = () => {
-      const amt = parseFloat(prompt("Deposit Amount:")); 
-      if (amt > 0) db.ref("users/" + userId + "/wallet").transaction(val => (val || 0) + amt);
-    };
-
-    const withdraw = () => {
-      const amt = parseFloat(prompt("Withdraw Amount:")); 
-      if (amt > 0 && amt <= balance) db.ref("users/" + userId + "/wallet").transaction(val => (val || 0) - amt);
-    };
-
     const setAmt = amt => document.getElementById("amount").value = amt;
 
     const placeBet = () => {
@@ -190,6 +194,7 @@
       }
       currentBets = bets.map(b => ({ choice: b, amount: amt }));
       db.ref("users/" + userId + "/wallet").transaction(val => (val || 0) - amt * bets.length);
+      document.getElementById("userBetsBox").innerHTML = "Your Bets: " + currentBets.map(b => `<span>${b.choice} (₹${b.amount})</span>`).join(' ');
     };
 
     const rollDice = () => {
@@ -200,15 +205,31 @@
       let win = 0;
 
       currentBets.forEach(b => {
-        if ((b.choice === 'Small' && sum >= 3 && sum <= 10) || (b.choice === 'Big' && sum >= 11 && sum <= 18)) win += b.amount * 2;
-        else if (parseInt(b.choice) === sum) win += b.amount * 9;
+        if ((b.choice === 'Small' && sum >= 3 && sum <= 10) || (b.choice === 'Big' && sum >= 11 && sum <= 18)) {
+          if (Math.random() <= 0.2) win += b.amount * 2;
+        } else if (parseInt(b.choice) === sum) {
+          if (Math.random() <= 0.2) win += b.amount * 9;
+        }
       });
 
-      if (win > 0) db.ref("users/" + userId + "/wallet").transaction(val => (val || 0) + win);
+      if (win > 0) {
+        db.ref("users/" + userId + "/wallet").transaction(val => (val || 0) + win);
+        showPopup(`🎉 You Won ₹${win.toFixed(2)}!`, 'win');
+      } else {
+        showPopup("😞 You Lost!", 'lose');
+      }
+
       history.unshift(sum); if (history.length > 10) history.pop();
       document.getElementById("historyBox").innerHTML = "History: " + history.map(x => `<span>${x}</span>`).join('');
       bets = []; currentBets = [];
       renderButtons();
+      document.getElementById("userBetsBox").innerHTML = "";
+    };
+
+    const showPopup = (msg, type) => {
+      const box = document.getElementById("popupBox");
+      box.innerHTML = `<div class='popup ${type}'>${msg}</div>`;
+      setTimeout(() => box.innerHTML = '', 3000);
     };
 
     const renderButtons = () => {
@@ -248,3 +269,4 @@
   </script>
 </body>
 </html>
+
