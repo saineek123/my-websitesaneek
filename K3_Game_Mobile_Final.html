@@ -1,9 +1,11 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>K3 Game </title>
+  <title>K3 Game Final</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <style>
@@ -104,7 +106,7 @@
       font-weight: bold;
       cursor: pointer;
     }
-    .result, .history, .your-bet {
+    .result, .history {
       text-align: center;
       margin-top: 10px;
     }
@@ -119,10 +121,12 @@
   </style>
 </head>
 <body>
-  <div class="header">🎲 K3 Game</div>
+  <div class="header">🎲 K3 Game </div>
   <div class="wallet">
     Wallet: ₹<span id="wallet">0</span>
     <div>
+      
+     
       <a href="recharge.html"><button>Deposit</button></a>
       <a href="withdraw.html"><button>Withdraw</button></a>
     </div>
@@ -141,7 +145,6 @@
     </div>
     <input type="number" id="amount" placeholder="Enter Amount ₹" />
     <button class="place-bet" onclick="placeBet()">Place Bet</button>
-    <div class="your-bet" id="yourBetBox"></div>
     <div class="result" id="resultBox"></div>
     <div class="history" id="historyBox">History:</div>
   </div>
@@ -167,6 +170,16 @@
       });
     };
 
+    const deposit = () => {
+      const amt = parseFloat(prompt("Deposit Amount:")); 
+      if (amt > 0) db.ref("users/" + userId + "/wallet").transaction(val => (val || 0) + amt);
+    };
+
+    const withdraw = () => {
+      const amt = parseFloat(prompt("Withdraw Amount:")); 
+      if (amt > 0 && amt <= balance) db.ref("users/" + userId + "/wallet").transaction(val => (val || 0) - amt);
+    };
+
     const setAmt = amt => document.getElementById("amount").value = amt;
 
     const placeBet = () => {
@@ -176,7 +189,6 @@
         return;
       }
       currentBets = bets.map(b => ({ choice: b, amount: amt }));
-      document.getElementById("yourBetBox").innerText = "Your Bet: " + bets.join(", ");
       db.ref("users/" + userId + "/wallet").transaction(val => (val || 0) - amt * bets.length);
     };
 
@@ -188,18 +200,14 @@
       let win = 0;
 
       currentBets.forEach(b => {
-        const winChance = Math.random(); // 20% win chance logic
-        const isWin = winChance <= 0.2;
-
-        if (isWin && ((b.choice === 'Small' && sum >= 3 && sum <= 10) || (b.choice === 'Big' && sum >= 11 && sum <= 18))) win += b.amount * 2;
-        else if (isWin && parseInt(b.choice) === sum) win += b.amount * 9;
+        if ((b.choice === 'Small' && sum >= 3 && sum <= 10) || (b.choice === 'Big' && sum >= 11 && sum <= 18)) win += b.amount * 2;
+        else if (parseInt(b.choice) === sum) win += b.amount * 9;
       });
 
       if (win > 0) db.ref("users/" + userId + "/wallet").transaction(val => (val || 0) + win);
       history.unshift(sum); if (history.length > 10) history.pop();
       document.getElementById("historyBox").innerHTML = "History: " + history.map(x => `<span>${x}</span>`).join('');
       bets = []; currentBets = [];
-      document.getElementById("yourBetBox").innerText = "";
       renderButtons();
     };
 
