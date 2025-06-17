@@ -1,4 +1,4 @@
-<!-- Save this as k3.html -->
+<!-- FINAL: k3.html - Real-Time Multiplayer K3 Dice Game -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -39,7 +39,7 @@
     </div>
   </div>
   <div class="container">
-    <div style="text-align:center;">⏳ Time left: <span id="timer">30</span>s</div>
+    <div style="text-align:center;">⏳ Time left: <span id="timer">--</span>s</div>
     <div style="text-align:center;">Period: <span id="periodId"></span></div>
     <div class="dice" id="diceBox">🎲 🎲 🎲</div>
     <div class="bet-grid" id="betButtons"></div>
@@ -88,11 +88,15 @@
       }
       currentBets = bets.map(b => ({ choice: b, amount: amt }));
       db.ref("users/" + userId + "/wallet").transaction(val => (val || 0) - amt * bets.length);
+      const matchId = window.currentMatchId;
+      currentBets.forEach(b => {
+        db.ref("k3game/matches/" + matchId + "/bets/" + userId + "/" + b.choice).set({ amount: amt });
+      });
       document.getElementById("userBetsBox").innerHTML = "Your Bets: " + currentBets.map(b => `<span>${b.choice} (₹${b.amount})</span>`).join(' ');
     };
 
-    const rollDice = () => {
-      db.ref("k3game/result").once("value").then(snapshot => {
+    const rollDice = (matchId) => {
+      db.ref("k3game/matches/" + matchId + "/result").once("value").then(snapshot => {
         const res = snapshot.val();
         if (!res) return;
 
@@ -149,24 +153,31 @@
       });
     };
 
-    const getPeriodId = () => {
-      const d = new Date();
-      return `${d.getFullYear()}${(d.getMonth()+1).toString().padStart(2,'0')}${d.getDate().toString().padStart(2,'0')}${d.getHours().toString().padStart(2,'0')}${d.getMinutes().toString().padStart(2,'0')}${d.getSeconds().toString().padStart(2,'0')}`;
-    };
+    let gameInterval = null;
+    db.ref("k3game/currentMatchId").on("value", snap => {
+      const matchId = snap.val();
+      if (!matchId) return;
+      window.currentMatchId = matchId;
+      document.getElementById("periodId").innerText = matchId;
 
-    let timer = 30;
-    setInterval(() => {
-      document.getElementById("timer").innerText = timer--;
-      if (timer < 0) {
-        document.getElementById("periodId").innerText = getPeriodId();
-        rollDice();
-        timer = 30;
-      }
-    }, 1000);
+      db.ref("k3game/matches/" + matchId + "/startTime").once("value").then(snap => {
+        const startTime = snap.val();
+        if (!startTime) return;
+
+        clearInterval(gameInterval);
+        gameInterval = setInterval(() => {
+          const timeLeft = Math.max(0, 30 - Math.floor((Date.now() - startTime) / 1000));
+          document.getElementById("timer").innerText = timeLeft;
+          if (timeLeft === 0) {
+            rollDice(matchId);
+            clearInterval(gameInterval);
+          }
+        }, 1000);
+      });
+    });
 
     updateWallet();
     renderButtons();
-    document.getElementById("periodId").innerText = getPeriodId();
   </script>
 </body>
 </html>
