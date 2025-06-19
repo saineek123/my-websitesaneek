@@ -27,10 +27,11 @@
       box-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
     }
     .balance {
-      font-size: 20px;
+      font-size: 16px;
       margin-bottom: 15px;
       color: #ffdd57;
       text-shadow: 0 0 5px #ffdd57;
+      line-height: 1.6;
     }
     .cards {
       display: flex;
@@ -98,7 +99,13 @@
 <body>
   <h1>🔥 Dragon vs 🐯 Tiger vs 🎴 Tie</h1>
   <div class="game-container">
-    <div class="balance">Wallet Balance: ₹<span id="balance">Loading...</span></div>
+    <div class="balance">
+      <strong>Recharge:</strong> ₹<span id="rechargeBal">0</span> |
+      <strong>Bonus:</strong> ₹<span id="bonusBal">0</span> |
+      <strong>Winning:</strong> ₹<span id="winningBal">0</span><br>
+      <strong>Total:</strong> ₹<span id="balance">0</span>
+    </div>
+
     <div class="cards">
       <div class="card" id="dragonBox">
         <div id="dragonCard">?</div>
@@ -148,17 +155,24 @@
     const userId = localStorage.getItem("userId");
     if (!userId) window.location.href = "login.html";
 
-    const balanceSpan = document.getElementById("balance");
-    const resultDiv = document.getElementById("resultMsg");
+    let winning = 0;
 
-    function updateBalanceDisplay() {
-      db.ref("users/" + userId + "/wallet").once("value").then(snap => {
-        const bal = parseFloat(snap.val()) || 0;
-        balanceSpan.textContent = bal.toFixed(2);
+    function loadWalletBreakdown() {
+      db.ref("users/" + userId + "/wallet").on("value", (snapshot) => {
+        const wallet = snapshot.val();
+        if (wallet) {
+          const recharge = parseFloat(wallet.recharge || 0);
+          const bonus = parseFloat(wallet.bonus || 0);
+          winning = parseFloat(wallet.winning || 0);
+          const total = recharge + bonus + winning;
+
+          document.getElementById("rechargeBal").innerText = recharge.toFixed(2);
+          document.getElementById("bonusBal").innerText = bonus.toFixed(2);
+          document.getElementById("winningBal").innerText = winning.toFixed(2);
+          document.getElementById("balance").innerText = total.toFixed(2);
+        }
       });
     }
-
-    updateBalanceDisplay();
 
     function getRandomCard() {
       return Math.floor(Math.random() * 13) + 1;
@@ -171,6 +185,8 @@
       const bet = parseFloat(document.getElementById("betAmount").value);
 
       if (!bet || bet < 10) return alert("Minimum bet is ₹10");
+
+      if (bet > winning) return alert("❌ Insufficient winning balance");
 
       clearInterval(timerInterval);
 
@@ -189,72 +205,77 @@
     }
 
     function runGameLogic(choice, bet) {
-      db.ref("users/" + userId + "/wallet").once("value").then((snap) => {
-        let balance = parseFloat(snap.val()) || 0;
-        if (bet > balance) return alert("❌ Insufficient balance");
+      const dragon = getRandomCard();
+      const tiger = getRandomCard();
 
-        const dragon = getRandomCard();
-        const tiger = getRandomCard();
+      const dragonBox = document.getElementById("dragonBox");
+      const tigerBox = document.getElementById("tigerBox");
+      const tieBox = document.getElementById("tieBox");
 
-        const dragonBox = document.getElementById("dragonBox");
-        const tigerBox = document.getElementById("tigerBox");
-        const tieBox = document.getElementById("tieBox");
+      dragonBox.classList.remove("winner");
+      tigerBox.classList.remove("winner");
+      tieBox.classList.remove("winner");
 
-        dragonBox.classList.remove("winner");
-        tigerBox.classList.remove("winner");
-        tieBox.classList.remove("winner");
+      document.getElementById("dragonCard").textContent = dragon;
+      document.getElementById("tigerCard").textContent = tiger;
 
-        document.getElementById("dragonCard").textContent = dragon;
-        document.getElementById("tigerCard").textContent = tiger;
+      let result = "";
+      let won = false;
+      let winAmount = 0;
 
-        let result = "";
-        let won = false;
-        let winAmount = 0;
+      const winChance = Math.random();
+      const allowWin = winChance <= 0.2;
 
-        const winChance = Math.random(); // User win chance logic
-        const allowWin = winChance <= 0.2;
-
-        if (dragon > tiger) {
-          result = "Dragon Wins";
-          if (choice === "dragon" && allowWin) {
-            won = true;
-            winAmount = bet;
-            dragonBox.classList.add("winner");
-          }
-        } else if (tiger > dragon) {
-          result = "Tiger Wins";
-          if (choice === "tiger" && allowWin) {
-            won = true;
-            winAmount = bet;
-            tigerBox.classList.add("winner");
-          }
-        } else {
-          result = "It's a Tie!";
-          if (choice === "tie" && allowWin) {
-            won = true;
-            winAmount = bet * 9;
-            tieBox.classList.add("winner");
-          }
+      if (dragon > tiger) {
+        result = "Dragon Wins";
+        if (choice === "dragon" && allowWin) {
+          won = true;
+          winAmount = bet;
+          dragonBox.classList.add("winner");
         }
+      } else if (tiger > dragon) {
+        result = "Tiger Wins";
+        if (choice === "tiger" && allowWin) {
+          won = true;
+          winAmount = bet;
+          tigerBox.classList.add("winner");
+        }
+      } else {
+        result = "It's a Tie!";
+        if (choice === "tie" && allowWin) {
+          won = true;
+          winAmount = bet * 9;
+          tieBox.classList.add("winner");
+        }
+      }
 
-        resultDiv.textContent = `${result} - You ${won ? 'Win ₹' + winAmount : 'Lose'}!`;
+      resultDiv.textContent = `${result} - You ${won ? 'Win ₹' + winAmount : 'Lose'}!`;
 
-        let newBalance = won ? balance + winAmount : balance - bet;
-        db.ref("users/" + userId + "/wallet").set(newBalance).then(updateBalanceDisplay);
+      if (won) {
+        winning += winAmount;
+      } else {
+        winning -= bet;
+      }
 
-        const gameLog = {
-          choice,
-          dragon,
-          tiger,
-          result,
-          amount: bet,
-          win: won,
-          payout: winAmount,
-          date: new Date().toLocaleString()
-        };
-        db.ref("history/" + userId).push(gameLog);
+      db.ref("users/" + userId + "/wallet").update({
+        winning: parseFloat(winning.toFixed(2))
       });
+
+      const gameLog = {
+        choice,
+        dragon,
+        tiger,
+        result,
+        amount: bet,
+        win: won,
+        payout: winAmount,
+        date: new Date().toLocaleString()
+      };
+      db.ref("history/" + userId).push(gameLog);
     }
+
+    const resultDiv = document.getElementById("resultMsg");
+    loadWalletBreakdown();
   </script>
 </body>
 </html>
