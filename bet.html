@@ -1,3 +1,4 @@
+<!-- FINAL: bet.html with wallet breakdown -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -80,6 +81,14 @@
     button:hover {
       background-color: #0099cc;
     }
+    .wallet-info {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 16px;
+    }
+    .wallet-info span {
+      color: #00f7ff;
+    }
   </style>
 </head>
 <body>
@@ -94,8 +103,13 @@
   <a href="login.html">Logout</a>
 </nav>
 
-<div style="text-align:center; font-size:20px; margin-top:20px;">
-  Current Balance: ₹<span id="liveUserBalance">0</span>
+<div class="wallet-info">
+  <p>
+    💰 Total Balance: ₹<span id="totalBalance">0</span><br>
+    💳 Recharge: ₹<span id="rechargeBalance">0</span> |
+    🎁 Bonus: ₹<span id="bonusBalance">0</span> |
+    🏆 Winning: ₹<span id="winningBalance">0</span>
+  </p>
 </div>
 
 <h2>🔥 Place Your Bet</h2>
@@ -126,29 +140,39 @@
   const selectedBets = {};
   const matches = [];
 
-  // 🔴 Show Live Wallet
+  // 🔴 Show Full Wallet Info
   if (userId) {
-    const walletEl = document.getElementById("liveUserBalance");
+    const totalEl = document.getElementById("totalBalance");
+    const rechargeEl = document.getElementById("rechargeBalance");
+    const bonusEl = document.getElementById("bonusBalance");
+    const winningEl = document.getElementById("winningBalance");
+
     db.ref("users/" + userId + "/wallet").on("value", (snap) => {
-      walletEl.innerText = snap.val() || 0;
+      const wallet = snap.val() || {};
+      const recharge = wallet.recharge || 0;
+      const bonus = wallet.bonus || 0;
+      const winning = wallet.winning || 0;
+      const total = recharge + bonus + winning;
+
+      totalEl.innerText = total.toFixed(2);
+      rechargeEl.innerText = recharge.toFixed(2);
+      bonusEl.innerText = bonus.toFixed(2);
+      winningEl.innerText = winning.toFixed(2);
     });
   }
 
   // 🔄 Load Matches from Firebase
- db.ref("matches").on("value", (snapshot) => {
-  matches.length = 0;
-  snapshot.forEach((child) => {
-    const data = child.val();
-
-    // ✅ Yeh line check karegi ki result nahi hona chahiye
-    if (!data.result) {
-      data.id = child.key;
-      matches.push(data);
-    }
+  db.ref("matches").on("value", (snapshot) => {
+    matches.length = 0;
+    snapshot.forEach((child) => {
+      const data = child.val();
+      if (!data.result) {
+        data.id = child.key;
+        matches.push(data);
+      }
+    });
+    renderMatches();
   });
-  renderMatches();
-});
-
 
   function renderMatches() {
     const container = document.getElementById("matchesContainer");
@@ -194,8 +218,10 @@
     }
 
     db.ref("users/" + userId + "/wallet").once("value").then((snap) => {
-      const currentBalance = snap.val() || 0;
-      if (currentBalance < amount) {
+      const wallet = snap.val() || {};
+      const totalBalance = (wallet.recharge || 0) + (wallet.bonus || 0) + (wallet.winning || 0);
+
+      if (totalBalance < amount) {
         alert("Insufficient balance!");
         return;
       }
@@ -216,8 +242,18 @@
       // Save bet in Firebase
       db.ref("users/" + userId + "/bets").push(betData);
 
-      // Deduct from wallet
-      db.ref("users/" + userId + "/wallet").set(currentBalance - amount);
+      // Deduct from winning first (or bonus/recharge if you want more logic)
+      const newWinning = (wallet.winning || 0) >= amount ? (wallet.winning - amount) : 0;
+      const usedFromBonus = (wallet.winning || 0) >= amount ? 0 : (amount - wallet.winning);
+      const newBonus = (wallet.bonus || 0) >= usedFromBonus ? wallet.bonus - usedFromBonus : 0;
+      const usedFromRecharge = (wallet.winning || 0) + (wallet.bonus || 0) >= amount ? 0 : amount - (wallet.winning || 0) - (wallet.bonus || 0);
+      const newRecharge = (wallet.recharge || 0) - usedFromRecharge;
+
+      db.ref("users/" + userId + "/wallet").set({
+        recharge: newRecharge,
+        bonus: newBonus,
+        winning: newWinning
+      });
 
       alert(`✅ Bet placed on ${selected.team} for ₹${amount}. Return: ₹${returnAmount}`);
       window.location.href = "history.html";
