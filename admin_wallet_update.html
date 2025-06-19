@@ -1,0 +1,205 @@
+<!-- FINAL VERSION: admin_wallet_update.html with Name + History -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Wallet Control</title>
+  <style>
+    body {
+      background-color: #121212;
+      font-family: Arial, sans-serif;
+      color: white;
+      padding: 30px;
+    }
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: #1f1f1f;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px #00e5ff50;
+    }
+    h2 {
+      text-align: center;
+      color: #00e5ff;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 12px;
+      border-radius: 6px;
+      border: none;
+      font-size: 16px;
+    }
+    input {
+      background: #2c2c2c;
+      color: #fff;
+    }
+    button {
+      background-color: #00e5ff;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #00bcd4;
+    }
+    .label {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #ccc;
+    }
+    .history {
+      background: #292929;
+      margin-top: 20px;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .history h3 {
+      margin: 0 0 8px;
+      color: #00e5ff;
+      font-size: 16px;
+    }
+    .history-entry {
+      margin-bottom: 6px;
+      border-bottom: 1px solid #444;
+      padding-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Admin Wallet Editor</h2>
+
+  <label class="label">Enter User ID:</label>
+  <input type="text" id="userId" placeholder="User ID" onblur="loadWallet()" />
+
+  <div id="userName" style="margin-top: 8px; color:#ccc; font-style: italic;"></div>
+
+  <label class="label">Recharge Balance ₹</label>
+  <input type="number" id="recharge" placeholder="Recharge" />
+
+  <label class="label">Bonus Balance ₹</label>
+  <input type="number" id="bonus" placeholder="Bonus" />
+
+  <label class="label">Winning Balance ₹</label>
+  <input type="number" id="winning" placeholder="Winning" />
+
+  <button onclick="updateWallet()">✅ Update Wallet</button>
+
+  <div class="history" id="withdrawHistory">
+    <h3>Withdraw History</h3>
+    <div id="withdrawList">Loading...</div>
+  </div>
+
+  <div class="history" id="rechargeHistory">
+    <h3>Recharge History</h3>
+    <div id="rechargeList">Loading...</div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+    authDomain: "betting-app-43800.firebaseapp.com",
+    databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+    projectId: "betting-app-43800",
+    storageBucket: "betting-app-43800.appspot.com",
+    messagingSenderId: "752263307747",
+    appId: "1:752263307747:web:183e06d62bc5920fc700d6"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  function loadWallet() {
+    const userId = document.getElementById("userId").value.trim();
+    if (!userId) return;
+
+    // Load name & wallet
+    db.ref("users/" + userId).once("value").then(snapshot => {
+      const user = snapshot.val();
+      if (user) {
+        document.getElementById("userName").textContent = "👤 " + (user.name || "No name found");
+        const wallet = user.wallet || {};
+        document.getElementById("recharge").value = wallet.recharge || 0;
+        document.getElementById("bonus").value = wallet.bonus || 0;
+        document.getElementById("winning").value = wallet.winning || 0;
+      } else {
+        alert("❌ User not found.");
+        return;
+      }
+    });
+
+    // Load withdraw history
+    db.ref("withdraws/" + userId).limitToLast(5).once("value").then(snapshot => {
+      const list = document.getElementById("withdrawList");
+      list.innerHTML = "";
+      const data = snapshot.val();
+      if (!data) {
+        list.innerHTML = "No withdraws.";
+        return;
+      }
+      Object.values(data).reverse().forEach(entry => {
+        list.innerHTML += `<div class="history-entry">
+          ₹${entry.amount} → ${entry.upi || entry.account || "N/A"}<br/>
+          Status: ${entry.status || "pending"}<br/>
+          Date: ${entry.date || "-"}
+        </div>`;
+      });
+    });
+
+    // Load recharge history
+    db.ref("recharges/" + userId).limitToLast(5).once("value").then(snapshot => {
+      const list = document.getElementById("rechargeList");
+      list.innerHTML = "";
+      const data = snapshot.val();
+      if (!data) {
+        list.innerHTML = "No recharges.";
+        return;
+      }
+      Object.values(data).reverse().forEach(entry => {
+        list.innerHTML += `<div class="history-entry">
+          ₹${entry.amount}<br/>
+          Status: ${entry.status || "pending"}<br/>
+          Date: ${entry.date || "-"}
+        </div>`;
+      });
+    });
+  }
+
+  function updateWallet() {
+    const userId = document.getElementById("userId").value.trim();
+    const recharge = parseFloat(document.getElementById("recharge").value);
+    const bonus = parseFloat(document.getElementById("bonus").value);
+    const winning = parseFloat(document.getElementById("winning").value);
+
+    if (!userId) {
+      alert("❌ Please enter User ID");
+      return;
+    }
+
+    const walletData = {
+      recharge: isNaN(recharge) ? 0 : recharge,
+      bonus: isNaN(bonus) ? 0 : bonus,
+      winning: isNaN(winning) ? 0 : winning
+    };
+
+    db.ref("users/" + userId + "/wallet").set(walletData)
+      .then(() => {
+        alert("✅ Wallet updated successfully!");
+        loadWallet();
+      })
+      .catch((error) => {
+        alert("Error: " + error.message);
+      });
+  }
+</script>
+
+</body>
+</html>
