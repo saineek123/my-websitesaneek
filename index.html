@@ -153,8 +153,14 @@
   <div class="dashboard">
     <div class="info">
       <h2>Welcome, <span id="userName">User</span></h2>
-      <p>Balance: ₹<span id="userBalance">0</span></p>
+      <p>Total Balance: ₹<span id="totalBalance">0</span></p>
+      <p style="margin-top:10px; font-size: 14px; color:#ccc;">
+        💳 Recharge: ₹<span id="rechargeBalance">0</span> |
+        🎁 Bonus: ₹<span id="bonusBalance">0</span> |
+        🏆 Winning: ₹<span id="winningBalance">0</span>
+      </p>
     </div>
+  </div>
          <img src="rechage.jpg.jpg" alt="My Image" width="400" height="200">
     <img src="refural.png.png" alt="referral" width="400" height="200">
     <div class="cards">
@@ -212,11 +218,24 @@
 
     const userId = localStorage.getItem("userId");
     if (userId) {
-      const walletEl = document.getElementById("userBalance");
-      db.ref("users/" + userId + "/wallet").on("value", (snap) => {
-        const balance = snap.val() || 0;
-        walletEl.innerText = balance;
-      });
+      const totalEl = document.getElementById("totalBalance");
+const rechargeEl = document.getElementById("rechargeBalance");
+const bonusEl = document.getElementById("bonusBalance");
+const winningEl = document.getElementById("winningBalance");
+
+db.ref("users/" + userId + "/wallet").on("value", (snap) => {
+  const wallet = snap.val() || {};
+  const recharge = wallet.recharge || 0;
+  const bonus = wallet.bonus || 0;
+  const winning = wallet.winning || 0;
+  const total = recharge + bonus + winning;
+
+  totalEl.innerText = total.toFixed(2);
+  rechargeEl.innerText = recharge.toFixed(2);
+  bonusEl.innerText = bonus.toFixed(2);
+  winningEl.innerText = winning.toFixed(2);
+});
+
     }
 
     function logout() {
