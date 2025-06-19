@@ -1,4 +1,4 @@
-<!-- FINAL MOBILE-FRIENDLY COLOR GAME UI (UPDATED + FIXED) -->
+<!-- FINAL COLOR GAME WITH WALLET BREAKDOWN -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,8 +9,14 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <style>
     body { margin: 0; font-family: 'Poppins', sans-serif; background: #111; color: #fff; }
-    .wallet { display: flex; justify-content: space-between; padding: 10px 15px; background: #222; }
+    .wallet { display: flex; flex-direction: column; align-items: center; padding: 10px 15px; background: #222; }
     .wallet span { color: yellow; font-weight: bold; }
+    .wallet .breakdown { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 8px; }
+    .wallet .box { background: #333; padding: 8px 12px; border-radius: 6px; font-size: 14px; }
+    .wallet .box b { color: #0ff; }
+    .wallet .actions { margin-top: 8px; }
+    .wallet .actions button { margin: 0 5px; padding: 5px 10px; border: none; border-radius: 6px; background: #0ff; color: #000; font-weight: bold; }
+
     .header { text-align: center; padding: 15px 0; font-size: 24px; background: #000; color: #0ff; }
     .container { padding: 15px; text-align: center; }
     .container input, .container button { width: 90%; max-width: 300px; margin: 10px auto; padding: 10px; font-size: 16px; border-radius: 6px; border: none; }
@@ -27,8 +33,13 @@
 </head>
 <body>
   <div class="wallet">
-    Wallet: ₹<span id="wallet">0</span>
-    <div>
+    <div>Total Wallet: ₹<span id="wallet">0</span></div>
+    <div class="breakdown">
+      <div class="box">Recharge: ₹<b id="recharge">0</b></div>
+      <div class="box">Bonus: ₹<b id="bonus">0</b></div>
+      <div class="box">Winning: ₹<b id="winning">0</b></div>
+    </div>
+    <div class="actions">
       <a href="recharge.html"><button>Deposit</button></a>
       <a href="withdraw.html"><button>Withdraw</button></a>
     </div>
@@ -67,15 +78,28 @@
     firebase.initializeApp(config);
     const db = firebase.database();
 
-    let userId = localStorage.getItem("userId") || "user_" + Math.floor(Math.random() * 10000);
-    localStorage.setItem("userId", userId);
+    const userId = localStorage.getItem("userId");
+    if (!userId) window.location.href = "login.html";
+
     let balance = 0;
     let currentBet = null, currentMatchId = null, history = [];
 
     function updateWallet() {
-      db.ref("users/" + userId + "/wallet").on("value", snap => {
-        balance = snap.val() || 0;
-        document.getElementById("wallet").innerText = balance.toFixed(2);
+      const path = "users/" + userId + "/walletBreakup";
+      db.ref(path).on("value", (snap) => {
+        const data = snap.val() || {};
+        const recharge = parseFloat(data.recharge) || 0;
+        const bonus = parseFloat(data.bonus) || 0;
+        const winning = parseFloat(data.winning) || 0;
+
+        const total = recharge + bonus + winning;
+
+        document.getElementById("wallet").innerText = total.toFixed(2);
+        document.getElementById("recharge").innerText = recharge.toFixed(2);
+        document.getElementById("bonus").innerText = bonus.toFixed(2);
+        document.getElementById("winning").innerText = winning.toFixed(2);
+
+        balance = total;
       });
     }
 
@@ -84,7 +108,7 @@
       if (!amt || amt <= 0 || amt > balance || !currentMatchId) return alert("Invalid or insufficient balance!");
 
       currentBet = { color, amount: amt };
-      db.ref("users/" + userId + "/wallet").transaction(val => (val || 0) - amt);
+      db.ref("users/" + userId + "/walletBreakup/winning").transaction(w => (w || 0) - amt);
       db.ref("colorGame/matches/" + currentMatchId + "/bets/" + userId).set(currentBet);
       document.getElementById("userBetsBox").innerText = `You bet ₹${amt} on ${color.toUpperCase()}`;
     }
@@ -100,7 +124,7 @@
       if (currentBet) {
         if (currentBet.color === result) {
           let winAmt = result === "violet" ? currentBet.amount * 5 : currentBet.amount * 2;
-          db.ref("users/" + userId + "/wallet").transaction(val => (val || 0) + winAmt);
+          db.ref("users/" + userId + "/walletBreakup/winning").transaction(w => (w || 0) + winAmt);
           showPopup("🎉 You won ₹" + winAmt.toFixed(2), 'win');
         } else {
           showPopup("😞 You lost!", 'lose');
