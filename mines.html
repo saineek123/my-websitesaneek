@@ -1,3 +1,4 @@
+<!-- FINAL: mines.html with full wallet breakdown -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -25,6 +26,10 @@
       padding: 10px 20px;
       border-radius: 8px;
       margin-bottom: 10px;
+      font-size: 15px;
+    }
+    .wallet span {
+      color: #00f7ff;
     }
     #dailyRewardBtn {
       margin-bottom: 15px;
@@ -90,9 +95,17 @@
 </head>
 <body>
   <h1>💣 Mines Game + 🎁 Daily Reward</h1>
-  <div class="wallet">Wallet: ₹<span id="wallet">0</span></div>
+
+  <!-- ✅ Full Wallet Breakdown -->
+  <div class="wallet">
+    💰 Total: ₹<span id="totalBalance">0</span><br>
+    💳 Recharge: ₹<span id="rechargeBalance">0</span> |
+    🎁 Bonus: ₹<span id="bonusBalance">0</span> |
+    🏆 Winning: ₹<span id="winningBalance">0</span>
+  </div>
+
   <button id="dailyRewardBtn" onclick="claimDailyReward()">🎁 Claim ₹5 Daily Bonus</button>
-  
+
   <div class="controls">
     <input type="number" id="betAmount" placeholder="Enter Bet Amount">
     <select id="mineCount">
@@ -121,14 +134,19 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const walletEl = document.getElementById("wallet");
-    const messageEl = document.getElementById("message");
+    const userId = localStorage.getItem("userId");
     const gridEl = document.getElementById("grid");
     const rewardBtn = document.getElementById("dailyRewardBtn");
-    const userId = localStorage.getItem("userId");
+    const messageEl = document.getElementById("message");
+
+    const totalEl = document.getElementById("totalBalance");
+    const rechargeEl = document.getElementById("rechargeBalance");
+    const bonusEl = document.getElementById("bonusBalance");
+    const winningEl = document.getElementById("winningBalance");
+
     const mineCountSelect = document.getElementById("mineCount");
 
-    let wallet = 0;
+    let wallet = { recharge: 0, bonus: 0, winning: 0 };
     let bet = 0;
     let multiplier = 1;
     let mines = [];
@@ -140,10 +158,14 @@
     if (userId) {
       db.ref("users/" + userId).on("value", snap => {
         const data = snap.val() || {};
-        wallet = data.wallet || 0;
-        walletEl.innerText = wallet.toFixed(2);
+        wallet = data.wallet || { recharge: 0, bonus: 0, winning: 0 };
+        const total = (wallet.recharge || 0) + (wallet.bonus || 0) + (wallet.winning || 0);
 
-        // Check reward timer
+        totalEl.innerText = total.toFixed(2);
+        rechargeEl.innerText = (wallet.recharge || 0).toFixed(2);
+        bonusEl.innerText = (wallet.bonus || 0).toFixed(2);
+        winningEl.innerText = (wallet.winning || 0).toFixed(2);
+
         const last = data.lastClaim || 0;
         const now = Date.now();
         rewardBtn.disabled = (now - last < 86400000);
@@ -166,14 +188,18 @@
           return;
         }
 
-        const newBalance = (data.wallet || 0) + rewardAmount;
+        const newWinning = (data.wallet?.winning || 0) + rewardAmount;
+        const updatedWallet = {
+          recharge: data.wallet?.recharge || 0,
+          bonus: data.wallet?.bonus || 0,
+          winning: newWinning
+        };
 
         userRef.update({
-          wallet: newBalance,
+          wallet: updatedWallet,
           lastClaim: now
         });
 
-        walletEl.innerText = newBalance.toFixed(2);
         alert(`🎉 You got ₹${rewardAmount} as daily reward!`);
         rewardBtn.disabled = true;
       });
@@ -182,17 +208,37 @@
     function startGame() {
       bet = parseFloat(document.getElementById("betAmount").value);
       mineCount = parseInt(mineCountSelect.value);
+      const totalBal = wallet.recharge + wallet.bonus + wallet.winning;
 
-      if (isNaN(bet) || bet <= 0 || bet > wallet) {
+      if (isNaN(bet) || bet <= 0 || bet > totalBal) {
         messageEl.innerText = "Invalid bet amount.";
         return;
       }
 
-      wallet -= bet;
-      walletEl.innerText = wallet.toFixed(2);
-      if (userId) {
-        db.ref("users/" + userId + "/wallet").set(wallet);
+      // Deduct from wallet: winning → bonus → recharge
+      let remaining = bet;
+      if (wallet.winning >= remaining) {
+        wallet.winning -= remaining;
+        remaining = 0;
+      } else {
+        remaining -= wallet.winning;
+        wallet.winning = 0;
       }
+
+      if (remaining > 0 && wallet.bonus >= remaining) {
+        wallet.bonus -= remaining;
+        remaining = 0;
+      } else if (remaining > 0) {
+        remaining -= wallet.bonus;
+        wallet.bonus = 0;
+      }
+
+      if (remaining > 0 && wallet.recharge >= remaining) {
+        wallet.recharge -= remaining;
+        remaining = 0;
+      }
+
+      db.ref("users/" + userId + "/wallet").set(wallet);
 
       multiplier = 1;
       revealed = [];
@@ -246,11 +292,8 @@
         return;
       }
       const win = Math.floor(bet * multiplier * 0.95);
-      wallet += win;
-      walletEl.innerText = wallet.toFixed(2);
-      if (userId) {
-        db.ref("users/" + userId + "/wallet").set(wallet);
-      }
+      wallet.winning += win;
+      db.ref("users/" + userId + "/wallet").set(wallet);
 
       messageEl.innerText = `🎉 You cashed out ₹${win}`;
       gameStarted = false;
