@@ -91,7 +91,7 @@
     <h2>Withdraw Request</h2>
 
     <div id="balanceDisplay">
-      Current Balance: ₹<span id="balanceAmount">Loading...</span>
+      Winnings Balance: ₹<span id="balanceAmount">Loading...</span>
     </div>
 
     <form id="withdrawForm">
@@ -143,10 +143,13 @@
       window.location.href = "login.html";
     }
 
-    // Show real-time wallet balance
+    let winningBalance = 0;
+
+    // ✅ Load only winning balance
     db.ref("users/" + userId + "/wallet").on("value", (snap) => {
-      const balance = snap.val() || 0;
-      document.getElementById("balanceAmount").textContent = balance.toFixed(2);
+      const wallet = snap.val() || {};
+      winningBalance = wallet.winning || 0;
+      document.getElementById("balanceAmount").textContent = winningBalance.toFixed(2);
     });
 
     document.getElementById("withdrawForm").addEventListener("submit", function (e) {
@@ -173,35 +176,39 @@
         return;
       }
 
-      // Check balance before making request
-      db.ref("users/" + userId + "/wallet").once("value").then((snap) => {
-        const currentBalance = snap.val() || 0;
+      if (amount > winningBalance) {
+        alert("❌ You do not have enough winnings balance to withdraw.");
+        return;
+      }
 
-        if (currentBalance < amount) {
-          alert("❌ Insufficient balance.");
-          return;
+      const withdrawRequest = {
+        amount,
+        upi,
+        account: accountNumber,
+        ifsc,
+        holder,
+        date: new Date().toLocaleString(),
+        status: "pending"
+      };
+
+      // ✅ Deduct winnings balance from Firebase
+      const userWalletRef = db.ref("users/" + userId + "/wallet");
+      userWalletRef.transaction(wallet => {
+        if (wallet && wallet.winning >= amount) {
+          wallet.winning -= amount;
+          return wallet;
+        } else {
+          alert("Insufficient winnings balance during processing.");
+          return; // abort
         }
-
-        const withdrawRequest = {
-          amount,
-          upi,
-          account: accountNumber,
-          ifsc,
-          holder,
-          date: new Date().toLocaleString(),
-          status: "pending"
-        };
-
-        db.ref("withdraws/" + userId).push(withdrawRequest).then(() => {
-          // Deduct from wallet
-          const newBalance = currentBalance - amount;
-          db.ref("users/" + userId + "/wallet").set(newBalance);
-
-          alert("✅ Withdraw request submitted successfully!");
-          document.getElementById("withdrawForm").reset();
-        }).catch((error) => {
-          alert("Error: " + error.message);
-        });
+      }).then(() => {
+        // Store withdraw request
+        return db.ref("withdraws/" + userId).push(withdrawRequest);
+      }).then(() => {
+        alert("✅ Withdraw request submitted successfully!");
+        document.getElementById("withdrawForm").reset();
+      }).catch((error) => {
+        alert("Error: " + error.message);
       });
     });
   </script>
