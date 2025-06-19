@@ -1,22 +1,26 @@
-<!-- FINAL: color_game.html -->
+<!-- FINAL MOBILE-FRIENDLY COLOR GAME UI (UPDATED + FIXED) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Color Game</title>
+  <title>Color Betting Game</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <style>
-    body { font-family: 'Poppins', sans-serif; background: #111; color: white; text-align: center; }
-    .wallet { background: #222; padding: 10px; display: flex; justify-content: space-between; }
-    .wallet span { color: yellow; }
-    button { padding: 10px 20px; margin: 10px; border-radius: 6px; font-size: 16px; border: none; }
+    body { margin: 0; font-family: 'Poppins', sans-serif; background: #111; color: #fff; }
+    .wallet { display: flex; justify-content: space-between; padding: 10px 15px; background: #222; }
+    .wallet span { color: yellow; font-weight: bold; }
+    .header { text-align: center; padding: 15px 0; font-size: 24px; background: #000; color: #0ff; }
+    .container { padding: 15px; text-align: center; }
+    .container input, .container button { width: 90%; max-width: 300px; margin: 10px auto; padding: 10px; font-size: 16px; border-radius: 6px; border: none; }
+    .color-btns button { width: 30%; margin: 1%; font-size: 18px; font-weight: bold; }
     .red { background: red; color: white; }
     .black { background: black; color: white; }
     .violet { background: purple; color: white; }
-    #resultBox { font-size: 24px; margin-top: 20px; }
-    .popup { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); padding:20px; border-radius:10px; z-index:999; font-weight:bold; }
+    .info { margin-top: 10px; font-size: 16px; }
+    .history { margin-top: 20px; font-size: 14px; color: #ccc; }
+    .popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 20px; border-radius: 10px; z-index: 999; font-weight: bold; text-align: center; }
     .win { background: #00ffcc; color: black; }
     .lose { background: #ffcccc; color: black; }
   </style>
@@ -30,20 +34,27 @@
     </div>
   </div>
 
-  <h2>🎯 Color Betting Game</h2>
-  <div>⏳ Time left: <span id="timer">--</span>s</div>
-  <div>Period: <span id="periodId">--</span></div>
-  
-  <div>
+  <div class="header">🎯 Color Betting Game</div>
+
+  <div class="container">
+    <div class="info">
+      Period: <span id="periodId">--</span><br>
+      ⏳ Time left: <span id="timer">--</span>s
+    </div>
+
     <input type="number" id="amount" placeholder="Enter Amount ₹" />
-    <button class="red" onclick="placeBet('red')">Red</button>
-    <button class="black" onclick="placeBet('black')">Black</button>
-    <button class="violet" onclick="placeBet('violet')">Violet</button>
+
+    <div class="color-btns">
+      <button class="red" onclick="placeBet('red')">RED</button>
+      <button class="black" onclick="placeBet('black')">BLACK</button>
+      <button class="violet" onclick="placeBet('violet')">VIOLET</button>
+    </div>
+
+    <div id="userBetsBox" class="info"></div>
+    <div id="resultBox" class="info" style="font-size: 20px; margin-top: 10px;"></div>
+    <div id="historyBox" class="history"></div>
   </div>
 
-  <div id="userBetsBox"></div>
-  <div id="resultBox"></div>
-  <div id="historyBox"></div>
   <div id="popupBox"></div>
 
   <script>
@@ -103,20 +114,24 @@
       if (!matchId) return;
       currentMatchId = matchId;
       document.getElementById("periodId").innerText = matchId;
+      document.getElementById("resultBox").innerText = "";
+      document.getElementById("userBetsBox").innerText = "";
 
       db.ref("colorGame/matches/" + matchId + "/startTime").once("value").then(snap => {
         const startTime = snap.val();
         if (!startTime) return;
 
         const timerEl = document.getElementById("timer");
-        let timer = setInterval(() => {
+        clearInterval(window.timerInterval);
+        let timer = () => {
           const left = Math.max(0, 30 - Math.floor((Date.now() - startTime) / 1000));
           timerEl.innerText = left;
-          if (left === 0) clearInterval(timer);
-        }, 1000);
+          if (left <= 0) clearInterval(window.timerInterval);
+        };
+        timer();
+        window.timerInterval = setInterval(timer, 1000);
       });
 
-      // Listen for result
       db.ref("colorGame/matches/" + matchId + "/result").on("value", snap => {
         const result = snap.val();
         if (!result) return;
