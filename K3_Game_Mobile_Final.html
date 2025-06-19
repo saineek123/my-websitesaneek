@@ -1,4 +1,4 @@
-<!-- FINAL: k3.html - With Fixed Result Show & Separated History View -->
+<!-- FINAL: k3.html - With Result Fix and Full Features -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -99,53 +99,60 @@
     };
 
     const rollDice = (matchId) => {
-      db.ref("k3game/matches/" + matchId + "/result").once("value").then(snapshot => {
-        const res = snapshot.val();
-        if (!res) return;
-
-        const { dice1, dice2, dice3 } = res;
-        const em = ["", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
-        const sum = dice1 + dice2 + dice3;
-        document.getElementById("diceBox").innerText = `${em[dice1]} ${em[dice2]} ${em[dice3]}`;
-
-        let win = 0;
-        let userPlacedBet = currentBets.length > 0;
-
-        currentBets.forEach(b => {
-          if ((b.choice === 'Small' && sum >= 3 && sum <= 10) || (b.choice === 'Big' && sum >= 11 && sum <= 18)) {
-            win += b.amount * 2;
-          } else if (parseInt(b.choice) === sum) {
-            win += b.amount * 9;
+      const pollForResult = () => {
+        db.ref("k3game/matches/" + matchId + "/result").once("value").then(snapshot => {
+          const res = snapshot.val();
+          if (!res) {
+            setTimeout(pollForResult, 1000);
+            return;
           }
+
+          const { dice1, dice2, dice3 } = res;
+          const em = ["", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
+          const sum = dice1 + dice2 + dice3;
+          document.getElementById("diceBox").innerText = `${em[dice1]} ${em[dice2]} ${em[dice3]}`;
+
+          let win = 0;
+          let userPlacedBet = currentBets.length > 0;
+
+          currentBets.forEach(b => {
+            if ((b.choice === 'Small' && sum >= 3 && sum <= 10) || (b.choice === 'Big' && sum >= 11 && sum <= 18)) {
+              win += b.amount * 2;
+            } else if (parseInt(b.choice) === sum) {
+              win += b.amount * 9;
+            }
+          });
+
+          if (userPlacedBet) {
+            if (win > 0) {
+              db.ref("users/" + userId + "/wallet").transaction(val => (val || 0) + win);
+              showPopup(`🎉 You Won ₹${win.toFixed(2)}!`, 'win');
+            } else {
+              showPopup("😞 You Lost!", 'lose');
+            }
+          }
+
+          history.unshift({ sum, matchId, bs: sum <= 10 ? "Small" : "Big" });
+          if (history.length > 10) history.pop();
+
+          const numHtml = history.map(x => `<span>${x.sum}</span>`).join('');
+          const bsHtml = history.map(x => `<span>${x.bs}</span>`).join('');
+          const matchHtml = history.map(x => `<span>${x.matchId}</span>`).join('');
+
+          document.getElementById("historyBox").innerHTML = `
+            <div><b>Number:</b><br/>${numHtml}</div>
+            <div><b>Big/Small:</b><br/>${bsHtml}</div>
+            <div><b>Period:</b><br/>${matchHtml}</div>
+          `;
+
+          bets = [];
+          currentBets = [];
+          renderButtons();
+          document.getElementById("userBetsBox").innerHTML = "";
         });
+      };
 
-        if (userPlacedBet) {
-          if (win > 0) {
-            db.ref("users/" + userId + "/wallet").transaction(val => (val || 0) + win);
-            showPopup(`🎉 You Won ₹${win.toFixed(2)}!`, 'win');
-          } else {
-            showPopup("😞 You Lost!", 'lose');
-          }
-        }
-
-        history.unshift({ sum, matchId, bs: sum <= 10 ? "Small" : "Big" });
-        if (history.length > 10) history.pop();
-
-        const numHtml = history.map(x => `<span>${x.sum}</span>`).join('');
-        const bsHtml = history.map(x => `<span>${x.bs}</span>`).join('');
-        const matchHtml = history.map(x => `<span>${x.matchId}</span>`).join('');
-
-        document.getElementById("historyBox").innerHTML = `
-          <div><b>Number:</b><br/>${numHtml}</div>
-          <div><b>Big/Small:</b><br/>${bsHtml}</div>
-          <div><b>Period:</b><br/>${matchHtml}</div>
-        `;
-
-        bets = [];
-        currentBets = [];
-        renderButtons();
-        document.getElementById("userBetsBox").innerHTML = "";
-      });
+      pollForResult();
     };
 
     const showPopup = (msg, type) => {
@@ -198,4 +205,3 @@
   </script>
 </body>
 </html>
-
