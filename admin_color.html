@@ -1,0 +1,102 @@
+<!-- FINAL: admin_color.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Color Control</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <style>
+    body { font-family: 'Poppins', sans-serif; background: #111; color: white; text-align: center; padding: 20px; }
+    h2 { color: #0ff; }
+    button { padding: 12px 20px; font-size: 18px; margin: 10px; border: none; border-radius: 6px; }
+    .red { background: red; color: white; }
+    .black { background: black; color: white; }
+    .violet { background: purple; color: white; }
+    .start { background: green; color: white; }
+    .info { margin-top: 20px; font-size: 18px; }
+  </style>
+</head>
+<body>
+  <h2>🎮 Admin Control Panel - Color Game</h2>
+
+  <button class="start" onclick="startNewRound()">Start New Round</button>
+
+  <div class="info">
+    Current Match ID: <span id="matchId">--</span><br/>
+    Timer: <span id="timer">--</span>s<br/>
+    Result: <span id="currentResult">--</span>
+  </div>
+
+  <h3>Set Result</h3>
+  <button class="red" onclick="setResult('red')">RED</button>
+  <button class="black" onclick="setResult('black')">BLACK</button>
+  <button class="violet" onclick="setResult('violet')">VIOLET</button>
+
+  <script>
+    const config = {
+      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+      authDomain: "betting-app-43800.firebaseapp.com",
+      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+      projectId: "betting-app-43800"
+    };
+    firebase.initializeApp(config);
+    const db = firebase.database();
+
+    let currentMatchId = null;
+
+    function startNewRound() {
+      const matchId = "R" + Date.now();
+      const startTime = Date.now();
+
+      db.ref("colorGame/currentMatchId").set(matchId);
+      db.ref("colorGame/matches/" + matchId).set({
+        startTime: startTime,
+        result: ""
+      });
+
+      currentMatchId = matchId;
+      document.getElementById("matchId").innerText = matchId;
+      document.getElementById("currentResult").innerText = "--";
+
+      // Timer countdown
+      let t = 30;
+      const timerEl = document.getElementById("timer");
+      const interval = setInterval(() => {
+        t--;
+        timerEl.innerText = t;
+        if (t <= 0) clearInterval(interval);
+      }, 1000);
+    }
+
+    function setResult(color) {
+      if (!currentMatchId) return alert("Start a round first");
+      db.ref("colorGame/matches/" + currentMatchId + "/result").set(color);
+      document.getElementById("currentResult").innerText = color.toUpperCase();
+    }
+
+    // Auto show current round info if reload
+    db.ref("colorGame/currentMatchId").on("value", snap => {
+      const matchId = snap.val();
+      if (!matchId) return;
+      currentMatchId = matchId;
+      document.getElementById("matchId").innerText = matchId;
+
+      db.ref("colorGame/matches/" + matchId).on("value", snap2 => {
+        const data = snap2.val();
+        if (!data) return;
+        document.getElementById("currentResult").innerText = data.result || "--";
+
+        let t = 30 - Math.floor((Date.now() - data.startTime) / 1000);
+        const timerEl = document.getElementById("timer");
+        clearInterval(window.timerInterval);
+        window.timerInterval = setInterval(() => {
+          timerEl.innerText = Math.max(0, --t);
+          if (t <= 0) clearInterval(window.timerInterval);
+        }, 1000);
+      });
+    });
+  </script>
+</body>
+</html>
