@@ -1,3 +1,4 @@
+<!-- FINAL: slots.html with wallet breakdown -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -54,6 +55,11 @@
     .back-link a:hover {
       text-decoration: underline;
     }
+    .wallet-info {
+      font-size: 15px;
+      margin: 10px 0 25px;
+      color: #00e5ff;
+    }
   </style>
 </head>
 <body>
@@ -70,7 +76,15 @@
 
   <div class="container">
     <h2>Slot Machine</h2>
-    <p><strong>Balance:</strong> ₹<span id="balance">0</span></p>
+    
+    <!-- ✅ Wallet Breakdown -->
+    <div class="wallet-info">
+      💰 Total: ₹<span id="totalBalance">0</span><br>
+      💳 Recharge: ₹<span id="rechargeBalance">0</span> |
+      🎁 Bonus: ₹<span id="bonusBalance">0</span> |
+      🏆 Winning: ₹<span id="winningBalance">0</span>
+    </div>
+
     <p>
       <strong>Bet Amount:</strong>
       <input type="number" id="betAmount" value="10" min="1" />
@@ -100,34 +114,73 @@
     const db = firebase.database();
 
     const userId = localStorage.getItem("userId");
-    const balanceEl = document.getElementById("balance");
     const slotsEl = document.getElementById("slots");
     const resultMessage = document.getElementById("resultMessage");
 
-    let balance = 0;
+    const totalEl = document.getElementById("totalBalance");
+    const rechargeEl = document.getElementById("rechargeBalance");
+    const bonusEl = document.getElementById("bonusBalance");
+    const winningEl = document.getElementById("winningBalance");
+
+    let currentWallet = { recharge: 0, bonus: 0, winning: 0 };
 
     if (!userId) {
       alert("User not logged in.");
       window.location.href = "login.html";
     } else {
       db.ref("users/" + userId + "/wallet").on("value", snap => {
-        balance = snap.val() || 0;
-        balanceEl.innerText = balance;
+        const wallet = snap.val() || {};
+        currentWallet = {
+          recharge: wallet.recharge || 0,
+          bonus: wallet.bonus || 0,
+          winning: wallet.winning || 0
+        };
+        const total = currentWallet.recharge + currentWallet.bonus + currentWallet.winning;
+
+        totalEl.innerText = total.toFixed(2);
+        rechargeEl.innerText = currentWallet.recharge.toFixed(2);
+        bonusEl.innerText = currentWallet.bonus.toFixed(2);
+        winningEl.innerText = currentWallet.winning.toFixed(2);
       });
     }
 
     function spinSlot() {
       const bet = parseInt(document.getElementById("betAmount").value);
+      const totalBalance = currentWallet.recharge + currentWallet.bonus + currentWallet.winning;
+
       if (isNaN(bet) || bet <= 0) {
         alert("Please enter a valid bet amount.");
         return;
       }
-      if (balance < bet) {
+      if (totalBalance < bet) {
         alert("Insufficient balance!");
         return;
       }
 
-      balance -= bet;
+      // Deduction logic: use winning → bonus → recharge
+      let remaining = bet;
+      let updatedWallet = { ...currentWallet };
+
+      if (updatedWallet.winning >= remaining) {
+        updatedWallet.winning -= remaining;
+        remaining = 0;
+      } else {
+        remaining -= updatedWallet.winning;
+        updatedWallet.winning = 0;
+      }
+
+      if (remaining > 0 && updatedWallet.bonus >= remaining) {
+        updatedWallet.bonus -= remaining;
+        remaining = 0;
+      } else if (remaining > 0) {
+        remaining -= updatedWallet.bonus;
+        updatedWallet.bonus = 0;
+      }
+
+      if (remaining > 0 && updatedWallet.recharge >= remaining) {
+        updatedWallet.recharge -= remaining;
+        remaining = 0;
+      }
 
       const symbols = ["🍒", "🍋", "🍇", "🍊", "🍉"];
       let s1, s2, s3;
@@ -148,7 +201,7 @@
       if (s1 === s2 && s2 === s3) {
         const multiplier = 10;
         const reward = bet * multiplier;
-        balance += reward;
+        updatedWallet.winning += reward;
         resultMessage.style.color = '#00ff99';
         resultMessage.innerText = `🎉 Jackpot! You won ₹${reward} (×${multiplier})`;
       } else {
@@ -156,8 +209,7 @@
         resultMessage.innerText = `😞 You lost! Try again.`;
       }
 
-      balanceEl.innerText = balance;
-      db.ref("users/" + userId + "/wallet").set(balance);
+      db.ref("users/" + userId + "/wallet").set(updatedWallet);
     }
   </script>
 </body>
