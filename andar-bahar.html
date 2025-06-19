@@ -52,6 +52,7 @@
     .info {
       text-align: center;
       margin-bottom: 1rem;
+      font-size: 0.95rem;
     }
     .middle-card {
       margin: 0 auto 1rem;
@@ -145,7 +146,6 @@
 <h1>🎴 Andar Bahar 🎴</h1>
 
 <div class="game-container">
-
   <div class="robot-girl">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke="#00796b" stroke-width="2">
       <rect x="14" y="20" width="36" height="28" rx="6" ry="6" fill="#a7ffeb"/>
@@ -161,8 +161,11 @@
 
   <div class="play-area">
     <div class="info">
-      <strong>User:</strong> <span id="userName">Guest</span> |
-      <strong>Balance:</strong> ₹<span id="userBalance">0</span>
+      <strong>User:</strong> <span id="userName">Guest</span><br>
+      <strong>Recharge:</strong> ₹<span id="rechargeBal">0</span> |
+      <strong>Bonus:</strong> ₹<span id="bonusBal">0</span> |
+      <strong>Winning:</strong> ₹<span id="winningBal">0</span><br>
+      <strong>Total:</strong> ₹<span id="userBalance">0</span>
     </div>
 
     <div class="bet-container">
@@ -187,7 +190,6 @@
   </div>
 </div>
 
-<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
@@ -210,9 +212,26 @@
   }
 
   document.getElementById("userName").innerText = user.username || "Guest";
-  db.ref("users/" + userId + "/wallet").on("value", snap => {
-    document.getElementById("userBalance").innerText = snap.val() || 0;
-  });
+
+  const userBalanceEl = document.getElementById("userBalance");
+  let winning = 0;
+
+  function loadWalletBreakdown() {
+    db.ref("users/" + userId + "/wallet").on("value", (snapshot) => {
+      const wallet = snapshot.val();
+      if (wallet) {
+        const recharge = parseFloat(wallet.recharge || 0);
+        const bonus = parseFloat(wallet.bonus || 0);
+        winning = parseFloat(wallet.winning || 0);
+        const total = recharge + bonus + winning;
+
+        document.getElementById("rechargeBal").innerText = recharge.toFixed(2);
+        document.getElementById("bonusBal").innerText = bonus.toFixed(2);
+        document.getElementById("winningBal").innerText = winning.toFixed(2);
+        userBalanceEl.innerText = total.toFixed(2);
+      }
+    });
+  }
 
   const suits = ["♠", "♥", "♦", "♣"];
   const values = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
@@ -272,6 +291,12 @@
       return;
     }
 
+    if (bet > winning) {
+      alert("❌ Winning balance कम है!");
+      playing = false;
+      return;
+    }
+
     betInput.disabled = true;
     btnAndar.disabled = true;
     btnBahar.disabled = true;
@@ -302,21 +327,20 @@
       i++;
     }
 
-    let balance = parseFloat(document.getElementById("userBalance").innerText) || 0;
     let userWins = matchSide === userChoice;
-
     if (userWins) {
-      balance += bet;
+      winning += bet;
       resultEl.classList.remove('red');
       resultEl.textContent = `✅ Bet: ₹${bet.toFixed(2)} on ${userChoice.toUpperCase()} | 🎉 Jeet Gaye! ₹${bet.toFixed(2)}`;
     } else {
-      balance -= bet;
+      winning -= bet;
       resultEl.classList.add('red');
       resultEl.textContent = `❌ Bet: ₹${bet.toFixed(2)} on ${userChoice.toUpperCase()} | 😞 Haar Gaye!`;
     }
 
-    document.getElementById("userBalance").innerText = balance.toFixed(2);
-    db.ref("users/" + userId + "/wallet").set(balance);
+    db.ref("users/" + userId + "/wallet").update({
+      winning: parseFloat(winning.toFixed(2))
+    });
 
     btnReset.disabled = false;
   }
@@ -325,6 +349,7 @@
   btnBahar.onclick = () => makeChoice('bahar');
   btnReset.onclick = startGame;
 
+  loadWalletBreakdown();
   startGame();
 </script>
 
