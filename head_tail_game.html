@@ -99,130 +99,155 @@
 
   <div class="result" id="result">Place your bet to start!</div>
 
-  <div class="stats" id="stats">
-    Total Games: 0 | Wins: 0 | Losses: 0 | Balance: ₹<span id="walletBalance">0</span>
-  </div>
+ <div class="stats" id="stats">
+  💰 Total: ₹<span id="totalBalance">0</span><br>
+  💳 Recharge: ₹<span id="rechargeBalance">0</span> |
+  🎁 Bonus: ₹<span id="bonusBalance">0</span> |
+  🏆 Winning: ₹<span id="winningBalance">0</span>
+</div>
+
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
-      authDomain: "betting-app-43800.firebaseapp.com",
-      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
-      projectId: "betting-app-43800",
-      storageBucket: "betting-app-43800.appspot.com",
-      messagingSenderId: "752263307747",
-      appId: "1:752263307747:web:183e06d62bc5920fc700d6"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+    authDomain: "betting-app-43800.firebaseapp.com",
+    databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+    projectId: "betting-app-43800"
+  };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const userId = localStorage.getItem("userId");
 
-    const userId = localStorage.getItem("userId");
-    if (!userId) {
-      alert("User not logged in.");
-      window.location.href = "login.html";
+  if (!userId) {
+    alert("User not logged in.");
+    window.location.href = "login.html";
+  }
+
+  const coin = document.getElementById("coin");
+  const resultDiv = document.getElementById("result");
+  const betInput = document.getElementById("betAmount");
+
+  const totalEl = document.getElementById("totalBalance");
+  const rechargeEl = document.getElementById("rechargeBalance");
+  const bonusEl = document.getElementById("bonusBalance");
+  const winningEl = document.getElementById("winningBalance");
+
+  let totalGames = 0;
+  let wins = 0;
+  let losses = 0;
+  let wallet = { recharge: 0, bonus: 0, winning: 0 };
+
+  // Load wallet
+  function loadWallet() {
+    db.ref("users/" + userId + "/wallet").on("value", (snap) => {
+      wallet = snap.val() || { recharge: 0, bonus: 0, winning: 0 };
+      const total = wallet.recharge + wallet.bonus + wallet.winning;
+
+      totalEl.innerText = total.toFixed(2);
+      rechargeEl.innerText = wallet.recharge.toFixed(2);
+      bonusEl.innerText = wallet.bonus.toFixed(2);
+      winningEl.innerText = wallet.winning.toFixed(2);
+    });
+  }
+
+  function updateWallet(newWallet) {
+    db.ref("users/" + userId + "/wallet").set(newWallet);
+  }
+
+  function flipCoin(userBet) {
+    const bet = parseFloat(betInput.value);
+    const totalBalance = wallet.recharge + wallet.bonus + wallet.winning;
+
+    if (isNaN(bet) || bet <= 0) {
+      alert("Enter valid bet amount!");
+      return;
     }
 
-    const coin = document.getElementById("coin");
-    const resultDiv = document.getElementById("result");
-    const statsDiv = document.getElementById("stats");
-    const betInput = document.getElementById("betAmount");
-    const walletSpan = document.getElementById("walletBalance");
-
-    let totalGames = 0;
-    let wins = 0;
-    let losses = 0;
-    let walletBalance = 0;
-
-    // Load wallet from Firebase
-    function loadWallet() {
-      db.ref("users/" + userId).once("value")
-        .then(snapshot => {
-          const userData = snapshot.val();
-          walletBalance = userData?.wallet || 0;
-          walletSpan.textContent = walletBalance;
-        })
-        .catch(error => {
-          console.error("Wallet load error:", error.message);
-        });
+    if (totalBalance < bet) {
+      alert("Insufficient balance!");
+      return;
     }
 
-    function updateWalletInFirebase(newBalance) {
-      db.ref("users/" + userId).update({ wallet: newBalance })
-        .then(() => {
-          walletSpan.textContent = newBalance;
-        })
-        .catch(err => {
-          alert("Error updating wallet!");
-          console.error(err);
-        });
+    // Deduction: Winning → Bonus → Recharge
+    let remaining = bet;
+    if (wallet.winning >= remaining) {
+      wallet.winning -= remaining;
+      remaining = 0;
+    } else {
+      remaining -= wallet.winning;
+      wallet.winning = 0;
     }
 
-    function flipCoin(userBet) {
-      const bet = parseInt(betInput.value);
-      if (isNaN(bet) || bet <= 0) {
-        alert("Please enter a valid bet amount!");
-        return;
+    if (remaining > 0 && wallet.bonus >= remaining) {
+      wallet.bonus -= remaining;
+      remaining = 0;
+    } else if (remaining > 0) {
+      remaining -= wallet.bonus;
+      wallet.bonus = 0;
+    }
+
+    if (remaining > 0 && wallet.recharge >= remaining) {
+      wallet.recharge -= remaining;
+      remaining = 0;
+    }
+
+    // Flip animation
+    const midFace = Math.random() < 0.5 ? "head.png.jpg" : "tail.png.jpg";
+    coin.src = midFace;
+    coin.classList.remove("flip");
+    void coin.offsetWidth;
+    coin.classList.add("flip");
+
+    setTimeout(() => {
+      const outcome = Math.random() < 0.5 ? "HEAD" : "TAIL";
+      coin.src = outcome === "HEAD" ? "head.png.jpg" : "tail.png.jpg";
+
+      totalGames++;
+      let win = false;
+      if (userBet === outcome) {
+        wins++;
+        const reward = bet * 2;
+        wallet.winning += reward;
+        resultDiv.textContent = `🎉 You WON ₹${bet}! It was ${outcome}`;
+        resultDiv.style.color = "green";
+        win = true;
+      } else {
+        losses++;
+        resultDiv.textContent = `😞 You LOST ₹${bet}! It was ${outcome}`;
+        resultDiv.style.color = "red";
       }
 
-      if (bet > walletBalance) {
-        alert("Insufficient balance!");
-        return;
-      }
-
-      // Mid-animation: show random face
-      const midFace = Math.random() < 0.5 ? "head.png.jpg" : "tail.png.jpg";
-      coin.src = midFace;
-
-      coin.classList.remove("flip");
-      void coin.offsetWidth;
-      coin.classList.add("flip");
-
-      setTimeout(() => {
-        const outcome = Math.random() < 0.5 ? "HEAD" : "TAIL";
-        const outcomeImage = outcome === "HEAD" ? "head.png.jpg" : "tail.png.jpg";
-        coin.src = outcomeImage;
-
-        totalGames++;
-        if (userBet === outcome) {
-          wins++;
-          walletBalance += bet;
-          resultDiv.textContent = `🎉 You WON ₹${bet}! It was ${outcome}`;
-          resultDiv.style.color = "green";
-        } else {
-          losses++;
-          walletBalance -= bet;
-          resultDiv.textContent = `😞 You LOST ₹${bet}! It was ${outcome}`;
-          resultDiv.style.color = "red";
-        }
-
-        updateWalletInFirebase(walletBalance);
-        updateStats();
-      }, 1000);
-    }
-
-    function updateStats() {
-      statsDiv.innerHTML = `Total Games: ${totalGames} | Wins: ${wins} | Losses: ${losses} | Balance: ₹<span id="walletBalance">${walletBalance}</span>`;
-    }
-
-    function resetGame() {
-      totalGames = 0;
-      wins = 0;
-      losses = 0;
-      resultDiv.textContent = "Place your bet to start!";
-      resultDiv.style.color = "#333";
-      coin.src = "head.png.jpg";
-      betInput.value = "";
+      updateWallet(wallet);
       updateStats();
-      loadWallet();
-    }
+    }, 1000);
+  }
 
-    // Initial load
-    loadWallet();
-  </script>
+  function updateStats() {
+    const total = wallet.recharge + wallet.bonus + wallet.winning;
+    totalEl.innerText = total.toFixed(2);
+    rechargeEl.innerText = wallet.recharge.toFixed(2);
+    bonusEl.innerText = wallet.bonus.toFixed(2);
+    winningEl.innerText = wallet.winning.toFixed(2);
+  }
+
+  function resetGame() {
+    totalGames = 0;
+    wins = 0;
+    losses = 0;
+    resultDiv.textContent = "Place your bet to start!";
+    resultDiv.style.color = "#333";
+    coin.src = "head.png.jpg";
+    betInput.value = "";
+    updateStats();
+  }
+
+  loadWallet();
+</script>
+
 </body>
 </html>
