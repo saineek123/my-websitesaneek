@@ -2,89 +2,96 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Wallet</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: #0f0f0f;
+      font-family: 'Poppins', sans-serif;
+      background: radial-gradient(circle at top, #141e30, #243b55);
+      min-height: 100vh;
       color: #fff;
       display: flex;
-      justify-content: center;
       align-items: center;
-      min-height: 100vh;
+      justify-content: center;
+      padding: 20px;
     }
-    .wallet-card {
-      width: 100%;
-      max-width: 400px;
-      background: #1c1c1c;
-      padding: 24px;
+    .wallet-container {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 20px;
-      box-shadow: 0 15px 30px rgba(0, 255, 255, 0.1);
+      padding: 30px 40px;
+      max-width: 400px;
+      width: 100%;
+      backdrop-filter: blur(15px);
+      box-shadow: 0 8px 30px rgba(0, 255, 255, 0.1);
+    }
+    h1 {
       text-align: center;
-      transition: transform 0.3s ease;
+      margin-bottom: 25px;
+      font-size: 2em;
+      color: #00f7ff;
     }
-    .wallet-card:hover {
-      transform: scale(1.02);
-    }
-    .wallet-header h2 {
-      margin-bottom: 16px;
-      font-size: 26px;
-      color: #00e5ff;
-    }
-    .balance-box {
-      background: #2a2a2a;
-      margin: 10px 0;
-      padding: 14px;
-      border-radius: 12px;
-      font-size: 18px;
-      color: #eee;
+    .balance-row {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      margin: 15px 0;
+      font-size: 1.1em;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
     }
-    .balance-box span {
-      color: #00e5ff;
+    .balance-row span:last-child {
       font-weight: bold;
     }
-    .wallet-actions button {
-      display: block;
-      width: 100%;
-      margin-top: 12px;
-      padding: 14px;
-      font-size: 16px;
+    .total {
+      font-size: 1.3em;
+      color: #27ffbf;
+      border-bottom: none;
+      margin-top: 20px;
+    }
+    .btn-group {
+      display: flex;
+      gap: 15px;
+      margin-top: 30px;
+    }
+    button {
+      flex: 1;
+      padding: 12px;
+      font-size: 1em;
       border: none;
-      border-radius: 10px;
-      background-color: #00e5ff;
-      color: #000;
-      font-weight: bold;
+      border-radius: 30px;
       cursor: pointer;
-      transition: background 0.3s;
+      transition: 0.3s ease;
+      font-weight: 600;
     }
-    .wallet-actions button:hover {
-      background-color: #00bcd4;
+    #btnRecharge {
+      background: linear-gradient(135deg, #00c6ff, #0072ff);
+      color: #fff;
+    }
+    #btnWithdraw {
+      background: linear-gradient(135deg, #ff512f, #dd2476);
+      color: #fff;
+    }
+    button:hover {
+      transform: scale(1.05);
     }
   </style>
 </head>
 <body>
-  <div class="wallet-card">
-    <div class="wallet-header">
-      <h2>My Wallet</h2>
-    </div>
-    <div class="balance-box">
-      <div>Current Balance</div>
-      <span id="balanceAmount">Loading...</span>
-    </div>
-    <div class="wallet-actions">
-      <button onclick="openRecharge()">Recharge</button>
-      <button onclick="openWithdraw()">Withdraw</button>
+
+  <div class="wallet-container">
+    <h1>My Wallet</h1>
+    <div class="balance-row"><span>Recharge Balance</span><span id="recharge">₹0</span></div>
+    <div class="balance-row"><span>Bonus Balance</span><span id="bonus">₹0</span></div>
+    <div class="balance-row"><span>Winning Balance</span><span id="winning">₹0</span></div>
+    <div class="balance-row total"><span>Total Balance</span><span id="total">₹0</span></div>
+    <div class="btn-group">
+      <button id="btnRecharge">Recharge</button>
+      <button id="btnWithdraw">Withdraw</button>
     </div>
   </div>
-
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
   <script>
     const firebaseConfig = {
@@ -93,30 +100,36 @@
       databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
       projectId: "betting-app-43800"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    const rechargeEl = document.getElementById('recharge');
+    const bonusEl = document.getElementById('bonus');
+    const winningEl = document.getElementById('winning');
+    const totalEl = document.getElementById('total');
+
     const userId = localStorage.getItem("userId");
     if (!userId) {
-      alert("User not logged in.");
+      alert("User not logged in");
       window.location.href = "login.html";
     }
 
-    // ✅ Fetch balance like index.html & withdraw.html
-    const balanceEl = document.getElementById("balanceAmount");
     db.ref("users/" + userId + "/wallet").on("value", (snap) => {
-      const balance = parseFloat(snap.val() || 0);
-      balanceEl.innerText = balance.toFixed(2);
+      const wallet = snap.val() || {};
+      const recharge = wallet.recharge || 0;
+      const bonus = wallet.bonus || 0;
+      const winning = wallet.winning || 0;
+      const total = recharge + bonus + winning;
+
+      rechargeEl.innerText = `₹${recharge.toFixed(2)}`;
+      bonusEl.innerText = `₹${bonus.toFixed(2)}`;
+      winningEl.innerText = `₹${winning.toFixed(2)}`;
+      totalEl.innerText = `₹${total.toFixed(2)}`;
     });
 
-    function openRecharge() {
-      window.location.href = "recharge.html";
-    }
-
-    function openWithdraw() {
-      window.location.href = "withdraw.html";
-    }
+    document.getElementById("btnRecharge").onclick = () => window.location.href = "recharge.html";
+    document.getElementById("btnWithdraw").onclick = () => window.location.href = "withdraw.html";
   </script>
+
 </body>
 </html>
