@@ -1,4 +1,3 @@
-<!-- FINAL: k3.html - With Result Fix and Full Features -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,7 +9,7 @@
   <style>
     body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #f857a6, #ff5858); margin:0; color:white; }
     .header { text-align:center; padding:16px; font-size:22px; font-weight:bold; background: rgba(0,0,0,0.2); }
-    .wallet { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background: rgba(255,255,255,0.1); font-size:16px; }
+    .wallet { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background: rgba(255,255,255,0.1); font-size:16px; flex-wrap: wrap; gap: 5px; }
     .wallet span { font-weight:bold; color:#ffff00; }
     .wallet button { background:#00e0ff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; }
     .container { max-width: 420px; margin:auto; padding: 20px; }
@@ -35,7 +34,10 @@
 <body>
   <div class="header">🎲 K3 Dice Game</div>
   <div class="wallet">
-    Wallet: ₹<span id="wallet">0</span>
+    💳 Recharge: ₹<span id="rechargeBalance">0</span> |
+    🎁 Bonus: ₹<span id="bonusBalance">0</span> |
+    🏆 Winning: ₹<span id="winningBalance">0</span> |
+    💰 Total: ₹<span id="totalBalance">0</span>
     <div>
       <a href="recharge.html"><button>Deposit</button></a>
       <a href="withdraw.html"><button>Withdraw</button></a>
@@ -74,10 +76,25 @@
     let balance = 0;
     let bets = [], currentBets = [], history = [];
 
+    const rechargeEl = document.getElementById("rechargeBalance");
+    const bonusEl = document.getElementById("bonusBalance");
+    const winningEl = document.getElementById("winningBalance");
+    const totalEl = document.getElementById("totalBalance");
+
     const updateWallet = () => {
       db.ref("users/" + userId + "/wallet").on("value", snap => {
-        balance = snap.val() || 0;
-        document.getElementById("wallet").innerText = balance.toFixed(2);
+        const wallet = snap.val() || {};
+        const recharge = wallet.recharge || 0;
+        const bonus = wallet.bonus || 0;
+        const winning = wallet.winning || 0;
+        const total = recharge + bonus + winning;
+
+        rechargeEl.innerText = recharge.toFixed(2);
+        bonusEl.innerText = bonus.toFixed(2);
+        winningEl.innerText = winning.toFixed(2);
+        totalEl.innerText = total.toFixed(2);
+
+        balance = total;
       });
     };
 
@@ -90,7 +107,25 @@
         return;
       }
       currentBets = bets.map(b => ({ choice: b, amount: amt }));
-      db.ref("users/" + userId + "/wallet").transaction(val => (val || 0) - amt * bets.length);
+      db.ref("users/" + userId + "/wallet").transaction(w => {
+        w = w || {};
+        let total = (w.recharge || 0) + (w.bonus || 0) + (w.winning || 0);
+        if (total < amt * bets.length) return; // insufficient
+        const deduct = amt * bets.length;
+        if ((w.winning || 0) >= deduct) w.winning -= deduct;
+        else if ((w.bonus || 0) + (w.winning || 0) >= deduct) {
+          const fromBonus = deduct - (w.winning || 0);
+          w.winning = 0;
+          w.bonus -= fromBonus;
+        } else {
+          const fromRecharge = deduct - (w.bonus || 0) - (w.winning || 0);
+          w.winning = 0;
+          w.bonus = 0;
+          w.recharge -= fromRecharge;
+        }
+        return w;
+      });
+
       const matchId = window.currentMatchId;
       currentBets.forEach(b => {
         db.ref("k3game/matches/" + matchId + "/bets/" + userId + "/" + b.choice).set({ amount: amt });
@@ -125,7 +160,7 @@
 
           if (userPlacedBet) {
             if (win > 0) {
-              db.ref("users/" + userId + "/wallet").transaction(val => (val || 0) + win);
+              db.ref("users/" + userId + "/wallet/winning").transaction(val => (val || 0) + win);
               showPopup(`🎉 You Won ₹${win.toFixed(2)}!`, 'win');
             } else {
               showPopup("😞 You Lost!", 'lose');
