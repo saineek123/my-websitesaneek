@@ -70,8 +70,12 @@
     <div class="info">
       <p><strong>Username:</strong> <span id="userName">Loading...</span></p>
       <p><strong>Email:</strong> <span id="userEmail">N/A</span></p>
-      <p><strong>Balance:</strong> ₹<span id="userBalance">0</span></p>
-      
+      <p><strong>Total Balance:</strong> ₹<span id="totalBalance">0</span></p>
+      <p style="font-size: 14px; color: #ccc;">
+        💳 Recharge: ₹<span id="rechargeBalance">0</span> |
+        🎁 Bonus: ₹<span id="bonusBalance">0</span> |
+        🏆 Winning: ₹<span id="winningBalance">0</span>
+      </p>
     </div>
 
     <div class="buttons">
@@ -112,10 +116,22 @@
 
     const userId = localStorage.getItem("userId");
     if (userId) {
-      const walletEl = document.getElementById("userBalance");
+      const totalEl = document.getElementById("totalBalance");
+      const rechargeEl = document.getElementById("rechargeBalance");
+      const bonusEl = document.getElementById("bonusBalance");
+      const winningEl = document.getElementById("winningBalance");
+
       db.ref("users/" + userId + "/wallet").on("value", (snap) => {
-        const balance = snap.val() || 0;
-        walletEl.innerText = balance;
+        const wallet = snap.val() || {};
+        const recharge = wallet.recharge || 0;
+        const bonus = wallet.bonus || 0;
+        const winning = wallet.winning || 0;
+        const total = recharge + bonus + winning;
+
+        totalEl.innerText = total.toFixed(2);
+        rechargeEl.innerText = recharge.toFixed(2);
+        bonusEl.innerText = bonus.toFixed(2);
+        winningEl.innerText = winning.toFixed(2);
       });
     }
 
