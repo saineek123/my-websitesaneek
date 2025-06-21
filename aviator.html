@@ -3,30 +3,49 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Aviator Game - Final</title>
+  <title>Aviator Game</title>
   <style>
     body {
       margin: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #0f0f0f;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(to bottom right, #0d0d0d, #1a1a1a);
       color: #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
-      min-height: 100vh;
-      padding: 20px 0;
+      padding: 20px;
+    }
+
+    h2 {
+      margin: 10px 0 5px;
+    }
+
+    .wallet {
+      text-align: center;
+      margin-bottom: 20px;
+      background: #222;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 0 8px rgba(0,255,255,0.2);
+    }
+
+    .wallet p {
+      margin: 6px 0;
+      font-size: 16px;
+    }
+
+    .wallet span {
+      color: #00e5ff;
     }
 
     .game-container {
       background-color: #1c1c1c;
       padding: 20px;
       border-radius: 16px;
-      width: 90%;
+      width: 100%;
       max-width: 400px;
       box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
       text-align: center;
-      margin-bottom: 20px;
     }
 
     .multiplier {
@@ -91,11 +110,12 @@
 
     .history-container {
       background-color: #1c1c1c;
-      width: 90%;
+      width: 100%;
       max-width: 400px;
       padding: 15px;
       border-radius: 16px;
       box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+      margin-top: 30px;
       max-height: 220px;
       overflow-y: auto;
     }
@@ -112,22 +132,32 @@
       padding-bottom: 4px;
     }
   </style>
+
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 </head>
 <body>
+
+  <div class="wallet">
+    <h2>💼 Wallet Balance</h2>
+    <p>Total: ₹<span id="totalBalance">0</span></p>
+    <p>💳 Recharge: ₹<span id="rechargeBalance">0</span> |
+       🎁 Bonus: ₹<span id="bonusBalance">0</span> |
+       🏆 Winning: ₹<span id="winningBalance">0</span></p>
+  </div>
+
   <div class="game-container">
-    <h2>Aviator Game</h2>
+    <h2>✈️ Aviator Game</h2>
     <div class="multiplier" id="multiplier">1.00x</div>
-    <div class="airplane" id="airplane">✈️</div>
+    <div class="airplane" id="airplane">🛩️</div>
     <input type="number" id="betAmount" placeholder="Enter your bet (₹)" min="1" />
     <button class="start-btn" onclick="startGame()">🎮 Start Game</button>
     <button class="cashout-btn" onclick="cashOut()" disabled id="cashOutBtn">💸 Cash Out</button>
-    <div class="status" id="status">Wallet Balance: ₹0</div>
+    <div class="status" id="status">Loading...</div>
   </div>
 
   <div class="history-container">
-    <h3>Game History</h3>
+    <h3>🕓 Game History</h3>
     <div id="historyList">Loading...</div>
   </div>
 
@@ -136,20 +166,13 @@
       apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
       authDomain: "betting-app-43800.firebaseapp.com",
       databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
-      projectId: "betting-app-43800",
-      storageBucket: "betting-app-43800.appspot.com",
-      messagingSenderId: "752263307747",
-      appId: "1:752263307747:web:183e06d62bc5920fc700d6"
+      projectId: "betting-app-43800"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Use localStorage userId or create guest ID
-    let userId = localStorage.getItem("userId");
-    if (!userId) {
-      userId = "guestUser";
-      localStorage.setItem("userId", userId);
-    }
+    const userId = localStorage.getItem("userId") || "guestUser";
+    localStorage.setItem("userId", userId);
 
     let multiplier = 1.0;
     let gameInterval;
@@ -163,47 +186,58 @@
     const statusEl = document.getElementById("status");
     const historyListEl = document.getElementById("historyList");
 
-    function updateBalanceDisplay() {
-      statusEl.innerText = `Wallet Balance: ₹${balance.toFixed(2)}`;
+    const rechargeEl = document.getElementById("rechargeBalance");
+    const bonusEl = document.getElementById("bonusBalance");
+    const winningEl = document.getElementById("winningBalance");
+    const totalEl = document.getElementById("totalBalance");
+
+    function updateWalletUI(wallet = {}) {
+      const recharge = wallet.recharge || 0;
+      const bonus = wallet.bonus || 0;
+      const winning = wallet.winning || 0;
+      balance = recharge + bonus + winning;
+
+      rechargeEl.innerText = recharge.toFixed(2);
+      bonusEl.innerText = bonus.toFixed(2);
+      winningEl.innerText = winning.toFixed(2);
+      totalEl.innerText = balance.toFixed(2);
     }
 
-    function loadBalance() {
-      const userRef = db.ref("users/" + userId);
-      userRef.once("value").then(snapshot => {
-        const data = snapshot.val();
-        if (data && typeof data.wallet === "number") {
-          balance = data.wallet;
-        } else {
-          balance = 1000;
-          userRef.set({ wallet: balance });
-        }
-        updateBalanceDisplay();
+    function loadWallet() {
+      db.ref("users/" + userId + "/wallet").on("value", (snap) => {
+        const wallet = snap.val() || {};
+        updateWalletUI(wallet);
       });
     }
 
-    function saveBalance() {
-      db.ref("users/" + userId).update({ wallet: balance });
+    function saveWallet(balance) {
+      db.ref("users/" + userId + "/wallet").once("value").then(snap => {
+        const wallet = snap.val() || {};
+        const total = (wallet.recharge || 0) + (wallet.bonus || 0) + (wallet.winning || 0);
+        const ratio = balance / total || 0;
+        const newWallet = {
+          recharge: (wallet.recharge || 0) * ratio,
+          bonus: (wallet.bonus || 0) * ratio,
+          winning: (wallet.winning || 0) * ratio
+        };
+        db.ref("users/" + userId + "/wallet").update(newWallet);
+      });
     }
 
     function addHistory(entry) {
-      const historyRef = db.ref("gameHistory/" + userId);
-      const newEntry = historyRef.push();
-      newEntry.set(entry);
+      const ref = db.ref("gameHistory/" + userId).push();
+      ref.set(entry);
     }
 
     function loadHistory() {
-      const historyRef = db.ref("gameHistory/" + userId).limitToLast(10);
-      historyRef.once("value").then(snapshot => {
+      db.ref("gameHistory/" + userId).limitToLast(10).on("value", snap => {
         historyListEl.innerHTML = "";
-        if (!snapshot.exists()) {
+        if (!snap.exists()) {
           historyListEl.innerText = "No history yet.";
           return;
         }
         const entries = [];
-        snapshot.forEach(child => {
-          entries.push(child.val());
-        });
-        // Show newest first
+        snap.forEach(child => entries.push(child.val()));
         entries.reverse().forEach(entry => {
           const div = document.createElement("div");
           div.className = "history-entry";
@@ -220,36 +254,26 @@
 
     function startGame() {
       bet = parseFloat(document.getElementById("betAmount").value);
-      if (isNaN(bet) || bet <= 0) {
-        alert("Enter a valid bet amount.");
-        return;
-      }
-      if (bet > balance) {
-        alert("Insufficient balance.");
+      if (isNaN(bet) || bet <= 0 || bet > balance) {
+        alert("Invalid or insufficient bet.");
         return;
       }
 
-      // Deduct bet
       balance -= bet;
-      saveBalance();
-      updateBalanceDisplay();
+      saveWallet(balance);
+      updateWalletUI();
 
       multiplier = 1.0;
       crashed = false;
       cashOutBtn.disabled = false;
-      multiplierEl.innerText = multiplier.toFixed(2) + "x";
-      statusEl.innerText = `Wallet Balance: ₹${balance.toFixed(2)}\nGame started!`;
+      multiplierEl.innerText = "1.00x";
+      statusEl.innerText = `🎮 Game Started!`;
 
       gameInterval = setInterval(() => {
         multiplier += 0.05 + Math.random() * 0.1;
         multiplierEl.innerText = multiplier.toFixed(2) + "x";
         updateAirplane();
-
-        // Crash chance: 10% chance each tick
-        // Adjusted for difficulty - can tune this formula
-        if (Math.random() > 0.9) {
-          crashGame();
-        }
+        if (Math.random() > 0.9) crashGame();
       }, 100);
     }
 
@@ -259,27 +283,22 @@
 
       const winnings = bet * multiplier;
       balance += winnings;
-      saveBalance();
-      updateBalanceDisplay();
-      statusEl.innerText += `\n🎉 You cashed out at ${multiplier.toFixed(2)}x.\nYou won ₹${winnings.toFixed(2)}`;
+      saveWallet(balance);
+      updateWalletUI();
       cashOutBtn.disabled = true;
-
+      statusEl.innerText += `\n🎉 Cashed out at ${multiplier.toFixed(2)}x\nYou won ₹${winnings.toFixed(2)}`;
       addHistory({ bet, multiplier, result: "Won" });
-      loadHistory();
     }
 
     function crashGame() {
       clearInterval(gameInterval);
       crashed = true;
-      statusEl.innerText += `\n💥 Crashed at ${multiplier.toFixed(2)}x.\nYou lost ₹${bet.toFixed(2)}`;
       cashOutBtn.disabled = true;
-
+      statusEl.innerText += `\n💥 Crashed at ${multiplier.toFixed(2)}x\nYou lost ₹${bet.toFixed(2)}`;
       addHistory({ bet, multiplier, result: "Lost" });
-      loadHistory();
     }
 
-    // Initial load
-    loadBalance();
+    loadWallet();
     loadHistory();
   </script>
 </body>
