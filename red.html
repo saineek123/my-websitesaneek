@@ -1,4 +1,3 @@
-<!-- FINAL COLOR GAME WITH WALLET BREAKDOWN -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -147,13 +146,13 @@
 
         const timerEl = document.getElementById("timer");
         clearInterval(window.timerInterval);
-        let timer = () => {
+        const updateTimer = () => {
           const left = Math.max(0, 30 - Math.floor((Date.now() - startTime) / 1000));
           timerEl.innerText = left;
           if (left <= 0) clearInterval(window.timerInterval);
         };
-        timer();
-        window.timerInterval = setInterval(timer, 1000);
+        updateTimer();
+        window.timerInterval = setInterval(updateTimer, 1000);
       });
 
       db.ref("colorGame/matches/" + matchId + "/result").on("value", snap => {
