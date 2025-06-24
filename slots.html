@@ -1,8 +1,9 @@
-<!-- FINAL: slots.html with wallet breakdown -->
+<!-- FINAL: slots.html (Mobile Friendly) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Slot Machine</title>
   <style>
     body {
@@ -11,21 +12,61 @@
       color: #fff;
       text-align: center;
       padding: 20px;
+      margin: 0;
     }
+
+    nav {
+      background: #222;
+      padding: 10px;
+      text-align: center;
+    }
+
+    nav a {
+      color: white;
+      margin: 8px;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 14px;
+    }
+
     .container {
-      max-width: 400px;
+      max-width: 420px;
       margin: auto;
       background: #1c1c1c;
-      padding: 30px;
+      padding: 25px;
       border-radius: 12px;
       box-shadow: 0 0 10px rgba(0,255,255,0.2);
     }
+
+    h2 {
+      font-size: 24px;
+      margin-bottom: 15px;
+    }
+
+    .wallet-info {
+      font-size: 15px;
+      margin-bottom: 20px;
+      color: #00e5ff;
+      word-wrap: break-word;
+    }
+
+    input {
+      padding: 10px;
+      font-size: 16px;
+      width: 100%;
+      max-width: 150px;
+      border-radius: 6px;
+      border: none;
+      margin-bottom: 10px;
+    }
+
     .slots {
-      font-size: 50px;
+      font-size: 48px;
       margin: 20px 0;
     }
+
     button {
-      padding: 12px;
+      padding: 14px;
       font-size: 16px;
       background-color: #00e5ff;
       border: none;
@@ -33,51 +74,64 @@
       cursor: pointer;
       color: black;
       width: 100%;
+      max-width: 300px;
     }
-    input {
-      padding: 10px;
-      font-size: 16px;
-      width: 100px;
-      border-radius: 6px;
-    }
+
     .result {
       margin-top: 20px;
       font-size: 18px;
       font-weight: bold;
     }
+
     .back-link {
       margin-top: 30px;
     }
+
     .back-link a {
       color: #00e5ff;
       text-decoration: none;
     }
+
     .back-link a:hover {
       text-decoration: underline;
     }
-    .wallet-info {
-      font-size: 15px;
-      margin: 10px 0 25px;
-      color: #00e5ff;
+
+    @media (max-width: 480px) {
+      .slots {
+        font-size: 36px;
+      }
+
+      nav a {
+        display: block;
+        margin: 6px 0;
+        font-size: 16px;
+      }
+
+      input {
+        max-width: 100%;
+      }
+
+      button {
+        max-width: 100%;
+      }
     }
   </style>
 </head>
 <body>
 
-  <nav style="background: #222; padding: 10px; text-align: center;">
-    <a href="index.html" style="color:white; margin:10px;">Home</a>
-    <a href="recharge.html" style="color:white; margin:10px;">Recharge</a>
-    <a href="withdraw.html" style="color:white; margin:10px;">Withdraw</a>
-    <a href="history.html" style="color:white; margin:10px;">History</a>
-    <a href="account.html" style="color:white; margin:10px;">Account</a>
-    <a href="support.html" style="color:white; margin:10px;">Support</a>
-    <a href="login.html" style="color:white; margin:10px;">Logout</a>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="recharge.html">Recharge</a>
+    <a href="withdraw.html">Withdraw</a>
+    <a href="history.html">History</a>
+    <a href="account.html">Account</a>
+    <a href="support.html">Support</a>
+    <a href="login.html">Logout</a>
   </nav>
 
   <div class="container">
     <h2>Slot Machine</h2>
     
-    <!-- ✅ Wallet Breakdown -->
     <div class="wallet-info">
       💰 Total: ₹<span id="totalBalance">0</span><br>
       💳 Recharge: ₹<span id="rechargeBalance">0</span> |
@@ -86,7 +140,7 @@
     </div>
 
     <p>
-      <strong>Bet Amount:</strong>
+      <strong>Bet Amount:</strong><br>
       <input type="number" id="betAmount" value="10" min="1" />
     </p>
 
@@ -157,7 +211,6 @@
         return;
       }
 
-      // Deduction logic: use winning → bonus → recharge
       let remaining = bet;
       let updatedWallet = { ...currentWallet };
 
