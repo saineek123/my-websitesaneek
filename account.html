@@ -3,7 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <title>My Account</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
@@ -13,51 +18,64 @@
 
     header {
       background-color: #1e1e1e;
-      padding: 20px;
+      padding: 16px;
       text-align: center;
     }
 
     header h1 {
       margin: 0;
-      font-size: 24px;
+      font-size: 22px;
     }
 
     .container {
-      max-width: 600px;
-      margin: 40px auto;
-      padding: 20px;
+      width: 95%;
+      max-width: 500px;
+      margin: 20px auto;
+      padding: 16px;
       background-color: #1c1c1c;
       border-radius: 12px;
       box-shadow: 0 0 10px rgba(0,0,0,0.5);
     }
 
-    .info {
-      margin-bottom: 20px;
+    .info p {
+      font-size: 16px;
+      margin: 8px 0;
+      word-wrap: break-word;
     }
 
-    .info p {
-      font-size: 18px;
-      margin: 10px 0;
+    .info p small {
+      font-size: 14px;
+      color: #ccc;
     }
 
     .buttons {
-      text-align: center;
-      margin-top: 30px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 25px;
     }
 
     button {
-      padding: 10px 20px;
-      margin: 10px;
+      flex: 1 1 45%;
+      padding: 10px;
       background: #00bcd4;
       border: none;
-      border-radius: 5px;
+      border-radius: 6px;
       color: #000;
       font-weight: bold;
+      font-size: 14px;
       cursor: pointer;
     }
 
     button:hover {
       background: #0097a7;
+    }
+
+    @media (max-width: 400px) {
+      button {
+        flex: 1 1 100%;
+      }
     }
   </style>
 </head>
@@ -71,11 +89,11 @@
       <p><strong>Username:</strong> <span id="userName">Loading...</span></p>
       <p><strong>Email:</strong> <span id="userEmail">N/A</span></p>
       <p><strong>Total Balance:</strong> ₹<span id="totalBalance">0</span></p>
-      <p style="font-size: 14px; color: #ccc;">
+      <p><small>
         💳 Recharge: ₹<span id="rechargeBalance">0</span> |
         🎁 Bonus: ₹<span id="bonusBalance">0</span> |
         🏆 Winning: ₹<span id="winningBalance">0</span>
-      </p>
+      </small></p>
     </div>
 
     <div class="buttons">
@@ -83,7 +101,7 @@
       <button onclick="window.location.href='change-password.html'">🔐 Change Password</button>
       <button onclick="window.location.href='recharge.history.html'">📜 Recharge History</button>
       <button onclick="window.location.href='withdraw.history.html'">📜 Withdraw History</button>
-      <button onclick="window.location.href='support.html'">📞 Customer Support</button>
+      <button onclick="window.location.href='support.html'">📞 Support</button>
       <button onclick="window.location.href='settings.html'">⚙️ Settings</button>
       <button onclick="window.location.href='withdraw.html'">💸 Withdraw</button>
       <button onclick="logout()">🚪 Logout</button>
@@ -103,9 +121,7 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-  </script>
 
-  <script>
     const user = JSON.parse(localStorage.getItem("loggedInUser"));
     if (!user) {
       window.location.href = "login.html";
