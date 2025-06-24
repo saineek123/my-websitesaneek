@@ -1,59 +1,76 @@
-<!-- FINAL: bet.html with wallet breakdown -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Live Betting</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
       background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
       color: #fff;
-      padding: 20px;
       margin: 0;
+      padding: 0;
     }
     nav {
       background: #111;
-      padding: 15px;
+      padding: 10px;
       text-align: center;
+      overflow-x: auto;
+      white-space: nowrap;
     }
     nav a {
       color: #fff;
-      margin: 0 12px;
+      margin: 8px;
+      display: inline-block;
       text-decoration: none;
       font-weight: bold;
+      font-size: 14px;
     }
     h2 {
       text-align: center;
       margin-top: 20px;
-      font-size: 32px;
+      font-size: 24px;
+    }
+    .wallet-info {
+      text-align: center;
+      margin: 15px;
+      font-size: 14px;
+    }
+    .wallet-info span {
+      color: #00f7ff;
     }
     .matches {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 20px;
-      margin-top: 30px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
       padding: 10px;
     }
     .card {
       background: #1e2a38;
       border-radius: 12px;
-      padding: 20px;
+      padding: 15px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+      width: 90%;
+      max-width: 400px;
     }
     .card h3 {
-      margin-top: 0;
+      margin: 0 0 10px;
+      font-size: 18px;
       color: #00c6ff;
+      text-align: center;
     }
     .team-btn {
       display: flex;
       justify-content: space-between;
-      margin: 10px 0;
+      align-items: center;
       background: #263545;
-      padding: 12px 15px;
+      padding: 10px;
+      margin: 10px 0;
       border-radius: 8px;
       cursor: pointer;
-      transition: background 0.3s ease;
+      transition: background 0.3s;
     }
     .team-btn:hover {
       background: #35597c;
@@ -72,6 +89,7 @@
       border: none;
       border-radius: 6px;
       font-size: 16px;
+      box-sizing: border-box;
     }
     button {
       background-color: #00c6ff;
@@ -81,13 +99,27 @@
     button:hover {
       background-color: #0099cc;
     }
-    .wallet-info {
+    #matchesContainer p {
       text-align: center;
-      margin-top: 15px;
       font-size: 16px;
     }
-    .wallet-info span {
-      color: #00f7ff;
+
+    @media (max-width: 480px) {
+      h2 {
+        font-size: 20px;
+      }
+      .team-btn {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+      }
+      .wallet-info {
+        font-size: 13px;
+      }
+      nav a {
+        font-size: 12px;
+        margin: 5px;
+      }
     }
   </style>
 </head>
@@ -113,13 +145,14 @@
 </div>
 
 <h2>🔥 Place Your Bet</h2>
-  <a href="match-history.html" style="color: #ee1111;">View Bet History</a>
+<p style="text-align:center;"><a href="match-history.html" style="color:#ee1111;">View Bet History</a></p>
 <div class="matches" id="matchesContainer">Loading Matches...</div>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
+<!-- Your JS Script remains unchanged -->
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
@@ -131,6 +164,7 @@
   const db = firebase.database();
 </script>
 
+<!-- Place your full JavaScript logic below (same as what you already had) -->
 <script>
   const userId = localStorage.getItem("userId");
   if (!userId) {
@@ -141,7 +175,7 @@
   const selectedBets = {};
   const matches = [];
 
-  // 🔴 Show Full Wallet Info
+  // Wallet Info
   if (userId) {
     const totalEl = document.getElementById("totalBalance");
     const rechargeEl = document.getElementById("rechargeBalance");
@@ -162,7 +196,6 @@
     });
   }
 
-  // 🔄 Load Matches from Firebase
   db.ref("matches").on("value", (snapshot) => {
     matches.length = 0;
     snapshot.forEach((child) => {
@@ -240,10 +273,8 @@
         result: "pending"
       };
 
-      // Save bet in Firebase
       db.ref("users/" + userId + "/bets").push(betData);
 
-      // Deduct from winning first (or bonus/recharge if you want more logic)
       const newWinning = (wallet.winning || 0) >= amount ? (wallet.winning - amount) : 0;
       const usedFromBonus = (wallet.winning || 0) >= amount ? 0 : (amount - wallet.winning);
       const newBonus = (wallet.bonus || 0) >= usedFromBonus ? wallet.bonus - usedFromBonus : 0;
