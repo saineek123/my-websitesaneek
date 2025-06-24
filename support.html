@@ -3,16 +3,61 @@
 <head>
   <meta charset="UTF-8">
   <title>Customer Support</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       background-color: #111;
       color: #fff;
-      font-family: Arial, sans-serif;
-      padding: 20px;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
     }
+
+    nav {
+      background: #222;
+      padding: 10px;
+      text-align: center;
+      flex-wrap: wrap;
+    }
+
+    nav a {
+      color: white;
+      margin: 8px 6px;
+      text-decoration: none;
+      font-size: 14px;
+      display: inline-block;
+    }
+
+    .container {
+      width: 95%;
+      max-width: 450px;
+      margin: 20px auto;
+      background: #222;
+      padding: 20px;
+      border-radius: 10px;
+    }
+
     h2 {
       color: gold;
+      text-align: center;
     }
+
+    .contact-links {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .contact-links a {
+      display: inline-block;
+      margin: 5px 10px;
+      font-size: 16px;
+      text-decoration: none;
+    }
+
     input, textarea, button {
       width: 100%;
       padding: 10px;
@@ -21,43 +66,41 @@
       border-radius: 5px;
       border: none;
     }
+
+    textarea {
+      resize: vertical;
+    }
+
     button {
       background-color: gold;
       color: #000;
+      font-weight: bold;
       cursor: pointer;
     }
-    .container {
-      max-width: 400px;
-      margin: auto;
-      background: #222;
-      padding: 20px;
-      border-radius: 10px;
-    }
+
     .success {
       color: lightgreen;
       margin-top: 10px;
-    }
-    .contact-links {
       text-align: center;
-      margin-bottom: 20px;
     }
-    .contact-links a {
-      display: inline-block;
-      margin: 0 10px;
-      font-size: 18px;
-      text-decoration: none;
+
+    @media (max-width: 400px) {
+      nav a {
+        font-size: 13px;
+        margin: 5px 4px;
+      }
     }
   </style>
 </head>
 <body>
-  <nav style="background: #222; padding: 10px; text-align: center;">
-    <a href="index.html" style="color:white; margin:10px;">Home</a>
-    <a href="recharge.html" style="color:white; margin:10px;">Recharge</a>
-    <a href="withdraw.html" style="color:white; margin:10px;">Withdraw</a>
-    <a href="history.html" style="color:white; margin:10px;">History</a>
-    <a href="account.html" style="color:white; margin:10px;">Account</a>
-    <a href="support.html" style="color:white; margin:10px;">Support</a>
-    <a href="login.html" style="color:white; margin:10px;">Logout</a>
+  <nav>
+    <a href="index.html">🏠 Home</a>
+    <a href="recharge.html">💰 Recharge</a>
+    <a href="withdraw.html">💸 Withdraw</a>
+    <a href="history.html">📜 History</a>
+    <a href="account.html">👤 Account</a>
+    <a href="support.html">📞 Support</a>
+    <a href="login.html">🚪 Logout</a>
   </nav>
 
   <div class="container">
@@ -66,7 +109,7 @@
     <div class="contact-links">
       <h3>Connect with us:</h3>
       <a href="https://t.me/Manxamit" target="_blank" style="color: #0088cc;">📱 Telegram</a>
-      <a href="https://wa.me/91+9792368894" target="_blank" style="color: #25D366;">💬 WhatsApp</a>
+      <a href="https://wa.me/919792368894" target="_blank" style="color: #25D366;">💬 WhatsApp</a>
     </div>
 
     <input type="text" id="name" placeholder="Your Name" required>
@@ -111,6 +154,5 @@
       }
     });
   </script>
-  <script src="script.js"></script>
 </body>
 </html>
