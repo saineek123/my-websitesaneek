@@ -88,7 +88,7 @@
     <div class="info">
       <p><strong>Username:</strong> <span id="userName">Loading...</span></p>
       <p><strong>Email:</strong> <span id="userEmail">N/A</span></p>
-      <p><strong>Total Balance:</strong> ₹<span id="totalBalance">0</span></p>
+      <p><strong>Phone:</strong> <span id="userPhone">N/A</span></p>
       <p><small>
         💳 Recharge: ₹<span id="rechargeBalance">0</span> |
         🎁 Bonus: ₹<span id="bonusBalance">0</span> |
@@ -128,6 +128,7 @@
     } else {
       document.getElementById("userName").innerText = user.username || "Guest";
       document.getElementById("userEmail").innerText = user.email || "Not Provided";
+      document.getElementById("userPhone").innerText = user.phone || "Not Provided";
     }
 
     const userId = localStorage.getItem("userId");
