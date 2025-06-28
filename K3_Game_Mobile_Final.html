@@ -1,3 +1,4 @@
+<!-- FINAL: k3.html - With Result Fix and Full Features + Wallet Breakdown -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,8 +10,10 @@
   <style>
     body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #f857a6, #ff5858); margin:0; color:white; }
     .header { text-align:center; padding:16px; font-size:22px; font-weight:bold; background: rgba(0,0,0,0.2); }
-    .wallet { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background: rgba(255,255,255,0.1); font-size:16px; flex-wrap: wrap; gap: 5px; }
+    .wallet { padding:12px 16px; background: rgba(255,255,255,0.1); font-size:16px; }
+    .wallet-row { display: flex; justify-content: space-between; align-items: center; }
     .wallet span { font-weight:bold; color:#ffff00; }
+    .wallet-breakdown { font-size: 14px; margin-top: 6px; color: #fff; }
     .wallet button { background:#00e0ff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; }
     .container { max-width: 420px; margin:auto; padding: 20px; }
     .dice { text-align:center; font-size:60px; margin:20px 0; }
@@ -34,13 +37,18 @@
 <body>
   <div class="header">🎲 K3 Dice Game</div>
   <div class="wallet">
-    💳 Recharge: ₹<span id="rechargeBalance">0</span> |
-    🎁 Bonus: ₹<span id="bonusBalance">0</span> |
-    🏆 Winning: ₹<span id="winningBalance">0</span> |
-    💰 Total: ₹<span id="totalBalance">0</span>
-    <div>
-      <a href="recharge.html"><button>Deposit</button></a>
-      <a href="withdraw.html"><button>Withdraw</button></a>
+    <div class="wallet-row">
+      Wallet: ₹<span id="wallet">0</span>
+      <div>
+        <a href="recharge.html"><button>Deposit</button></a>
+        <a href="withdraw.html"><button>Withdraw</button></a>
+      </div>
+    </div>
+    <div class="wallet-breakdown">
+      Recharge: ₹<span id="rechargeBalance">0</span> |
+      Bonus: ₹<span id="bonusBalance">0</span> |
+      Winning: ₹<span id="winningBalance">0</span> |
+      Total: ₹<span id="totalBalance">0</span>
     </div>
   </div>
   <div class="container">
@@ -62,181 +70,117 @@
   </div>
   <div id="popupBox"></div>
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
-      authDomain: "betting-app-43800.firebaseapp.com",
-      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
-      projectId: "betting-app-43800"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+ <script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+    authDomain: "betting-app-43800.firebaseapp.com",
+    databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+    projectId: "betting-app-43800"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-    let userId = localStorage.getItem("userId") || "guest";
-    let balance = 0;
-    let bets = [], currentBets = [], history = [];
+  const userId = localStorage.getItem("userId") || "guest";
 
-    const rechargeEl = document.getElementById("rechargeBalance");
-    const bonusEl = document.getElementById("bonusBalance");
-    const winningEl = document.getElementById("winningBalance");
-    const totalEl = document.getElementById("totalBalance");
+  const updateWallet = () => {
+    db.ref("users/" + userId).on("value", snap => {
+      const data = snap.val() || {};
+      const recharge = data.recharge || 0;
+      const bonus = data.bonus || 0;
+      const winning = data.winning || 0;
+      const total = recharge + bonus + winning;
 
-    const updateWallet = () => {
-      db.ref("users/" + userId + "/wallet").on("value", snap => {
-        const wallet = snap.val() || {};
-        const recharge = wallet.recharge || 0;
-        const bonus = wallet.bonus || 0;
-        const winning = wallet.winning || 0;
-        const total = recharge + bonus + winning;
+      document.getElementById("wallet").innerText = total.toFixed(2);
+      document.getElementById("rechargeBalance").innerText = recharge;
+      document.getElementById("bonusBalance").innerText = bonus;
+      document.getElementById("winningBalance").innerText = winning;
+      document.getElementById("totalBalance").innerText = total;
+    });
+  };
 
-        rechargeEl.innerText = recharge.toFixed(2);
-        bonusEl.innerText = bonus.toFixed(2);
-        winningEl.innerText = winning.toFixed(2);
-        totalEl.innerText = total.toFixed(2);
+  updateWallet();
 
-        balance = total;
-      });
-    };
+  let currentMatchId = null;
+  let startTime = null;
+  let timerInterval;
 
-    const setAmt = amt => document.getElementById("amount").value = amt;
+  function startTimer(secondsLeft) {
+    clearInterval(timerInterval);
+    document.getElementById("timer").innerText = secondsLeft;
+    timerInterval = setInterval(() => {
+      secondsLeft--;
+      document.getElementById("timer").innerText = secondsLeft;
+      if (secondsLeft <= 0) clearInterval(timerInterval);
+    }, 1000);
+  }
 
-    const placeBet = () => {
-      const amt = parseFloat(document.getElementById("amount").value);
-      if (!amt || amt <= 0 || bets.length === 0 || amt * bets.length > balance) {
-        alert("Invalid or Insufficient Balance");
-        return;
-      }
-      currentBets = bets.map(b => ({ choice: b, amount: amt }));
-      db.ref("users/" + userId + "/wallet").transaction(w => {
-        w = w || {};
-        let total = (w.recharge || 0) + (w.bonus || 0) + (w.winning || 0);
-        if (total < amt * bets.length) return; // insufficient
-        const deduct = amt * bets.length;
-        if ((w.winning || 0) >= deduct) w.winning -= deduct;
-        else if ((w.bonus || 0) + (w.winning || 0) >= deduct) {
-          const fromBonus = deduct - (w.winning || 0);
-          w.winning = 0;
-          w.bonus -= fromBonus;
-        } else {
-          const fromRecharge = deduct - (w.bonus || 0) - (w.winning || 0);
-          w.winning = 0;
-          w.bonus = 0;
-          w.recharge -= fromRecharge;
-        }
-        return w;
-      });
-
-      const matchId = window.currentMatchId;
-      currentBets.forEach(b => {
-        db.ref("k3game/matches/" + matchId + "/bets/" + userId + "/" + b.choice).set({ amount: amt });
-      });
-      document.getElementById("userBetsBox").innerHTML = "Your Bets: " + currentBets.map(b => `<span>${b.choice} (₹${b.amount})</span>`).join(' ');
-    };
-
-    const rollDice = (matchId) => {
-      const pollForResult = () => {
-        db.ref("k3game/matches/" + matchId + "/result").once("value").then(snapshot => {
-          const res = snapshot.val();
-          if (!res) {
-            setTimeout(pollForResult, 1000);
-            return;
-          }
-
-          const { dice1, dice2, dice3 } = res;
-          const em = ["", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
-          const sum = dice1 + dice2 + dice3;
-          document.getElementById("diceBox").innerText = `${em[dice1]} ${em[dice2]} ${em[dice3]}`;
-
-          let win = 0;
-          let userPlacedBet = currentBets.length > 0;
-
-          currentBets.forEach(b => {
-            if ((b.choice === 'Small' && sum >= 3 && sum <= 10) || (b.choice === 'Big' && sum >= 11 && sum <= 18)) {
-              win += b.amount * 2;
-            } else if (parseInt(b.choice) === sum) {
-              win += b.amount * 9;
-            }
-          });
-
-          if (userPlacedBet) {
-            if (win > 0) {
-              db.ref("users/" + userId + "/wallet/winning").transaction(val => (val || 0) + win);
-              showPopup(`🎉 You Won ₹${win.toFixed(2)}!`, 'win');
-            } else {
-              showPopup("😞 You Lost!", 'lose');
-            }
-          }
-
-          history.unshift({ sum, matchId, bs: sum <= 10 ? "Small" : "Big" });
-          if (history.length > 10) history.pop();
-
-          const numHtml = history.map(x => `<span>${x.sum}</span>`).join('');
-          const bsHtml = history.map(x => `<span>${x.bs}</span>`).join('');
-          const matchHtml = history.map(x => `<span>${x.matchId}</span>`).join('');
-
-          document.getElementById("historyBox").innerHTML = `
-            <div><b>Number:</b><br/>${numHtml}</div>
-            <div><b>Big/Small:</b><br/>${bsHtml}</div>
-            <div><b>Period:</b><br/>${matchHtml}</div>
-          `;
-
-          bets = [];
-          currentBets = [];
-          renderButtons();
-          document.getElementById("userBetsBox").innerHTML = "";
-        });
-      };
-
-      pollForResult();
-    };
-
-    const showPopup = (msg, type) => {
-      const box = document.getElementById("popupBox");
-      box.innerHTML = `<div class='popup ${type}'>${msg}</div>`;
-      setTimeout(() => box.innerHTML = '', 3000);
-    };
-
-    const renderButtons = () => {
-      const box = document.getElementById("betButtons");
-      box.innerHTML = '';
-      ['Small','Big',...Array.from({length:16},(_,i)=>i+3)].forEach(opt => {
-        const btn = document.createElement("button");
-        btn.innerText = opt;
-        if (bets.includes(opt)) btn.classList.add("active");
-        btn.onclick = () => {
-          if (bets.includes(opt)) bets = bets.filter(x => x !== opt);
-          else bets.push(opt);
-          renderButtons();
-        };
-        box.appendChild(btn);
-      });
-    };
-
-    let gameInterval = null;
+  function loadMatch() {
     db.ref("k3game/currentMatchId").on("value", snap => {
-      const matchId = snap.val();
-      if (!matchId) return;
-      window.currentMatchId = matchId;
-      document.getElementById("periodId").innerText = matchId;
-
-      db.ref("k3game/matches/" + matchId + "/startTime").once("value").then(snap => {
-        const startTime = snap.val();
-        if (!startTime) return;
-
-        clearInterval(gameInterval);
-        gameInterval = setInterval(() => {
-          const timeLeft = Math.max(0, 30 - Math.floor((Date.now() - startTime) / 1000));
-          document.getElementById("timer").innerText = timeLeft;
-          if (timeLeft === 0) {
-            rollDice(matchId);
-            clearInterval(gameInterval);
-          }
-        }, 1000);
-      });
+      currentMatchId = snap.val();
+      document.getElementById("periodId").innerText = currentMatchId;
     });
 
-    updateWallet();
-    renderButtons();
-  </script>
+    db.ref("k3game/currentMatchStartTime").on("value", snap => {
+      const start = snap.val();
+      if (!start) return;
+      startTime = start;
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const remaining = 30 - elapsed;
+      if (remaining > 0) startTimer(remaining);
+    });
+
+    db.ref("k3game/matches").on("value", snap => {
+      const data = snap.val() || {};
+      const match = data[currentMatchId];
+      if (!match || !match.result) {
+        document.getElementById("diceBox").innerText = "🎲 🎲 🎲";
+        document.getElementById("resultBox").innerText = "";
+        return;
+      }
+      const { dice1, dice2, dice3 } = match.result;
+      const total = dice1 + dice2 + dice3;
+      document.getElementById("diceBox").innerText = `🎲 ${dice1} 🎲 ${dice2} 🎲 ${dice3}`;
+      document.getElementById("resultBox").innerText = `Result: ${total}`;
+    });
+  }
+
+  function setAmt(amt) {
+    document.getElementById("amount").value = amt;
+  }
+
+  function placeBet() {
+    const betAmount = parseInt(document.getElementById("amount").value);
+    if (!betAmount || betAmount <= 0) return alert("Enter valid amount");
+    if (!currentMatchId) return alert("No active match");
+
+    const betType = selectedBet;
+    if (!betType) return alert("Select a bet");
+
+    const betRef = db.ref(`k3game/matches/${currentMatchId}/bets/${userId}/${betType}`);
+    betRef.set({ amount: betAmount });
+
+    const userBetsBox = document.getElementById("userBetsBox");
+    const span = document.createElement("span");
+    span.innerText = `${betType} - ₹${betAmount}`;
+    userBetsBox.appendChild(span);
+  }
+
+  let selectedBet = null;
+  const betOptions = ["Big", "Small", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17"];
+  const betButtonsBox = document.getElementById("betButtons");
+  betOptions.forEach(option => {
+    const btn = document.createElement("button");
+    btn.innerText = option;
+    btn.onclick = () => {
+      selectedBet = option;
+      document.querySelectorAll("#betButtons button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+    };
+    betButtonsBox.appendChild(btn);
+  });
+
+  loadMatch();
+</script>
+
 </body>
 </html>
