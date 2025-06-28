@@ -1,4 +1,3 @@
-<!-- START OF FINAL dragon.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -59,12 +58,6 @@
       display: none;
     }
     .overlay.show {display: block;}
-    h1 {
-      color: #00e5ff;
-      margin: 20px;
-      font-size: 2rem;
-      text-shadow: 0 0 10px #00e5ff;
-    }
     .game-container {
       max-width: 700px;
       margin: 20px auto;
@@ -77,7 +70,6 @@
       font-size: 16px;
       margin-bottom: 15px;
       color: #ffdd57;
-      text-shadow: 0 0 5px #ffdd57;
       line-height: 1.6;
     }
     .cards {
@@ -130,14 +122,14 @@
       background-color: #00e5ff;
       color: #000;
     }
-    select, input[type="number"], button {
+    input[type=\"number\"], button {
       padding: 12px;
       margin: 10px;
       border: none;
       border-radius: 10px;
       font-size: 16px;
     }
-    input[type="number"] {
+    input[type=\"number\"] {
       background: #333;
       color: white;
     }
@@ -158,9 +150,7 @@
     }
   </style>
 </head>
-<body>
-
-<div class="overlay" id="overlay" onclick="toggleDrawer()"></div>
+<body><div class="overlay" id="overlay" onclick="toggleDrawer()"></div>
 <div class="drawer" id="drawer">
   <a href="index.html">🏠 Home</a>
   <a href="wallet.html">💰 Wallet</a>
@@ -169,12 +159,10 @@
 </div>
 
 <header>
-  <div class="menu-icon" onclick="toggleDrawer()">☰</div>
-  BIG WIN
+  <div class="menu-icon" onclick="toggleDrawer()">☰ MENU</div>
+  BIG WIN 
 </header>
-
 <h1>🔥 Dragon vs 🐯 Tiger vs 🎴 Tie</h1>
-
 <div class="game-container">
   <div class="balance">
     Recharge: ₹<span id="rechargeBal">0</span> |
@@ -210,8 +198,22 @@
   </div>
 
   <div class="result" id="resultMsg"></div>
+
+  <div class="history">
+    <h3 style="margin-top: 30px;">🕒 Last 10 Bets</h3>
+    <table style="width:100%;color:#ccc;font-size:14px;margin-top:10px;border-collapse: collapse;">
+      <thead>
+        <tr style="background:#222;">
+          <th>Choice</th><th>Dragon</th><th>Tiger</th><th>Result</th>
+          <th>Bet</th><th>Win</th><th>Time</th>
+        </tr>
+      </thead>
+      <tbody id="historyBody"></tbody>
+    </table>
+  </div>
 </div>
 
+<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 <script>
@@ -234,6 +236,11 @@
     document.getElementById("overlay").classList.toggle("show");
   }
 
+  function selectChoice(value) {
+    selectedChoice = value;
+    document.getElementById("selectedChoiceText").innerText = value.toUpperCase();
+  }
+
   function loadWallet() {
     db.ref("users/" + userId + "/wallet").on("value", snap => {
       const data = snap.val() || {};
@@ -248,9 +255,27 @@
     });
   }
 
-  function selectChoice(value) {
-    selectedChoice = value;
-    document.getElementById("selectedChoiceText").innerText = value.toUpperCase();
+  function renderHistory() {
+    db.ref("history/" + userId).limitToLast(10).once("value", snapshot => {
+      const body = document.getElementById("historyBody");
+      body.innerHTML = "";
+      const data = snapshot.val();
+      if (!data) return;
+      const items = Object.values(data).reverse();
+      items.forEach(log => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${log.choice}</td>
+          <td>${log.dragon}</td>
+          <td>${log.tiger}</td>
+          <td>${log.result}</td>
+          <td>₹${log.amount}</td>
+          <td>${log.win ? '✅ ₹'+log.payout : '❌'}</td>
+          <td>${log.time}</td>
+        `;
+        body.appendChild(tr);
+      });
+    });
   }
 
   function getRandomCard() {
@@ -262,13 +287,20 @@
     const choice = selectedChoice;
     const bet = parseFloat(document.getElementById("betAmount").value);
     if (!bet || bet < 10) return alert("Minimum ₹10 required");
-    if (recharge < bet) return alert("❌ Insufficient Recharge Balance");
+    if ((recharge + winning) < bet) return alert("❌ Insufficient balance");
 
-    recharge -= bet;
+    let fromRecharge = 0, fromWinning = 0;
+    if (recharge >= bet) {
+      fromRecharge = bet;
+    } else {
+      fromRecharge = recharge;
+      fromWinning = bet - recharge;
+    }
+    recharge -= fromRecharge;
+    winning -= fromWinning;
 
     const dragon = getRandomCard();
     const tiger = getRandomCard();
-
     document.getElementById("dragonCard").textContent = dragon;
     document.getElementById("tigerCard").textContent = tiger;
     document.getElementById("tieCard").textContent = dragon === tiger ? "✓" : "-";
@@ -308,18 +340,19 @@
       winning: parseFloat(winning.toFixed(2))
     });
 
-    document.getElementById("resultMsg").innerText = `${result} - You ${won ? 'Win ₹' + winAmount : 'Lose'}!`;
+    document.getElementById("resultMsg").innerText =
+      `You chose: ${choice.toUpperCase()} | ${result} - You ${won ? 'Win ₹' + winAmount : 'Lose'}!`;
 
     const gameLog = {
       choice, dragon, tiger, result, amount: bet,
       win: won, payout: winAmount, time: new Date().toLocaleString()
     };
     db.ref("history/" + userId).push(gameLog);
+    renderHistory();
   }
 
   loadWallet();
+  renderHistory();
 </script>
-
 </body>
 </html>
-<!-- END OF FINAL -->
