@@ -793,176 +793,171 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
-      authDomain: "betting-app-43800.firebaseapp.com",
-      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
-      projectId: "betting-app-43800"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    
-    function toggleDrawer() {
-      const drawer = document.getElementById("drawer");
-      const overlay = document.getElementById("overlay");
-      drawer.classList.toggle("open");
-      overlay.classList.toggle("show");
-    }
-    
-    // Mines game data
-    let minesData = {
-      gamesPlayed: 0,
-      totalWins: 0,
-      lastWin: 0
-    };
-    
-    // Load mines data from localStorage
-    function loadMinesData() {
-      const savedData = localStorage.getItem("minesData");
-      if (savedData) {
-        minesData = JSON.parse(savedData);
-        updateMinesUI();
-      }
-    }
-    
-    // Save mines data to localStorage
-    function saveMinesData() {
-      localStorage.setItem("minesData", JSON.stringify(minesData));
-    }
-    
-    // Update mines UI
-    function updateMinesUI() {
-      document.getElementById("minesGamesPlayed").textContent = minesData.gamesPlayed;
-      document.getElementById("minesTotalWins").textContent = minesData.totalWins.toFixed(2);
-      document.getElementById("minesLastWin").textContent = minesData.lastWin.toFixed(2);
-    }
-    
-    // Simulate a win for demo purposes
-    function simulateMinesWin() {
-      minesData.gamesPlayed++;
-      const winAmount = Math.floor(Math.random() * 500) + 50;
-      minesData.totalWins += winAmount;
-      minesData.lastWin = winAmount;
-      saveMinesData();
+  <!-- Replace the existing Firebase script block with this corrected version -->
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+    authDomain: "betting-app-43800.firebaseapp.com",
+    databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+    projectId: "betting-app-43800"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  
+  function toggleDrawer() {
+    const drawer = document.getElementById("drawer");
+    const overlay = document.getElementById("overlay");
+    drawer.classList.toggle("open");
+    overlay.classList.toggle("show");
+  }
+  
+  // Mines game data
+  let minesData = {
+    gamesPlayed: 0,
+    totalWins: 0,
+    lastWin: 0
+  };
+  
+  // Load mines data from localStorage
+  function loadMinesData() {
+    const savedData = localStorage.getItem("minesData");
+    if (savedData) {
+      minesData = JSON.parse(savedData);
       updateMinesUI();
     }
+  }
+  
+  // Save mines data to localStorage
+  function saveMinesData() {
+    localStorage.setItem("minesData", JSON.stringify(minesData));
+  }
+  
+  // Update mines UI
+  function updateMinesUI() {
+    document.getElementById("minesGamesPlayed").textContent = minesData.gamesPlayed;
+    document.getElementById("minesTotalWins").textContent = minesData.totalWins.toFixed(2);
+    document.getElementById("minesLastWin").textContent = minesData.lastWin.toFixed(2);
+  }
+  
+  // Simulate a win for demo purposes
+  function simulateMinesWin() {
+    minesData.gamesPlayed++;
+    const winAmount = Math.floor(Math.random() * 500) + 50;
+    minesData.totalWins += winAmount;
+    minesData.lastWin = winAmount;
+    saveMinesData();
+    updateMinesUI();
+  }
+  
+  // Initialize mines data
+  loadMinesData();
+  
+  // Simulate a win every 30 seconds for demo
+  setInterval(simulateMinesWin, 30000);
+
+  const user = JSON.parse(localStorage.getItem("loggedInUser"));
+  if (!user) {
+    window.location.href = "login.html";
+  } else {
+    document.getElementById("userName").innerText = user.username || "Guest";
+    document.getElementById("drawerUserName").innerText = user.username || "Guest";
+  }
+
+  const userId = localStorage.getItem("userId");
+  if (userId) {
+    const totalEl = document.getElementById("totalBalance");
+    const drawerBalanceEl = document.getElementById("drawerBalance");
+
+    db.ref("users/" + userId + "/wallet").on("value", (snap) => {
+      const wallet = snap.val() || {};
+      const recharge = wallet.recharge || 0;
+      const bonus = wallet.bonus || 0;
+      const winning = wallet.winning || 0;
+      const total = recharge + bonus + winning;
+
+      totalEl.innerText = total.toFixed(2);
+      drawerBalanceEl.innerText = total.toFixed(2);
+    });
+  }
+
+  function logout() {
+    localStorage.removeItem("loggedInUser");
+    localStorage.removeItem("userId");
+    window.location.href = "login.html";
+  }
+
+  const matches = JSON.parse(localStorage.getItem("matchRates")) || [];
+  const selectedBets = {};
+
+  function renderMatches() {
+    const container = document.getElementById("matchesContainer");
+    container.innerHTML = "";
+
+    matches.forEach(match => {
+      const matchCard = document.createElement("div");
+      matchCard.className = "match-card";
+      matchCard.innerHTML = `
+        <div class="match-header">
+          <div class="match-title">${match.team1} vs ${match.team2}</div>
+          <div class="live-badge">LIVE</div>
+        </div>
+        <div class="teams">
+          <div class="team">
+            <div class="team-name">${match.team1}</div>
+            <div class="team-logo"><i class="fas fa-shield-alt"></i></div>
+          </div>
+          <div class="vs">VS</div>
+          <div class="team">
+            <div class="team-name">${match.team2}</div>
+            <div class="team-logo"><i class="fas fa-shield-alt"></i></div>
+          </div>
+        </div>
+        <div class="bet-options">
+          <button class="bet-btn" onclick="selectTeam(${match.id}, '${match.team1}', ${match.rate1})">
+            ${match.team1} <span class="bet-rate">${match.rate1}</span>
+          </button>
+          <button class="bet-btn" onclick="selectTeam(${match.id}, '${match.team2}', ${match.rate2})">
+            ${match.team2} <span class="bet-rate">${match.rate2}</span>
+          </button>
+        </div>
+        <input type="number" class="bet-input" id="amount-${match.id}" placeholder="Enter bet amount (₹)">
+        <div class="selected-bet" id="selected-${match.id}"></div>
+        <button class="place-bet-btn" onclick="placeBet(${match.id})">Place Bet</button>
+      `;
+      container.appendChild(matchCard);
+    });
+  }
+
+  function selectTeam(matchId, team, rate) {
+    selectedBets[matchId] = { team, rate };
+    document.getElementById(`selected-${matchId}`).innerText = `Selected: ${team} @${rate}`;
+  }
+
+  function placeBet(matchId) {
+    const amountInput = document.getElementById(`amount-${match.id}`);
+    const amount = parseFloat(amountInput.value);
+    const selected = selectedBets[matchId];
     
-    // Initialize mines data
-    loadMinesData();
+    if (!selected) {
+      alert("Please select a team first");
+      return;
+    }
     
-    // Simulate a win every 30 seconds for demo
-    setInterval(simulateMinesWin, 30000);
-
-    const user = JSON.parse(localStorage.getItem("loggedInUser"));
-    if (!user) {
-      window.location.href = "login.html";
-    } else {
-      document.getElementById("userName").innerText = user.username || "Guest";
-      document.getElementById("drawerUserName").innerText = user.username || "Guest";
+    if (isNaN(amount) || amount <= 0) {
+      alert("Please enter a valid bet amount");
+      return;
     }
+    
+    const returnAmount = (amount * selected.rate).toFixed(2);
+    alert(`✅ Bet placed on ${selected.team} for ₹${amount}. Potential return: ₹${returnAmount}`);
+    
+    // Reset selection
+    selectedBets[matchId] = null;
+    document.getElementById(`selected-${matchId}`).innerText = "";
+    amountInput.value = "";
+  }
 
-    const userId = localStorage.getItem("userId");
-    if (userId) {
-      const totalEl = document.getElementById("totalBalance");
-      const rechargeEl = document.getElementById("rechargeBalance");
-      const bonusEl = document.getElementById("bonusBalance");
-      const winningEl = document.getElementById("winningBalance");
-      const drawerBalanceEl = document.getElementById("drawerBalance");
-
-      db.ref("users/" + userId + "/wallet").on("value", (snap) => {
-        const wallet = snap.val() || {};
-        const recharge = wallet.recharge || 0;
-        const bonus = wallet.bonus || 0;
-        const winning = wallet.winning || 0;
-        const total = recharge + bonus + winning;
-
-        totalEl.innerText = total.toFixed(2);
-        rechargeEl.innerText = recharge.toFixed(2);
-        bonusEl.innerText = bonus.toFixed(2);
-        winningEl.innerText = winning.toFixed(2);
-        drawerBalanceEl.innerText = total.toFixed(2);
-      });
-    }
-
-    function logout() {
-      localStorage.removeItem("loggedInUser");
-      localStorage.removeItem("userId");
-      window.location.href = "login.html";
-    }
-
-    const matches = JSON.parse(localStorage.getItem("matchRates")) || [];
-    const selectedBets = {};
-
-    function renderMatches() {
-      const container = document.getElementById("matchesContainer");
-      container.innerHTML = "";
-
-      matches.forEach(match => {
-        const matchCard = document.createElement("div");
-        matchCard.className = "match-card";
-        matchCard.innerHTML = `
-          <div class="match-header">
-            <div class="match-title">${match.team1} vs ${match.team2}</div>
-            <div class="live-badge">LIVE</div>
-          </div>
-          <div class="teams">
-            <div class="team">
-              <div class="team-name">${match.team1}</div>
-              <div class="team-logo"><i class="fas fa-shield-alt"></i></div>
-            </div>
-            <div class="vs">VS</div>
-            <div class="team">
-              <div class="team-name">${match.team2}</div>
-              <div class="team-logo"><i class="fas fa-shield-alt"></i></div>
-            </div>
-          </div>
-          <div class="bet-options">
-            <button class="bet-btn" onclick="selectTeam(${match.id}, '${match.team1}', ${match.rate1})">
-              ${match.team1} <span class="bet-rate">${match.rate1}</span>
-            </button>
-            <button class="bet-btn" onclick="selectTeam(${match.id}, '${match.team2}', ${match.rate2})">
-              ${match.team2} <span class="bet-rate">${match.rate2}</span>
-            </button>
-          </div>
-          <input type="number" class="bet-input" id="amount-${match.id}" placeholder="Enter bet amount (₹)">
-          <div class="selected-bet" id="selected-${match.id}"></div>
-          <button class="place-bet-btn" onclick="placeBet(${match.id})">Place Bet</button>
-        `;
-        container.appendChild(matchCard);
-      });
-    }
-
-    function selectTeam(matchId, team, rate) {
-      selectedBets[matchId] = { team, rate };
-      document.getElementById(`selected-${matchId}`).innerText = `Selected: ${team} @${rate}`;
-    }
-
-    function placeBet(matchId) {
-      const amountInput = document.getElementById(`amount-${matchId}`);
-      const amount = parseFloat(amountInput.value);
-      const selected = selectedBets[matchId];
-      
-      if (!selected) {
-        alert("Please select a team first");
-        return;
-      }
-      
-      if (isNaN(amount) || amount <= 0) {
-        alert("Please enter a valid bet amount");
-        return;
-      }
-      
-      const returnAmount = (amount * selected.rate).toFixed(2);
-      alert(`✅ Bet placed on ${selected.team} for ₹${amount}. Potential return: ₹${returnAmount}`);
-      
-      // Reset selection
-      selectedBets[matchId] = null;
-      document.getElementById(`selected-${matchId}`).innerText = "";
-      amountInput.value = "";
-    }
-
-    renderMatches();
-  </script>
+  renderMatches();
+</script>
 </body>
 </html>
