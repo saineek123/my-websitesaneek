@@ -1,157 +1,545 @@
-<!-- FINAL: slots.html (Mobile Friendly) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Slot Machine</title>
+  <title>Luxury Slots</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #111;
-      color: #fff;
-      text-align: center;
-      padding: 20px;
+    * {
       margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-
+    
+    body {
+      background: linear-gradient(135deg, #0f0c29, #1a1a2e, #16213e);
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+    
     nav {
-      background: #222;
-      padding: 10px;
+      background: rgba(10, 10, 20, 0.85);
+      backdrop-filter: blur(10px);
+      padding: 12px 15px;
+      border-radius: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(0, 229, 255, 0.1);
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: bold;
+      font-size: 1.2rem;
+      background: linear-gradient(90deg, #00e5ff, #00b8d4);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    
+    .logo i {
+      font-size: 1.5rem;
+    }
+    
+    .nav-links {
+      display: flex;
+      gap: 5px;
+      overflow-x: auto;
+      padding: 5px 0;
+    }
+    
+    .nav-links a {
+      color: #a0a0d0;
+      text-decoration: none;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      border-radius: 20px;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+    }
+    
+    .nav-links a:hover, .nav-links a.active {
+      background: rgba(0, 229, 255, 0.15);
+      color: #00e5ff;
+    }
+    
+    .user-section {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .user-section button {
+      background: transparent;
+      border: 1px solid rgba(255, 0, 0, 0.3);
+      color: #ff5555;
+      border-radius: 20px;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .user-section button:hover {
+      background: rgba(255, 0, 0, 0.1);
+    }
+    
+    .main-container {
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .wallet-info {
+      background: rgba(20, 20, 35, 0.5);
+      border-radius: 16px;
+      padding: 25px;
+      margin-bottom: 25px;
+      border: 1px solid rgba(0, 229, 255, 0.1);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
       text-align: center;
     }
-
-    nav a {
-      color: white;
-      margin: 8px;
-      text-decoration: none;
-      display: inline-block;
-      font-size: 14px;
-    }
-
-    .container {
-      max-width: 420px;
-      margin: auto;
-      background: #1c1c1c;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,255,255,0.2);
-    }
-
-    h2 {
-      font-size: 24px;
-      margin-bottom: 15px;
-    }
-
-    .wallet-info {
-      font-size: 15px;
+    
+    .wallet-info h2 {
+      font-size: 1.8rem;
       margin-bottom: 20px;
-      color: #00e5ff;
-      word-wrap: break-word;
+      background: linear-gradient(90deg, #00e5ff, #00b8d4);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
     }
-
-    input {
-      padding: 10px;
-      font-size: 16px;
-      width: 100%;
-      max-width: 150px;
-      border-radius: 6px;
-      border: none;
-      margin-bottom: 10px;
-    }
-
-    .slots {
-      font-size: 48px;
-      margin: 20px 0;
-    }
-
-    button {
-      padding: 14px;
-      font-size: 16px;
-      background-color: #00e5ff;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      color: black;
-      width: 100%;
-      max-width: 300px;
-    }
-
-    .result {
+    
+    .balance-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
       margin-top: 20px;
+    }
+    
+    .balance-card {
+      background: rgba(30, 30, 50, 0.7);
+      border-radius: 12px;
+      padding: 15px;
+      text-align: center;
+      border: 1px solid rgba(0, 229, 255, 0.1);
+    }
+    
+    .balance-card h3 {
+      font-size: 1rem;
+      margin-bottom: 8px;
+      color: #a0a0d0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+    
+    .balance-card .amount {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: #00e5ff;
+    }
+    
+    .slot-machine {
+      background: rgba(30, 30, 50, 0.7);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(0, 229, 255, 0.15);
+      text-align: center;
+      margin-bottom: 25px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .slot-machine::before {
+      content: "";
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(0, 229, 255, 0.1) 0%, transparent 70%);
+      transform: rotate(30deg);
+      z-index: 0;
+    }
+    
+    .slot-machine h2 {
+      font-size: 1.8rem;
+      margin-bottom: 20px;
+      background: linear-gradient(90deg, #00e5ff, #00b8d4);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .bet-control {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      margin: 25px 0;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .bet-label {
+      font-size: 1.1rem;
+      color: #a0a0d0;
+    }
+    
+    .bet-input {
+      position: relative;
+    }
+    
+    .bet-input i {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #00e5ff;
+      font-size: 18px;
+    }
+    
+    .bet-input input {
+      width: 120px;
+      padding: 14px 15px 14px 45px;
+      background: rgba(20, 20, 35, 0.7);
+      border: 1px solid rgba(0, 229, 255, 0.2);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 16px;
+      transition: all 0.3s ease;
+    }
+    
+    .bet-input input:focus {
+      outline: none;
+      border-color: #00e5ff;
+      box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.2);
+      background: rgba(25, 25, 45, 0.8);
+    }
+    
+    .slots-container {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin: 30px 0;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .slot {
+      width: 100px;
+      height: 100px;
+      background: rgba(20, 20, 35, 0.7);
+      border-radius: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 48px;
+      border: 2px solid rgba(0, 229, 255, 0.2);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .slot::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(transparent, rgba(0, 229, 255, 0.1), transparent);
+    }
+    
+    .slot.spinning {
+      animation: spin 0.1s infinite linear;
+    }
+    
+    @keyframes spin {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(100%); }
+    }
+    
+    .spin-btn {
+      padding: 16px 40px;
+      border-radius: 50px;
+      border: none;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: linear-gradient(90deg, #00e5ff, #00b8d4);
+      color: #000;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+      z-index: 1;
+      margin-top: 15px;
+      box-shadow: 0 5px 15px rgba(0, 229, 255, 0.3);
+    }
+    
+    .spin-btn:hover {
+      background: linear-gradient(90deg, #00d0eb, #00a0c0);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0, 229, 255, 0.4);
+    }
+    
+    .spin-btn:disabled {
+      background: #555;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    
+    .result {
+      margin-top: 25px;
+      padding: 15px;
+      border-radius: 12px;
       font-size: 18px;
       font-weight: bold;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+      transition: all 0.5s ease;
     }
-
-    .back-link {
-      margin-top: 30px;
+    
+    .win {
+      background: rgba(40, 167, 69, 0.2);
+      color: #28a745;
+      border: 1px solid rgba(40, 167, 69, 0.3);
+      animation: winPulse 2s infinite;
     }
-
-    .back-link a {
+    
+    .lose {
+      background: rgba(220, 53, 69, 0.2);
+      color: #dc3545;
+      border: 1px solid rgba(220, 53, 69, 0.3);
+    }
+    
+    @keyframes winPulse {
+      0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); }
+      70% { box-shadow: 0 0 0 15px rgba(40, 167, 69, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+    }
+    
+    .dashboard-link {
+      text-align: center;
+      margin-top: 20px;
+    }
+    
+    .dashboard-link a {
       color: #00e5ff;
       text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 25px;
+      border-radius: 30px;
+      background: rgba(0, 229, 255, 0.1);
+      transition: all 0.3s ease;
+      position: relative;
+      z-index: 1;
     }
-
-    .back-link a:hover {
-      text-decoration: underline;
+    
+    .dashboard-link a:hover {
+      background: rgba(0, 229, 255, 0.2);
+      transform: translateY(-3px);
     }
-
-    @media (max-width: 480px) {
-      .slots {
+    
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 25px;
+      background: rgba(30, 30, 50, 0.9);
+      border-left: 4px solid #00e5ff;
+      border-radius: 8px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      transform: translateX(110%);
+      transition: transform 0.4s ease;
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+    }
+    
+    .notification.show {
+      transform: translateX(0);
+    }
+    
+    .notification.error {
+      border-left-color: #ff5555;
+    }
+    
+    footer {
+      text-align: center;
+      margin-top: 30px;
+      padding: 20px;
+      color: #8888bb;
+      font-size: 0.9rem;
+    }
+    
+    @media (max-width: 768px) {
+      nav {
+        flex-direction: column;
+        gap: 15px;
+      }
+      
+      .nav-links {
+        width: 100%;
+        justify-content: center;
+      }
+      
+      .user-section {
+        width: 100%;
+        justify-content: center;
+      }
+      
+      .slots-container {
+        gap: 10px;
+      }
+      
+      .slot {
+        width: 80px;
+        height: 80px;
         font-size: 36px;
       }
-
-      nav a {
-        display: block;
-        margin: 6px 0;
-        font-size: 16px;
+    }
+    
+    @media (max-width: 480px) {
+      .nav-links a {
+        font-size: 0.75rem;
+        padding: 6px 10px;
       }
-
-      input {
-        max-width: 100%;
+      
+      .slot-machine {
+        padding: 20px;
       }
-
-      button {
-        max-width: 100%;
+      
+      .bet-control {
+        flex-direction: column;
+      }
+      
+      .slots-container {
+        gap: 8px;
+      }
+      
+      .slot {
+        width: 70px;
+        height: 70px;
+        font-size: 32px;
       }
     }
   </style>
 </head>
 <body>
-
   <nav>
-    <a href="index.html">Home</a>
-    <a href="recharge.html">Recharge</a>
-    <a href="withdraw.html">Withdraw</a>
-    <a href="history.html">History</a>
-    <a href="account.html">Account</a>
-    <a href="support.html">Support</a>
-    <a href="login.html">Logout</a>
+    <div class="logo">
+      <i class="fas fa-dice"></i>
+      <span>LUXURY SLOTS</span>
+    </div>
+    
+    <div class="nav-links">
+      <a href="index.html" class="active"><i class="fas fa-home"></i> Home</a>
+      <a href="recharge.html"><i class="fas fa-wallet"></i> Recharge</a>
+      <a href="withdraw.html"><i class="fas fa-money-bill-wave"></i> Withdraw</a>
+      <a href="history.html"><i class="fas fa-history"></i> History</a>
+      <a href="account.html"><i class="fas fa-user"></i> Account</a>
+    </div>
+    
+    <div class="user-section">
+      <button onclick="window.location.href='login.html'">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </div>
   </nav>
 
-  <div class="container">
-    <h2>Slot Machine</h2>
-    
+  <div class="main-container">
     <div class="wallet-info">
-      💰 Total: ₹<span id="totalBalance">0</span><br>
-      💳 Recharge: ₹<span id="rechargeBalance">0</span> |
-      🎁 Bonus: ₹<span id="bonusBalance">0</span> |
-      🏆 Winning: ₹<span id="winningBalance">0</span>
+      <h2><i class="fas fa-wallet"></i> Your Wallet</h2>
+      
+      <div class="balance-grid">
+        <div class="balance-card">
+          <h3><i class="fas fa-money-bill"></i> Total Balance</h3>
+          <div class="amount">₹<span id="totalBalance">0</span></div>
+        </div>
+        
+        <div class="balance-card">
+          <h3><i class="fas fa-credit-card"></i> Recharge</h3>
+          <div class="amount">₹<span id="rechargeBalance">0</span></div>
+        </div>
+        
+        <div class="balance-card">
+          <h3><i class="fas fa-gift"></i> Bonus</h3>
+          <div class="amount">₹<span id="bonusBalance">0</span></div>
+        </div>
+        
+        <div class="balance-card">
+          <h3><i class="fas fa-trophy"></i> Winning</h3>
+          <div class="amount">₹<span id="winningBalance">0</span></div>
+        </div>
+      </div>
     </div>
-
-    <p>
-      <strong>Bet Amount:</strong><br>
-      <input type="number" id="betAmount" value="10" min="1" />
-    </p>
-
-    <div class="slots" id="slots">🍒 🍋 🍇</div>
-    <button onclick="spinSlot()">Spin</button>
-
-    <div class="result" id="resultMessage"></div>
-    <div class="back-link">
-      <a href="index.html">← Back to Dashboard</a>
+    
+    <div class="slot-machine">
+      <h2><i class="fas fa-coins"></i> Slot Machine</h2>
+      
+      <div class="bet-control">
+        <div class="bet-label">Bet Amount:</div>
+        <div class="bet-input">
+          <i class="fas fa-rupee-sign"></i>
+          <input type="number" id="betAmount" value="10" min="1" />
+        </div>
+      </div>
+      
+      <div class="slots-container">
+        <div class="slot" id="slot1">🍒</div>
+        <div class="slot" id="slot2">🍋</div>
+        <div class="slot" id="slot3">🍇</div>
+      </div>
+      
+      <button class="spin-btn" id="spinButton" onclick="spinSlot()">
+        <i class="fas fa-play"></i> SPIN
+      </button>
+      
+      <div class="result" id="resultMessage"></div>
+    </div>
+    
+    <div class="dashboard-link">
+      <a href="index.html"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
     </div>
   </div>
+  
+  <div id="notification" class="notification"></div>
+  
+  <footer>
+    <p>© 2023 Luxury Slots. All rights reserved. Gambling can be addictive. Play responsibly.</p>
+  </footer>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -168,7 +556,7 @@
     const db = firebase.database();
 
     const userId = localStorage.getItem("userId");
-    const slotsEl = document.getElementById("slots");
+    const spinButton = document.getElementById("spinButton");
     const resultMessage = document.getElementById("resultMessage");
 
     const totalEl = document.getElementById("totalBalance");
@@ -177,6 +565,7 @@
     const winningEl = document.getElementById("winningBalance");
 
     let currentWallet = { recharge: 0, bonus: 0, winning: 0 };
+    let isSpinning = false;
 
     if (!userId) {
       alert("User not logged in.");
@@ -198,19 +587,56 @@
       });
     }
 
+    function showNotification(message, isError = false) {
+      const notification = document.getElementById("notification");
+      notification.innerText = message;
+      notification.className = "notification";
+      
+      if (isError) {
+        notification.classList.add("error");
+      }
+      
+      notification.classList.add("show");
+      
+      setTimeout(() => {
+        notification.classList.remove("show");
+      }, 3000);
+    }
+
     function spinSlot() {
+      if (isSpinning) return;
+      
       const bet = parseInt(document.getElementById("betAmount").value);
       const totalBalance = currentWallet.recharge + currentWallet.bonus + currentWallet.winning;
 
       if (isNaN(bet) || bet <= 0) {
-        alert("Please enter a valid bet amount.");
+        showNotification("Please enter a valid bet amount.", true);
         return;
       }
+      
       if (totalBalance < bet) {
-        alert("Insufficient balance!");
+        showNotification("Insufficient balance!", true);
         return;
       }
 
+      // Disable button during spin
+      isSpinning = true;
+      spinButton.disabled = true;
+      resultMessage.className = "result";
+      resultMessage.innerText = "";
+      
+      // Start spinning animation
+      const slots = [
+        document.getElementById("slot1"),
+        document.getElementById("slot2"),
+        document.getElementById("slot3")
+      ];
+      
+      slots.forEach(slot => {
+        slot.classList.add("spinning");
+      });
+
+      // Deduct bet amount
       let remaining = bet;
       let updatedWallet = { ...currentWallet };
 
@@ -235,34 +661,72 @@
         remaining = 0;
       }
 
+      // Generate symbols
       const symbols = ["🍒", "🍋", "🍇", "🍊", "🍉"];
       let s1, s2, s3;
 
-      if (Math.random() < 0.10) {
-        const winSymbol = symbols[Math.floor(Math.random() * symbols.length)];
-        s1 = s2 = s3 = winSymbol;
-      } else {
-        do {
-          s1 = symbols[Math.floor(Math.random() * symbols.length)];
-          s2 = symbols[Math.floor(Math.random() * symbols.length)];
-          s3 = symbols[Math.floor(Math.random() * symbols.length)];
-        } while (s1 === s2 && s2 === s3);
-      }
-
-      slotsEl.innerText = `${s1} ${s2} ${s3}`;
-
-      if (s1 === s2 && s2 === s3) {
-        const multiplier = 10;
-        const reward = bet * multiplier;
-        updatedWallet.winning += reward;
-        resultMessage.style.color = '#00ff99';
-        resultMessage.innerText = `🎉 Jackpot! You won ₹${reward} (×${multiplier})`;
-      } else {
-        resultMessage.style.color = '#ff5555';
-        resultMessage.innerText = `😞 You lost! Try again.`;
-      }
-
-      db.ref("users/" + userId + "/wallet").set(updatedWallet);
+      // Determine if it's a win (10% chance)
+      const isWin = Math.random() < 0.10;
+      
+      setTimeout(() => {
+        if (isWin) {
+          // Win scenario
+          const winSymbol = symbols[Math.floor(Math.random() * symbols.length)];
+          s1 = s2 = s3 = winSymbol;
+        } else {
+          // Lose scenario
+          do {
+            s1 = symbols[Math.floor(Math.random() * symbols.length)];
+            s2 = symbols[Math.floor(Math.random() * symbols.length)];
+            s3 = symbols[Math.floor(Math.random() * symbols.length)];
+          } while (s1 === s2 && s2 === s3);
+        }
+        
+        // Update slot display
+        slots[0].innerText = s1;
+        slots[1].innerText = s2;
+        slots[2].innerText = s3;
+        
+        // Stop spinning animation
+        slots.forEach(slot => {
+          slot.classList.remove("spinning");
+        });
+        
+        // Process result
+        if (s1 === s2 && s2 === s3) {
+          const multiplier = 10;
+          const reward = bet * multiplier;
+          updatedWallet.winning += reward;
+          
+          resultMessage.className = "result win";
+          resultMessage.innerHTML = `
+            <i class="fas fa-trophy"></i> JACKPOT! You won ₹${reward} (×${multiplier}) <i class="fas fa-trophy"></i>
+          `;
+          
+          // Play win sound
+          playWinSound();
+          
+          showNotification(`🎉 You won ₹${reward}!`);
+        } else {
+          resultMessage.className = "result lose";
+          resultMessage.innerHTML = `
+            <i class="fas fa-sad-tear"></i> No win this time. Try again!
+          `;
+        }
+        
+        // Update wallet in Firebase
+        db.ref("users/" + userId + "/wallet").set(updatedWallet);
+        
+        // Re-enable button
+        isSpinning = false;
+        spinButton.disabled = false;
+      }, 2000); // 2 second spinning animation
+    }
+    
+    function playWinSound() {
+      // In a real implementation, we would play an actual sound
+      // For this demo, we'll just simulate it
+      console.log("Win sound played");
     }
   </script>
 </body>
