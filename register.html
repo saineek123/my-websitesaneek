@@ -1,74 +1,303 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>User Registration</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modern Dark Auth | Register</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     * {
-      box-sizing: border-box;
-    }
-    body {
-      background: #121212;
-      color: #fff;
-      font-family: sans-serif;
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      color: #e0e0e0;
+      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
+      padding: 20px;
     }
-    .box {
-      background: #1e1e1e;
-      padding: 30px;
-      border-radius: 10px;
-      max-width: 400px;
-      width: 90%;
-      box-shadow: 0 0 10px rgba(0, 229, 255, 0.1);
+    
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+      max-width: 1200px;
+      width: 100%;
     }
+    
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    header h1 {
+      font-size: 2.8rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #00e5ff, #00b8d4);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 10px;
+    }
+    
+    header p {
+      font-size: 1.2rem;
+      color: #a0a0d0;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    .card {
+      background: rgba(30, 30, 50, 0.7);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 40px;
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(0, 229, 255, 0.15);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(0, 229, 255, 0.2);
+    }
+    
+    .card h2 {
+      font-size: 2rem;
+      margin-bottom: 30px;
+      text-align: center;
+      font-weight: 600;
+      background: linear-gradient(90deg, #00e5ff, #00b8d4);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    
+    .input-group {
+      margin-bottom: 25px;
+      position: relative;
+    }
+    
+    .input-group i {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #00e5ff;
+      font-size: 18px;
+    }
+    
     input {
       width: 100%;
-      padding: 12px;
-      margin-top: 10px;
-      border: none;
-      border-radius: 6px;
-      background: #2a2a2a;
+      padding: 15px 15px 15px 45px;
+      background: rgba(20, 20, 35, 0.7);
+      border: 1px solid rgba(0, 229, 255, 0.2);
+      border-radius: 10px;
       color: #fff;
       font-size: 16px;
+      transition: all 0.3s ease;
     }
-    button {
-      margin-top: 20px;
+    
+    input:focus {
+      outline: none;
+      border-color: #00e5ff;
+      box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.2);
+      background: rgba(25, 25, 45, 0.8);
+    }
+    
+    input::placeholder {
+      color: #8888bb;
+    }
+    
+    .btn {
       width: 100%;
-      padding: 12px;
-      background: #00e5ff;
+      padding: 15px;
+      border-radius: 10px;
       border: none;
-      border-radius: 6px;
-      color: #000;
-      font-weight: bold;
       font-size: 16px;
+      font-weight: 600;
       cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
     }
-    .login-btn {
-      background: transparent;
-      border: 1px solid #00e5ff;
-      color: #00e5ff;
+    
+    .btn-primary {
+      background: linear-gradient(90deg, #00e5ff, #00b8d4);
+      color: #000;
       margin-top: 10px;
+    }
+    
+    .btn-primary:hover {
+      background: linear-gradient(90deg, #00d0eb, #00a0c0);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 229, 255, 0.3);
+    }
+    
+    .btn-secondary {
+      background: transparent;
+      color: #00e5ff;
+      border: 2px solid #00e5ff;
+      margin-top: 15px;
+    }
+    
+    .btn-secondary:hover {
+      background: rgba(0, 229, 255, 0.1);
+      transform: translateY(-2px);
+    }
+    
+    .msg {
+      text-align: center;
+      margin-top: 20px;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+    
+    .success {
+      background: rgba(40, 167, 69, 0.2);
+      color: #28a745;
+      border: 1px solid rgba(40, 167, 69, 0.3);
+    }
+    
+    .error {
+      background: rgba(220, 53, 69, 0.2);
+      color: #dc3545;
+      border: 1px solid rgba(220, 53, 69, 0.3);
+    }
+    
+    .features {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 40px;
+    }
+    
+    .feature {
+      background: rgba(30, 30, 50, 0.5);
+      border-radius: 12px;
+      padding: 20px;
+      width: 200px;
+      text-align: center;
+      border: 1px solid rgba(0, 229, 255, 0.1);
+    }
+    
+    .feature i {
+      font-size: 2.5rem;
+      color: #00e5ff;
+      margin-bottom: 15px;
+    }
+    
+    .feature h3 {
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+      color: #00e5ff;
+    }
+    
+    .feature p {
+      font-size: 0.9rem;
+      color: #a0a0d0;
+    }
+    
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      color: #8888bb;
+      font-size: 0.9rem;
+    }
+    
+    .nav-buttons {
+      display: flex;
+      gap: 15px;
+      margin-top: 20px;
+    }
+    
+    @media (max-width: 600px) {
+      .card {
+        padding: 25px;
+      }
+      
+      header h1 {
+        font-size: 2.2rem;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="box">
-    <h2>Register</h2>
-    <input type="text" id="phone" placeholder="Phone Number" required />
-    <input type="text" id="name" placeholder="Name" required />
-    <input type="text" id="referralCodeInput" placeholder="Referral Code (optional)" />
-    <input type="password" id="password" placeholder="Password" required />
-    <button id="registerBtn" onclick="registerUser()">Register</button>
-    <button class="login-btn" onclick="goToLogin()">Login</button>
-    <p id="msg" style="color: lightgreen; margin-top: 10px;"></p>
+  <div class="container">
+    <header>
+      <h1>Secure Registration <br> <i class="fas fa-flag-checkered"></i> BIG WIN</h1>
+      <p>Join our platform with state-of-the-art security features</p>
+    </header>
+    
+    <div class="card">
+      <h2>Create Account</h2>
+      <div class="input-group">
+        <i class="fas fa-phone"></i>
+        <input type="text" id="phone" placeholder="Phone Number" required>
+      </div>
+      <div class="input-group">
+        <i class="fas fa-user"></i>
+        <input type="text" id="name" placeholder="Full Name" required>
+      </div>
+      <div class="input-group">
+        <i class="fas fa-tag"></i>
+        <input type="text" id="referralCodeInput" placeholder="Referral Code (optional)">
+      </div>
+      <div class="input-group">
+        <i class="fas fa-lock"></i>
+        <input type="password" id="password" placeholder="Password" required>
+      </div>
+      <button class="btn btn-primary" onclick="registerUser()">
+        <i class="fas fa-user-plus"></i> Register Now
+      </button>
+      <div class="nav-buttons">
+        <button class="btn btn-secondary" onclick="goToLogin()">
+          <i class="fas fa-sign-in-alt"></i> Login Instead
+        </button>
+      </div>
+      <p id="msg" class="msg"></p>
+    </div>
+    
+    <div class="features">
+      <div class="feature">
+        <i class="fas fa-shield-alt"></i>
+        <h3>Secure</h3>
+        <p>Military-grade encryption</p>
+      </div>
+      <div class="feature">
+        <i class="fas fa-bolt"></i>
+        <h3>Fast</h3>
+        <p>Instant registration</p>
+      </div>
+      <div class="feature">
+        <i class="fas fa-gift"></i>
+        <h3>Rewards</h3>
+        <p>Referral bonuses</p>
+      </div>
+      <div class="feature">
+        <i class="fas fa-wallet"></i>
+        <h3>Wallet</h3>
+        <p>Integrated wallet system</p>
+      </div>
+    </div>
+    
+    <footer>
+      <p>© 2023 Secure Authentication System. All rights reserved.</p>
+    </footer>
   </div>
-
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
   import { getDatabase, ref, set, push, get, update, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
@@ -102,17 +331,19 @@
     const password = document.getElementById("password").value.trim();
     const referralCodeInput = document.getElementById("referralCodeInput").value.trim();
     const msg = document.getElementById("msg");
+    msg.className = 'msg';
 
     if (!phone || !name || !password) {
-      alert("Kripya sabhi zaruri field bharein.");
+      msg.textContent = "Please fill all required fields.";
+      msg.classList.add('error');
       return;
     }
 
-    // ✅ Check: Kya phone number already hai?
     const phoneQuery = query(ref(db, "users"), orderByChild("phone"), equalTo(phone));
     const phoneSnapshot = await get(phoneQuery);
     if (phoneSnapshot.exists()) {
-      msg.innerText = "Phone number already registered ❌";
+      msg.textContent = "Phone number already registered ❌";
+      msg.classList.add('error');
       return;
     }
 
@@ -120,19 +351,16 @@
     const userId = push(ref(db, 'users')).key;
 
     const userData = {
-      phone,
-      name,
-      password,
-      referralCode,
+      phone, name, password, referralCode,
       wallet: 0,
       referredBy: referralCodeInput || null
     };
 
     try {
       await set(ref(db, 'users/' + userId), userData);
-      msg.innerText = "Safalta se register ho gaya ✔";
+      msg.textContent = "Registered successfully ✔";
+      msg.classList.add('success');
 
-      // ✅ Agar referral code diya hai toh wallet update karo
       if (referralCodeInput) {
         const refQuery = query(ref(db, "users"), orderByChild("referralCode"), equalTo(referralCodeInput));
         const snapshot = await get(refQuery);
@@ -145,12 +373,10 @@
         }
       }
 
-      setTimeout(() => {
-        window.location.href = "login.html";
-      }, 1500);
-
+      setTimeout(() => { window.location.href = "login.html"; }, 1500);
     } catch (error) {
-      msg.innerText = "Error: " + error.message;
+      msg.textContent = "Error: " + error.message;
+      msg.classList.add('error');
     }
   };
 
@@ -158,6 +384,5 @@
     window.location.href = "login.html";
   };
 </script>
-
 </body>
 </html>
