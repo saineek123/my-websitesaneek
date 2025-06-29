@@ -4,121 +4,405 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Live Betting</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
-      color: #fff;
+    * {
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
+    
+    body {
+      background: linear-gradient(135deg, #0f0c29, #1a1a2e, #16213e);
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding-bottom: 20px;
+    }
+    
     nav {
-      background: #111;
-      padding: 10px;
-      text-align: center;
+      background: rgba(10, 10, 20, 0.85);
+      backdrop-filter: blur(10px);
+      padding: 12px 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      border-bottom: 1px solid rgba(0, 229, 255, 0.1);
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: bold;
+      font-size: 1.2rem;
+      background: linear-gradient(90deg, #00e5ff, #00b8d4);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    
+    .logo i {
+      font-size: 1.5rem;
+    }
+    
+    .nav-links {
+      display: flex;
+      gap: 5px;
       overflow-x: auto;
+      padding: 5px 0;
+    }
+    
+    .nav-links a {
+      color: #a0a0d0;
+      text-decoration: none;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      border-radius: 20px;
+      transition: all 0.3s ease;
       white-space: nowrap;
     }
-    nav a {
-      color: #fff;
-      margin: 8px;
-      display: inline-block;
-      text-decoration: none;
-      font-weight: bold;
-      font-size: 14px;
+    
+    .nav-links a:hover, .nav-links a.active {
+      background: rgba(0, 229, 255, 0.15);
+      color: #00e5ff;
     }
-    h2 {
-      text-align: center;
-      margin-top: 20px;
-      font-size: 24px;
+    
+    .user-section {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
+    
+    .user-section button {
+      background: transparent;
+      border: 1px solid rgba(255, 0, 0, 0.3);
+      color: #ff5555;
+      border-radius: 20px;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .user-section button:hover {
+      background: rgba(255, 0, 0, 0.1);
+    }
+    
     .wallet-info {
       text-align: center;
-      margin: 15px;
-      font-size: 14px;
+      margin: 20px auto;
+      padding: 20px;
+      max-width: 700px;
+      background: rgba(20, 20, 35, 0.5);
+      border-radius: 16px;
+      border: 1px solid rgba(0, 229, 255, 0.1);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     }
-    .wallet-info span {
-      color: #00f7ff;
-    }
-    .matches {
+    
+    .wallet-info h2 {
+      font-size: 1.8rem;
+      margin-bottom: 20px;
+      background: linear-gradient(90deg, #00e5ff, #00b8d4);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
       display: flex;
-      flex-wrap: wrap;
+      align-items: center;
       justify-content: center;
-      gap: 15px;
-      padding: 10px;
+      gap: 10px;
     }
-    .card {
-      background: #1e2a38;
+    
+    .balance-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+    
+    .balance-card {
+      background: rgba(30, 30, 50, 0.7);
       border-radius: 12px;
       padding: 15px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-      width: 90%;
-      max-width: 400px;
-    }
-    .card h3 {
-      margin: 0 0 10px;
-      font-size: 18px;
-      color: #00c6ff;
       text-align: center;
+      border: 1px solid rgba(0, 229, 255, 0.1);
     }
+    
+    .balance-card h3 {
+      font-size: 1rem;
+      margin-bottom: 8px;
+      color: #a0a0d0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+    
+    .balance-card .amount {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: #00e5ff;
+    }
+    
+    .matches-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 15px;
+    }
+    
+    .section-title {
+      text-align: center;
+      margin: 20px 0 25px;
+      font-size: 1.8rem;
+      background: linear-gradient(90deg, #00e5ff, #00b8d4);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+    
+    .history-link {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+    
+    .history-link a {
+      color: #ff5555;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      border-radius: 30px;
+      background: rgba(255, 85, 85, 0.1);
+      transition: all 0.3s ease;
+    }
+    
+    .history-link a:hover {
+      background: rgba(255, 85, 85, 0.2);
+      transform: translateY(-2px);
+    }
+    
+    .matches {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 25px;
+      padding: 10px;
+    }
+    
+    .match-card {
+      background: rgba(30, 30, 50, 0.7);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 25px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(0, 229, 255, 0.15);
+      transition: all 0.3s ease;
+    }
+    
+    .match-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(0, 229, 255, 0.2);
+    }
+    
+    .match-card h3 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 1.4rem;
+      color: #00e5ff;
+      padding-bottom: 15px;
+      border-bottom: 1px solid rgba(0, 229, 255, 0.1);
+    }
+    
     .team-btn {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: #263545;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 8px;
+      background: rgba(20, 20, 35, 0.7);
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 10px;
       cursor: pointer;
-      transition: background 0.3s;
+      transition: all 0.3s ease;
+      border: 1px solid transparent;
     }
+    
     .team-btn:hover {
-      background: #35597c;
+      background: rgba(30, 40, 60, 0.8);
+      border-color: rgba(0, 229, 255, 0.3);
+      transform: translateY(-3px);
     }
+    
+    .team-btn.selected {
+      background: rgba(0, 229, 255, 0.1);
+      border-color: #00e5ff;
+      box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
+    }
+    
+    .team-name {
+      font-size: 1.1rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
     .rate {
-      background: #00c6ff;
-      padding: 4px 8px;
-      border-radius: 4px;
+      background: linear-gradient(135deg, #00e5ff, #00b8d4);
+      padding: 6px 12px;
+      border-radius: 20px;
       color: #000;
       font-weight: bold;
-    }
-    input, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
-      box-sizing: border-box;
-    }
-    button {
-      background-color: #00c6ff;
-      color: white;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #0099cc;
-    }
-    #matchesContainer p {
+      min-width: 70px;
       text-align: center;
-      font-size: 16px;
     }
-
-    @media (max-width: 480px) {
-      h2 {
-        font-size: 20px;
-      }
-      .team-btn {
+    
+    .bet-input {
+      position: relative;
+      margin-top: 20px;
+    }
+    
+    .bet-input i {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #00e5ff;
+      font-size: 18px;
+    }
+    
+    .bet-input input {
+      width: 100%;
+      padding: 14px 15px 14px 45px;
+      background: rgba(20, 20, 35, 0.7);
+      border: 1px solid rgba(0, 229, 255, 0.2);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 16px;
+      transition: all 0.3s ease;
+    }
+    
+    .bet-input input:focus {
+      outline: none;
+      border-color: #00e5ff;
+      box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.2);
+      background: rgba(25, 25, 45, 0.8);
+    }
+    
+    .bet-input input::placeholder {
+      color: #8888bb;
+    }
+    
+    .bet-btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 10px;
+      border: none;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 15px;
+      background: linear-gradient(90deg, #00e5ff, #00b8d4);
+      color: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .bet-btn:hover {
+      background: linear-gradient(90deg, #00d0eb, #00a0c0);
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0, 229, 255, 0.3);
+    }
+    
+    .selected-team {
+      text-align: center;
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 8px;
+      background: rgba(0, 229, 255, 0.1);
+      border: 1px solid rgba(0, 229, 255, 0.2);
+      font-size: 14px;
+      color: #00e5ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 25px;
+      background: rgba(30, 30, 50, 0.9);
+      border-left: 4px solid #00e5ff;
+      border-radius: 8px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      transform: translateX(110%);
+      transition: transform 0.4s ease;
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+    }
+    
+    .notification.show {
+      transform: translateX(0);
+    }
+    
+    .notification.error {
+      border-left-color: #ff5555;
+    }
+    
+    @media (max-width: 768px) {
+      nav {
         flex-direction: column;
-        align-items: flex-start;
-        gap: 5px;
+        gap: 15px;
       }
-      .wallet-info {
-        font-size: 13px;
+      
+      .nav-links {
+        width: 100%;
+        justify-content: center;
       }
-      nav a {
-        font-size: 12px;
-        margin: 5px;
+      
+      .user-section {
+        width: 100%;
+        justify-content: center;
+      }
+      
+      .matches {
+        grid-template-columns: 1fr;
+      }
+      
+      .balance-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .nav-links a {
+        font-size: 0.75rem;
+        padding: 6px 10px;
+      }
+      
+      .balance-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .match-card {
+        padding: 20px;
+      }
+      
+      .team-btn {
+        padding: 12px;
       }
     }
   </style>
@@ -126,33 +410,69 @@
 <body>
 
 <nav>
-  <a href="index.html">Home</a>
-  <a href="recharge.html">Recharge</a>
-  <a href="withdraw.html">Withdraw</a>
-  <a href="history.html">History</a>
-  <a href="account.html">Account</a>
-  <a href="support.html">Support</a>
-  <a href="login.html">Logout</a>
+  <div class="logo">
+    <i class="fas fa-dice"></i>
+    <span>BETPRO</span>
+  </div>
+  
+  <div class="nav-links">
+    <a href="index.html" class="active"><i class="fas fa-home"></i> Home</a>
+    <a href="recharge.html"><i class="fas fa-wallet"></i> Recharge</a>
+    <a href="withdraw.html"><i class="fas fa-money-bill-wave"></i> Withdraw</a>
+    <a href="history.html"><i class="fas fa-history"></i> History</a>
+    <a href="account.html"><i class="fas fa-user"></i> Account</a>
+    <a href="support.html"><i class="fas fa-headset"></i> Support</a>
+  </div>
+  
+  <div class="user-section">
+    <button onclick="window.location.href='login.html'">
+      <i class="fas fa-sign-out-alt"></i> Logout
+    </button>
+  </div>
 </nav>
 
 <div class="wallet-info">
-  <p>
-    💰 Total Balance: ₹<span id="totalBalance">0</span><br><br>
-    💳 Recharge: ₹<span id="rechargeBalance">0</span> |
-    🎁 Bonus: ₹<span id="bonusBalance">0</span> |
-    🏆 Winning: ₹<span id="winningBalance">0</span>
-  </p>
+  <h2><i class="fas fa-wallet"></i> Your Wallet</h2>
+  
+  <div class="balance-grid">
+    <div class="balance-card">
+      <h3><i class="fas fa-money-bill"></i> Total Balance</h3>
+      <div class="amount">₹<span id="totalBalance">0</span></div>
+    </div>
+    
+    <div class="balance-card">
+      <h3><i class="fas fa-credit-card"></i> Recharge</h3>
+      <div class="amount">₹<span id="rechargeBalance">0</span></div>
+    </div>
+    
+    <div class="balance-card">
+      <h3><i class="fas fa-gift"></i> Bonus</h3>
+      <div class="amount">₹<span id="bonusBalance">0</span></div>
+    </div>
+    
+    <div class="balance-card">
+      <h3><i class="fas fa-trophy"></i> Winning</h3>
+      <div class="amount">₹<span id="winningBalance">0</span></div>
+    </div>
+  </div>
 </div>
 
-<h2>🔥 Place Your Bet</h2>
-<p style="text-align:center;"><a href="match-history.html" style="color:#ee1111;">View Bet History</a></p>
-<div class="matches" id="matchesContainer">Loading Matches...</div>
+<div class="matches-container">
+  <h2 class="section-title"><i class="fas fa-fire"></i> Live Betting</h2>
+  
+  <div class="history-link">
+    <a href="match-history.html"><i class="fas fa-history"></i> View Bet History</a>
+  </div>
+  
+  <div class="matches" id="matchesContainer">Loading Matches...</div>
+</div>
+
+<div id="notification" class="notification"></div>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
-<!-- Your JS Script remains unchanged -->
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
@@ -164,7 +484,6 @@
   const db = firebase.database();
 </script>
 
-<!-- Place your full JavaScript logic below (same as what you already had) -->
 <script>
   const userId = localStorage.getItem("userId");
   if (!userId) {
@@ -213,41 +532,70 @@
     container.innerHTML = "";
 
     if (matches.length === 0) {
-      container.innerHTML = "<p>No matches available.</p>";
+      container.innerHTML = "<p style='text-align:center; color:#a0a0d0; grid-column:1/-1;'>No matches available. Please check back later.</p>";
       return;
     }
 
     matches.forEach(match => {
       const card = document.createElement("div");
-      card.className = "card";
+      card.className = "match-card";
       card.innerHTML = `
         <h3>${match.team1} vs ${match.team2}</h3>
-        <div class="team-btn" onclick="selectTeam('${match.id}', '${match.team1}', ${match.rate1})">
-          <span>${match.team1}</span>
-          <span class="rate">@${match.rate1}</span>
+        <div class="team-btn" onclick="selectTeam('${match.id}', '${match.team1}', ${match.rate1})" id="btn-${match.id}-1">
+          <div class="team-name">
+            <i class="fas fa-users"></i>
+            <span>${match.team1}</span>
+          </div>
+          <div class="rate">@${match.rate1}</div>
         </div>
-        <div class="team-btn" onclick="selectTeam('${match.id}', '${match.team2}', ${match.rate2})">
-          <span>${match.team2}</span>
-          <span class="rate">@${match.rate2}</span>
+        <div class="team-btn" onclick="selectTeam('${match.id}', '${match.team2}', ${match.rate2})" id="btn-${match.id}-2">
+          <div class="team-name">
+            <i class="fas fa-users"></i>
+            <span>${match.team2}</span>
+          </div>
+          <div class="rate">@${match.rate2}</div>
         </div>
-        <input type="number" id="amount-${match.id}" placeholder="Enter amount">
-        <button onclick="placeBet('${match.id}')">Submit Bet</button>
-        <div id="selected-${match.id}" style="margin-top: 5px; font-size: 14px; color: #ccc;"></div>
+        <div class="bet-input">
+          <i class="fas fa-coins"></i>
+          <input type="number" id="amount-${match.id}" placeholder="Enter amount">
+        </div>
+        <button class="bet-btn" onclick="placeBet('${match.id}')">
+          <i class="fas fa-check-circle"></i> Place Bet
+        </button>
+        <div class="selected-team" id="selected-${match.id}">
+          <i class="fas fa-info-circle"></i> Select a team to bet on
+        </div>
       `;
       container.appendChild(card);
     });
   }
 
   function selectTeam(matchId, teamName, rate) {
+    // Remove selected class from both buttons
+    document.getElementById(`btn-${matchId}-1`).classList.remove('selected');
+    document.getElementById(`btn-${matchId}-2`).classList.remove('selected');
+    
+    // Add selected class to clicked button
+    const btnId = teamName === matches.find(m => m.id === matchId).team1 ? '1' : '2';
+    document.getElementById(`btn-${matchId}-${btnId}`).classList.add('selected');
+    
     selectedBets[matchId] = { team: teamName, rate: rate };
-    document.getElementById(`selected-${matchId}`).innerText = `Selected: ${teamName} @${rate}`;
+    document.getElementById(`selected-${matchId}`).innerHTML = `
+      <i class="fas fa-check-circle"></i> Selected: ${teamName} @${rate}
+    `;
   }
 
   function placeBet(matchId) {
     const amount = parseFloat(document.getElementById(`amount-${matchId}`).value);
     const selected = selectedBets[matchId];
-    if (!selected || isNaN(amount) || amount <= 0) {
-      alert("Please select team and enter valid amount!");
+    
+    if (!selected) {
+      showNotification("Please select a team first!", true);
+      return;
+    }
+    
+    if (isNaN(amount) || amount <= 0) {
+      showNotification("Please enter a valid amount!", true);
       return;
     }
 
@@ -256,7 +604,7 @@
       const totalBalance = (wallet.recharge || 0) + (wallet.bonus || 0) + (wallet.winning || 0);
 
       if (totalBalance < amount) {
-        alert("Insufficient balance!");
+        showNotification("Insufficient balance!", true);
         return;
       }
 
@@ -287,9 +635,35 @@
         winning: newWinning
       });
 
-      alert(`✅ Bet placed on ${selected.team} for ₹${amount}. Return: ₹${returnAmount}`);
-      window.location.href = "match-history.html";
+      showNotification(`✅ Bet placed on ${selected.team} for ₹${amount}. Return: ₹${returnAmount}`);
+      
+      // Reset form
+      setTimeout(() => {
+        document.getElementById(`amount-${matchId}`).value = '';
+        document.getElementById(`btn-${matchId}-1`).classList.remove('selected');
+        document.getElementById(`btn-${matchId}-2`).classList.remove('selected');
+        document.getElementById(`selected-${matchId}`).innerHTML = `
+          <i class="fas fa-info-circle"></i> Select a team to bet on
+        `;
+        delete selectedBets[matchId];
+      }, 2000);
     });
+  }
+  
+  function showNotification(message, isError = false) {
+    const notification = document.getElementById("notification");
+    notification.innerText = message;
+    notification.className = "notification";
+    
+    if (isError) {
+      notification.classList.add("error");
+    }
+    
+    notification.classList.add("show");
+    
+    setTimeout(() => {
+      notification.classList.remove("show");
+    }, 3000);
   }
 </script>
 </body>
