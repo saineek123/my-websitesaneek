@@ -4,136 +4,567 @@
   <meta charset="UTF-8" />
   <title>My Wallet</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --primary: #00bcd4;
+      --primary-dark: #0097a7;
+      --secondary: #9c27b0;
+      --success: #4caf50;
+      --warning: #ff9800;
+      --danger: #f44336;
+      --bg-dark: #121212;
+      --card-bg: rgba(30, 30, 30, 0.8);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --text-light: #ffffff;
+      --text-gray: #b0b0b0;
+      --glass-bg: rgba(255, 255, 255, 0.05);
+    }
+
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
+
     body {
-      font-family: 'Poppins', sans-serif;
-      background: radial-gradient(circle at top, #141e30, #243b55);
+      background: radial-gradient(circle at top, #0f2027, #203a43, #2c5364);
       min-height: 100vh;
-      color: #fff;
+      color: var(--text-light);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 15px;
+      padding: 20px;
+      overflow-x: hidden;
     }
-    .wallet-container {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 20px;
-      padding: 25px 20px;
+
+    .container {
       width: 100%;
-      max-width: 380px;
-      backdrop-filter: blur(15px);
-      box-shadow: 0 8px 30px rgba(0, 255, 255, 0.1);
+      max-width: 420px;
     }
-    h1 {
+
+    .wallet-header {
       text-align: center;
-      margin-bottom: 20px;
-      font-size: 1.6em;
-      color: #00f7ff;
+      margin-bottom: 30px;
+      position: relative;
     }
-    .balance-row {
-      display: flex;
-      justify-content: space-between;
-      margin: 12px 0;
-      font-size: 1em;
-      padding-bottom: 6px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
+
+    .wallet-header h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #00bcd4, #9c27b0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
     }
-    .balance-row span:last-child {
-      font-weight: bold;
+
+    .wallet-header p {
+      color: var(--text-gray);
+      font-size: 1rem;
     }
-    .total {
-      font-size: 1.2em;
-      color: #27ffbf;
-      border-bottom: none;
-      margin-top: 15px;
+
+    .wallet-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(15px);
+      border-radius: 20px;
+      border: 1px solid var(--card-border);
+      padding: 30px 25px;
+      width: 100%;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      margin-bottom: 25px;
+      position: relative;
+      overflow: hidden;
     }
-    .btn-group {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-top: 25px;
+
+    .wallet-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(0,188,212,0.1) 0%, transparent 70%);
+      z-index: -1;
     }
-    button {
-      padding: 12px;
-      font-size: 1em;
-      border: none;
-      border-radius: 30px;
-      cursor: pointer;
-      transition: 0.3s ease;
+
+    .total-balance {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .total-label {
+      color: var(--text-gray);
+      font-size: 1rem;
+      margin-bottom: 8px;
+    }
+
+    .total-amount {
+      font-size: 2.8rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, #ffffff, #e0f7fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -1px;
+    }
+
+    .balance-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    .balance-card {
+      background: var(--glass-bg);
+      border-radius: 12px;
+      padding: 15px 10px;
+      text-align: center;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .balance-card:hover {
+      transform: translateY(-5px);
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .balance-icon {
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+    }
+
+    .recharge .balance-icon { color: var(--primary); }
+    .bonus .balance-icon { color: var(--warning); }
+    .winning .balance-icon { color: var(--success); }
+
+    .balance-label {
+      font-size: 0.85rem;
+      color: var(--text-gray);
+      margin-bottom: 5px;
+    }
+
+    .balance-amount {
+      font-size: 1.1rem;
       font-weight: 600;
     }
-    #btnRecharge {
-      background: linear-gradient(135deg, #00c6ff, #0072ff);
-      color: #fff;
+
+    .action-buttons {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-top: 15px;
     }
-    #btnWithdraw {
-      background: linear-gradient(135deg, #ff512f, #dd2476);
-      color: #fff;
+
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 16px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: none;
+      text-align: center;
+      color: var(--text-light);
     }
-    button:hover {
-      transform: scale(1.04);
+
+    .btn-recharge {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    }
+
+    .btn-withdraw {
+      background: linear-gradient(135deg, var(--secondary), #7b1fa2);
+    }
+
+    .btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .transaction-history {
+      background: var(--card-bg);
+      backdrop-filter: blur(15px);
+      border-radius: 20px;
+      border: 1px solid var(--card-border);
+      padding: 25px;
+      width: 100%;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .section-title h2 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--text-light);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .view-all {
+      color: var(--primary);
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-decoration: none;
+    }
+
+    .transaction-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .transaction-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 15px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .transaction-item:hover {
+      background: rgba(255, 255, 255, 0.08);
+      transform: translateX(5px);
+    }
+
+    .transaction-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      margin-right: 15px;
+    }
+
+    .recharge-icon {
+      background: rgba(0, 188, 212, 0.15);
+      color: var(--primary);
+    }
+
+    .withdraw-icon {
+      background: rgba(156, 39, 176, 0.15);
+      color: var(--secondary);
+    }
+
+    .winning-icon {
+      background: rgba(76, 175, 80, 0.15);
+      color: var(--success);
+    }
+
+    .transaction-details {
+      flex: 1;
+    }
+
+    .transaction-title {
+      font-weight: 500;
+      margin-bottom: 3px;
+    }
+
+    .transaction-date {
+      font-size: 0.8rem;
+      color: var(--text-gray);
+    }
+
+    .transaction-amount {
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .credit {
+      color: var(--success);
+    }
+
+    .debit {
+      color: var(--danger);
+    }
+
+    .no-transactions {
+      text-align: center;
+      padding: 20px;
+      color: var(--text-gray);
+      font-style: italic;
+    }
+
+    .notification-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: var(--danger);
+      color: white;
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: bold;
+    }
+
+    @media (max-width: 480px) {
+      .total-amount {
+        font-size: 2.4rem;
+      }
+      
+      .balance-grid {
+        gap: 10px;
+      }
+      
+      .balance-card {
+        padding: 12px 8px;
+      }
+      
+      .balance-icon {
+        font-size: 1.5rem;
+      }
+      
+      .balance-label {
+        font-size: 0.8rem;
+      }
+      
+      .balance-amount {
+        font-size: 1rem;
+      }
+    }
+
+    @media (max-width: 350px) {
+      .balance-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Animation for values */
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    .pulse {
+      animation: pulse 0.5s ease;
     }
   </style>
 </head>
 <body>
 
-  <div class="wallet-container">
-    <h1>My Wallet</h1>
-    <div class="balance-row"><span>Recharge Balance</span><span id="recharge">₹0</span></div>
-    <div class="balance-row"><span>Bonus Balance</span><span id="bonus">₹0</span></div>
-    <div class="balance-row"><span>Winning Balance</span><span id="winning">₹0</span></div>
-    <div class="balance-row total"><span>Total Balance</span><span id="total">₹0</span></div>
-    <div class="btn-group">
-      <button id="btnRecharge">Recharge</button>
-      <button id="btnWithdraw">Withdraw</button>
+  <div class="container">
+    <div class="wallet-header">
+      <h1><i class="fas fa-wallet"></i> My Wallet</h1>
+      <p>Manage your funds and transactions</p>
+    </div>
+
+    <div class="wallet-card">
+      <div class="total-balance">
+        <div class="total-label">Total Balance</div>
+        <div class="total-amount" id="total">₹0.00</div>
+      </div>
+
+      <div class="balance-grid">
+        <div class="balance-card recharge">
+          <div class="balance-icon"><i class="fas fa-rupee-sign"></i></div>
+          <div class="balance-label">Recharge</div>
+          <div class="balance-amount" id="recharge">₹0.00</div>
+        </div>
+        
+        <div class="balance-card bonus">
+          <div class="balance-icon"><i class="fas fa-gift"></i></div>
+          <div class="balance-label">Bonus</div>
+          <div class="balance-amount" id="bonus">₹0.00</div>
+        </div>
+        
+        <div class="balance-card winning">
+          <div class="balance-icon"><i class="fas fa-trophy"></i></div>
+          <div class="balance-label">Winning</div>
+          <div class="balance-amount" id="winning">₹0.00</div>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <button class="btn btn-recharge" id="btnRecharge">
+          <i class="fas fa-plus-circle"></i> Recharge
+        </button>
+        <button class="btn btn-withdraw" id="btnWithdraw">
+          <i class="fas fa-money-bill-wave"></i> Withdraw
+        </button>
+      </div>
+    </div>
+
+    <div class="transaction-history">
+      <div class="section-title">
+        <h2><i class="fas fa-history"></i> Recent Transactions</h2>
+        <a href="transaction-history.html" class="view-all">View All</a>
+      </div>
+      
+      <div class="transaction-list" id="transactionList">
+        <!-- Transactions will be added here by JavaScript -->
+        <div class="no-transactions">No recent transactions</div>
+      </div>
     </div>
   </div>
 
   <script>
+    // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
       authDomain: "betting-app-43800.firebaseapp.com",
       databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
       projectId: "betting-app-43800"
     };
+    
+    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-
+    
+    // DOM Elements
     const rechargeEl = document.getElementById('recharge');
     const bonusEl = document.getElementById('bonus');
     const winningEl = document.getElementById('winning');
     const totalEl = document.getElementById('total');
-
+    const transactionList = document.getElementById('transactionList');
+    
+    // Buttons
+    const btnRecharge = document.getElementById('btnRecharge');
+    const btnWithdraw = document.getElementById('btnWithdraw');
+    
+    // Check if user is logged in
     const userId = localStorage.getItem("userId");
     if (!userId) {
-      alert("User not logged in");
+      alert("Please login to access your wallet");
       window.location.href = "login.html";
     }
-
-    db.ref("users/" + userId + "/wallet").on("value", (snap) => {
-      const wallet = snap.val() || {};
+    
+    // Format currency with commas
+    function formatCurrency(amount) {
+      return '₹' + amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+    }
+    
+    // Add pulse animation to element
+    function pulseElement(element) {
+      element.classList.add('pulse');
+      setTimeout(() => {
+        element.classList.remove('pulse');
+      }, 500);
+    }
+    
+    // Update wallet balances
+    function updateWalletBalances(wallet) {
       const recharge = wallet.recharge || 0;
       const bonus = wallet.bonus || 0;
       const winning = wallet.winning || 0;
       const total = recharge + bonus + winning;
-
-      rechargeEl.innerText = `₹${recharge.toFixed(2)}`;
-      bonusEl.innerText = `₹${bonus.toFixed(2)}`;
-      winningEl.innerText = `₹${winning.toFixed(2)}`;
-      totalEl.innerText = `₹${total.toFixed(2)}`;
+      
+      rechargeEl.textContent = formatCurrency(recharge);
+      bonusEl.textContent = formatCurrency(bonus);
+      winningEl.textContent = formatCurrency(winning);
+      totalEl.textContent = formatCurrency(total);
+      
+      // Add animation when values change
+      pulseElement(rechargeEl.parentElement);
+      pulseElement(bonusEl.parentElement);
+      pulseElement(winningEl.parentElement);
+      pulseElement(totalEl);
+    }
+    
+    // Create transaction item
+    function createTransactionItem(transaction) {
+      const item = document.createElement('div');
+      item.className = 'transaction-item';
+      
+      // Determine icon and color based on type
+      let iconClass = 'fas fa-question-circle';
+      let iconBg = 'recharge-icon';
+      let amountClass = 'credit';
+      
+      if (transaction.type === 'recharge') {
+        iconClass = 'fas fa-arrow-down';
+        iconBg = 'recharge-icon';
+        amountClass = 'credit';
+      } else if (transaction.type === 'withdraw') {
+        iconClass = 'fas fa-arrow-up';
+        iconBg = 'withdraw-icon';
+        amountClass = 'debit';
+      } else if (transaction.type === 'winning') {
+        iconClass = 'fas fa-trophy';
+        iconBg = 'winning-icon';
+        amountClass = 'credit';
+      }
+      
+      // Format date
+      const date = new Date(transaction.timestamp);
+      const dateStr = date.toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      });
+      
+      // Create HTML
+      item.innerHTML = `
+        <div class="transaction-icon ${iconBg}">
+          <i class="${iconClass}"></i>
+        </div>
+        <div class="transaction-details">
+          <div class="transaction-title">${transaction.description || 'Transaction'}</div>
+          <div class="transaction-date">${dateStr}</div>
+        </div>
+        <div class="transaction-amount ${amountClass}">
+          ${transaction.type === 'withdraw' ? '-' : '+'}₹${transaction.amount.toFixed(2)}
+        </div>
+      `;
+      
+      return item;
+    }
+    
+    // Listen for wallet balance changes
+    db.ref("users/" + userId + "/wallet").on("value", (snap) => {
+      const wallet = snap.val() || {};
+      updateWalletBalances(wallet);
     });
-
-    document.getElementById("btnRecharge").onclick = () => window.location.href = "recharge.html";
-    document.getElementById("btnWithdraw").onclick = () => window.location.href = "withdraw.html";
+    
+    // Load recent transactions
+    db.ref("users/" + userId + "/transactions").limitToLast(3).on("value", (snap) => {
+      const transactions = snap.val() || {};
+      transactionList.innerHTML = '';
+      
+      if (Object.keys(transactions).length === 0) {
+        transactionList.innerHTML = '<div class="no-transactions">No recent transactions</div>';
+        return;
+      }
+      
+      // Convert to array and reverse to show latest first
+      const transactionArray = Object.entries(transactions).map(([id, txn]) => ({
+        id,
+        ...txn
+      })).reverse();
+      
+      transactionArray.forEach(txn => {
+        transactionList.appendChild(createTransactionItem(txn));
+      });
+    });
+    
+    // Button event handlers
+    btnRecharge.onclick = () => window.location.href = "recharge.html";
+    btnWithdraw.onclick = () => window.location.href = "withdraw.html";
   </script>
 
 </body>
