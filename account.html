@@ -4,158 +4,517 @@
   <meta charset="UTF-8">
   <title>My Account</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
+    :root {
+      --primary: #00bcd4;
+      --primary-dark: #0097a7;
+      --bg-dark: #121212;
+      --card-bg: #1e1e1e;
+      --card-border: #2d2d2d;
+      --text-light: #f5f5f5;
+      --text-gray: #b0b0b0;
+      --success: #4caf50;
+      --warning: #ff9800;
+      --danger: #f44336;
+    }
+
     * {
+      margin: 0;
+      padding: 0;
       box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
     body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #121212;
-      color: #fff;
+      background: var(--bg-dark);
+      color: var(--text-light);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding-bottom: 20px;
     }
 
     header {
-      background-color: #1e1e1e;
-      padding: 16px;
+      background: linear-gradient(135deg, #1a1a1a, #0d0d0d);
+      padding: 18px 16px;
       text-align: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid var(--card-border);
     }
 
     header h1 {
-      margin: 0;
-      font-size: 22px;
+      font-size: 1.4rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
     }
 
     .container {
-      width: 95%;
       max-width: 500px;
       margin: 20px auto;
-      padding: 16px;
-      background-color: #1c1c1c;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      padding: 0 16px;
     }
 
-    .info p {
-      font-size: 16px;
-      margin: 8px 0;
-      word-wrap: break-word;
+    .user-card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+      margin-bottom: 24px;
+      border: 1px solid var(--card-border);
     }
 
-    .info p small {
-      font-size: 14px;
-      color: #ccc;
+    .user-header {
+      background: linear-gradient(90deg, #006064, #00838f);
+      padding: 20px;
+      text-align: center;
     }
 
-    .buttons {
+    .avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #00bcd4, #0097a7);
+      margin: 0 auto 15px;
       display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
+      align-items: center;
       justify-content: center;
-      margin-top: 25px;
+      font-size: 2.5rem;
+      border: 3px solid rgba(255, 255, 255, 0.2);
     }
 
-    button {
-      flex: 1 1 45%;
-      padding: 10px;
-      background: #00bcd4;
-      border: none;
-      border-radius: 6px;
-      color: #000;
-      font-weight: bold;
-      font-size: 14px;
+    .user-name {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .user-status {
+      display: inline-block;
+      background: rgba(0, 188, 212, 0.2);
+      color: var(--primary);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .user-info {
+      padding: 20px;
+    }
+
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .info-item:last-child {
+      border-bottom: none;
+    }
+
+    .info-label {
+      color: var(--text-gray);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .info-value {
+      font-weight: 500;
+      text-align: right;
+      max-width: 60%;
+      word-break: break-word;
+    }
+
+    .balance-section {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 24px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--card-border);
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .balance-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+    }
+
+    .balance-card {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 15px;
+      text-align: center;
+      transition: transform 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .balance-card:hover {
+      transform: translateY(-3px);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .balance-icon {
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+    }
+
+    .recharge .balance-icon { color: #4caf50; }
+    .bonus .balance-icon { color: #ff9800; }
+    .winning .balance-icon { color: #2196f3; }
+    .total .balance-icon { color: #9c27b0; }
+
+    .balance-label {
+      font-size: 0.9rem;
+      color: var(--text-gray);
+      margin-bottom: 5px;
+    }
+
+    .balance-amount {
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+
+    .buttons-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-top: 10px;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 15px 10px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 0.95rem;
       cursor: pointer;
+      transition: all 0.3s ease;
+      border: none;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-light);
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
-    button:hover {
-      background: #0097a7;
+    .btn:hover {
+      background: rgba(0, 188, 212, 0.15);
+      border-color: rgba(0, 188, 212, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 188, 212, 0.1);
+    }
+
+    .btn i {
+      font-size: 1.2rem;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #000;
+      font-weight: 700;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      box-shadow: 0 4px 15px rgba(0, 188, 212, 0.4);
+    }
+
+    .btn-logout {
+      background: rgba(244, 67, 54, 0.15);
+      border-color: rgba(244, 67, 54, 0.2);
+      color: #ff8a80;
+    }
+
+    .btn-logout:hover {
+      background: rgba(244, 67, 54, 0.25);
+      box-shadow: 0 4px 12px rgba(244, 67, 54, 0.1);
+    }
+
+    .loading {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: var(--primary);
+      animation: spin 1s ease-in-out infinite;
+      margin-left: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 600px) {
+      .buttons-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .balance-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     @media (max-width: 400px) {
-      button {
-        flex: 1 1 100%;
+      .container {
+        padding: 0 12px;
+      }
+      
+      .user-header {
+        padding: 15px;
+      }
+      
+      .user-info {
+        padding: 15px;
+      }
+      
+      .info-item {
+        flex-direction: column;
+        gap: 5px;
+      }
+      
+      .info-value {
+        text-align: left;
+        max-width: 100%;
       }
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>👤 My Account</h1>
+    <h1><i class="fas fa-user-circle"></i> My Account</h1>
   </header>
 
   <div class="container">
-    <div class="info">
-      <p><strong>Username:</strong> <span id="userName">Loading...</span></p>
-      <p><strong>Email:</strong> <span id="userEmail">N/A</span></p>
-      <p><strong>Phone:</strong> <span id="userPhone">N/A</span></p>
-      <p><small>
-        💳 Recharge: ₹<span id="rechargeBalance">0</span> |
-        🎁 Bonus: ₹<span id="bonusBalance">0</span> |
-        🏆 Winning: ₹<span id="winningBalance">0</span>
-      </small></p>
+    <div class="user-card">
+      <div class="user-header">
+        <div class="avatar">
+          <i class="fas fa-user"></i>
+        </div>
+        <h2 class="user-name" id="userName">Loading... <span class="loading"></span></h2>
+        <div class="user-status" id="verificationStatus">Checking verification...</div>
+      </div>
+      
+      <div class="user-info">
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-envelope"></i> Email:</span>
+          <span class="info-value" id="userEmail">Loading...</span>
+        </div>
+        
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-phone"></i> Phone:</span>
+          <span class="info-value" id="userPhone">Loading...</span>
+        </div>
+        
+        <div class="info-item">
+          <span class="info-label"><i class="fas fa-id-card"></i> Account ID:</span>
+          <span class="info-value" id="accountId">Loading...</span>
+        </div>
+      </div>
     </div>
-
-    <div class="buttons">
-      <button onclick="window.location.href='edit-profile.html'">✏️ Edit Profile</button>
-      <button onclick="window.location.href='change-password.html'">🔐 Change Password</button>
-      <button onclick="window.location.href='recharge.history.html'">📜 Recharge History</button>
-      <button onclick="window.location.href='withdraw.history.html'">📜 Withdraw History</button>
-      <button onclick="window.location.href='support.html'">📞 Support</button>
-      <button onclick="window.location.href='settings.html'">⚙️ Settings</button>
-      <button onclick="window.location.href='withdraw.html'">💸 Withdraw</button>
-      <button onclick="logout()">🚪 Logout</button>
+    
+    <div class="balance-section">
+      <h3 class="section-title"><i class="fas fa-wallet"></i> Wallet Balance</h3>
+      
+      <div class="balance-grid">
+        <div class="balance-card recharge">
+          <div class="balance-icon"><i class="fas fa-rupee-sign"></i></div>
+          <div class="balance-label">Recharge Balance</div>
+          <div class="balance-amount">₹<span id="rechargeBalance">0.00</span></div>
+        </div>
+        
+        <div class="balance-card bonus">
+          <div class="balance-icon"><i class="fas fa-gift"></i></div>
+          <div class="balance-label">Bonus Balance</div>
+          <div class="balance-amount">₹<span id="bonusBalance">0.00</span></div>
+        </div>
+        
+        <div class="balance-card winning">
+          <div class="balance-icon"><i class="fas fa-trophy"></i></div>
+          <div class="balance-label">Winning Balance</div>
+          <div class="balance-amount">₹<span id="winningBalance">0.00</span></div>
+        </div>
+        
+        <div class="balance-card total">
+          <div class="balance-icon"><i class="fas fa-coins"></i></div>
+          <div class="balance-label">Total Balance</div>
+          <div class="balance-amount">₹<span id="totalBalance">0.00</span></div>
+        </div>
+      </div>
+    </div>
+    
+    <h3 class="section-title"><i class="fas fa-cog"></i> Account Actions</h3>
+    
+    <div class="buttons-grid">
+      <button class="btn" onclick="window.location.href='edit-profile.html'">
+        <i class="fas fa-user-edit"></i> Edit Profile
+      </button>
+      
+      <button class="btn" onclick="window.location.href='change-password.html'">
+        <i class="fas fa-lock"></i> Change Password
+      </button>
+      
+      <button class="btn" onclick="window.location.href='recharge.history.html'">
+        <i class="fas fa-file-invoice"></i> Recharge History
+      </button>
+      
+      <button class="btn" onclick="window.location.href='withdraw.history.html'">
+        <i class="fas fa-receipt"></i> Withdraw History
+      </button>
+      
+      <button class="btn" onclick="window.location.href='support.html'">
+        <i class="fas fa-headset"></i> Support
+      </button>
+      
+      <button class="btn" onclick="window.location.href='settings.html'">
+        <i class="fas fa-cog"></i> Settings
+      </button>
+      
+      <button class="btn btn-primary" onclick="window.location.href='withdraw.html'">
+        <i class="fas fa-money-bill-wave"></i> Withdraw Funds
+      </button>
+      
+      <button class="btn btn-logout" onclick="logout()">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
     </div>
   </div>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 
   <script>
+    // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
       authDomain: "betting-app-43800.firebaseapp.com",
       databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
       projectId: "betting-app-43800"
     };
+    
+    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-
-    const user = JSON.parse(localStorage.getItem("loggedInUser"));
-    if (!user) {
-      window.location.href = "login.html";
-    } else {
-      document.getElementById("userName").innerText = user.username || "Guest";
-      document.getElementById("userEmail").innerText = user.email || "Not Provided";
-      document.getElementById("userPhone").innerText = user.phone || "Not Provided";
-    }
-
-    const userId = localStorage.getItem("userId");
-    if (userId) {
-      const totalEl = document.getElementById("totalBalance");
-      const rechargeEl = document.getElementById("rechargeBalance");
-      const bonusEl = document.getElementById("bonusBalance");
-      const winningEl = document.getElementById("winningBalance");
-
-      db.ref("users/" + userId + "/wallet").on("value", (snap) => {
-        const wallet = snap.val() || {};
+    const auth = firebase.auth();
+    
+    // DOM Elements
+    const userNameEl = document.getElementById("userName");
+    const userEmailEl = document.getElementById("userEmail");
+    const userPhoneEl = document.getElementById("userPhone");
+    const accountIdEl = document.getElementById("accountId");
+    const verificationStatusEl = document.getElementById("verificationStatus");
+    const rechargeEl = document.getElementById("rechargeBalance");
+    const bonusEl = document.getElementById("bonusBalance");
+    const winningEl = document.getElementById("winningBalance");
+    const totalEl = document.getElementById("totalBalance");
+    
+    // Check if user is logged in
+    auth.onAuthStateChanged((user) => {
+      if (!user) {
+        // User is not logged in, redirect to login
+        window.location.href = "login.html";
+      } else {
+        // User is logged in, load user data
+        loadUserData(user.uid);
+      }
+    });
+    
+    // Load user data from Firebase
+    function loadUserData(userId) {
+      // Get user data from Realtime Database
+      const userRef = db.ref('users/' + userId);
+      
+      userRef.once('value').then((snapshot) => {
+        const userData = snapshot.val();
+        
+        if (userData) {
+          // Display user information
+          userNameEl.innerHTML = userData.username || "Guest";
+          userEmailEl.textContent = userData.email || "Not provided";
+          userPhoneEl.textContent = userData.phone || "Not provided";
+          accountIdEl.textContent = "#" + userId.substring(0, 8).toUpperCase();
+          
+          // Check email verification
+          if (auth.currentUser.emailVerified) {
+            verificationStatusEl.textContent = "Verified Account";
+            verificationStatusEl.style.backgroundColor = "rgba(76, 175, 80, 0.2)";
+            verificationStatusEl.style.color = "#4caf50";
+          } else {
+            verificationStatusEl.textContent = "Not Verified";
+            verificationStatusEl.style.backgroundColor = "rgba(255, 152, 0, 0.2)";
+            verificationStatusEl.style.color = "#ff9800";
+          }
+          
+          // Remove loading indicator
+          const loading = userNameEl.querySelector('.loading');
+          if (loading) loading.remove();
+        }
+      });
+      
+      // Listen for wallet balance changes in real-time
+      const walletRef = db.ref('users/' + userId + '/wallet');
+      
+      walletRef.on('value', (snapshot) => {
+        const wallet = snapshot.val() || {};
         const recharge = wallet.recharge || 0;
         const bonus = wallet.bonus || 0;
         const winning = wallet.winning || 0;
         const total = recharge + bonus + winning;
-
-        totalEl.innerText = total.toFixed(2);
-        rechargeEl.innerText = recharge.toFixed(2);
-        bonusEl.innerText = bonus.toFixed(2);
-        winningEl.innerText = winning.toFixed(2);
+        
+        // Format and display balances
+        rechargeEl.textContent = formatCurrency(recharge);
+        bonusEl.textContent = formatCurrency(bonus);
+        winningEl.textContent = formatCurrency(winning);
+        totalEl.textContent = formatCurrency(total);
       });
     }
-
-    function logout() {
-      localStorage.removeItem("loggedInUser");
-      window.location.href = "login.html";
+    
+    // Format currency with commas
+    function formatCurrency(amount) {
+      return amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
     }
+    
+    // Logout function
+    function logout() {
+      if (confirm("Are you sure you want to logout?")) {
+        auth.signOut().then(() => {
+          window.location.href = "login.html";
+        });
+      }
+    }
+    
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', () => {
+      // Check if user is authenticated
+      const user = auth.currentUser;
+      if (user) {
+        loadUserData(user.uid);
+      }
+    });
   </script>
 </body>
 </html>
