@@ -473,6 +473,81 @@
       box-shadow: 0 0 15px rgba(255, 75, 92, 0.5);
     }
 
+    /* Mines Game Balance Section */
+    .mines-balance {
+      background: linear-gradient(135deg, #1a1a2e, #0f3460);
+      border-radius: 20px;
+      padding: 20px;
+      margin: 20px 0;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+    }
+
+    .mines-balance h3 {
+      text-align: center;
+      margin-bottom: 15px;
+      color: #00f7ff;
+    }
+
+    .mines-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      max-width: 320px;
+      margin: 0 auto;
+    }
+
+    .mines-cell {
+      background-color: #333;
+      padding-top: 100%;
+      position: relative;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .mines-cell span {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .mines-stats {
+      text-align: center;
+      margin-top: 15px;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+    }
+
+    .mines-stats p {
+      margin: 5px 0;
+    }
+
+    .mines-btn {
+      display: block;
+      width: 100%;
+      max-width: 200px;
+      margin: 15px auto 0;
+      padding: 10px;
+      background: linear-gradient(to right, #00f7ff, #0077ff);
+      border: none;
+      border-radius: 30px;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .mines-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(0, 247, 255, 0.5);
+    }
+
     /* Responsive Design */
     @media (max-width: 768px) {
       .logo {
@@ -608,6 +683,8 @@
       </div>
     </div>
     
+    
+    
     <div class="section-title">
       <i class="fas fa-gamepad"></i>
       <h2>Popular Games</h2>
@@ -621,6 +698,15 @@
         <h3>Sports Betting</h3>
         <p>Bet on your favorite sports</p>
         <button class="card-btn" onclick="window.location.href='bet.html'">Play Now</button>
+      </div>
+    
+       <div class="card">
+        <div class="card-icon">
+          <i class="fas fa-bomb"></i>
+        </div>
+        <h3>Mines Game</h3>
+        <p>Avoid the mines to win</p>
+        <button class="card-btn" onclick="window.location.href='mines.html'">Play Now</button>
       </div>
       
       <div class="card">
@@ -679,7 +765,7 @@
       
       <div class="card">
         <div class="card-icon">
-          <i class="fas fa-ti cket-alt"></i>
+          <i class="fas fa-ticket-alt"></i>
         </div>
         <h3>Lottery</h3>
         <p>Try your luck today</p>
@@ -700,7 +786,8 @@
       <button class="logout-btn" onclick="logout()">Logout</button>
     </div>
   </div>
- <!-- Firebase SDK -->
+
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
@@ -713,43 +800,87 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-  </script>
-  <script>
+    
     function toggleDrawer() {
       const drawer = document.getElementById("drawer");
       const overlay = document.getElementById("overlay");
       drawer.classList.toggle("open");
       overlay.classList.toggle("show");
     }
-  </script>
-  <script>
+    
+    // Mines game data
+    let minesData = {
+      gamesPlayed: 0,
+      totalWins: 0,
+      lastWin: 0
+    };
+    
+    // Load mines data from localStorage
+    function loadMinesData() {
+      const savedData = localStorage.getItem("minesData");
+      if (savedData) {
+        minesData = JSON.parse(savedData);
+        updateMinesUI();
+      }
+    }
+    
+    // Save mines data to localStorage
+    function saveMinesData() {
+      localStorage.setItem("minesData", JSON.stringify(minesData));
+    }
+    
+    // Update mines UI
+    function updateMinesUI() {
+      document.getElementById("minesGamesPlayed").textContent = minesData.gamesPlayed;
+      document.getElementById("minesTotalWins").textContent = minesData.totalWins.toFixed(2);
+      document.getElementById("minesLastWin").textContent = minesData.lastWin.toFixed(2);
+    }
+    
+    // Simulate a win for demo purposes
+    function simulateMinesWin() {
+      minesData.gamesPlayed++;
+      const winAmount = Math.floor(Math.random() * 500) + 50;
+      minesData.totalWins += winAmount;
+      minesData.lastWin = winAmount;
+      saveMinesData();
+      updateMinesUI();
+    }
+    
+    // Initialize mines data
+    loadMinesData();
+    
+    // Simulate a win every 30 seconds for demo
+    setInterval(simulateMinesWin, 30000);
+
     const user = JSON.parse(localStorage.getItem("loggedInUser"));
     if (!user) {
       window.location.href = "login.html";
     } else {
       document.getElementById("userName").innerText = user.username || "Guest";
+      document.getElementById("drawerUserName").innerText = user.username || "Guest";
     }
 
     const userId = localStorage.getItem("userId");
     if (userId) {
       const totalEl = document.getElementById("totalBalance");
-const rechargeEl = document.getElementById("rechargeBalance");
-const bonusEl = document.getElementById("bonusBalance");
-const winningEl = document.getElementById("winningBalance");
+      const rechargeEl = document.getElementById("rechargeBalance");
+      const bonusEl = document.getElementById("bonusBalance");
+      const winningEl = document.getElementById("winningBalance");
+      const drawerBalanceEl = document.getElementById("drawerBalance");
 
-db.ref("users/" + userId + "/wallet").on("value", (snap) => {
-  const wallet = snap.val() || {};
-  const recharge = wallet.recharge || 0;
-  const bonus = wallet.bonus || 0;
-  const winning = wallet.winning || 0;
-  const total = recharge + bonus + winning;
+      db.ref("users/" + userId + "/wallet").on("value", (snap) => {
+        const wallet = snap.val() || {};
+        const recharge = wallet.recharge || 0;
+        const bonus = wallet.bonus || 0;
+        const winning = wallet.winning || 0;
+        const total = recharge + bonus + winning;
 
-  totalEl.innerText = total.toFixed(2);
-  rechargeEl.innerText = recharge.toFixed(2);
-  bonusEl.innerText = bonus.toFixed(2);
-  winningEl.innerText = winning.toFixed(2);
-});
-
+        totalEl.innerText = total.toFixed(2);
+        rechargeEl.innerText = recharge.toFixed(2);
+        bonusEl.innerText = bonus.toFixed(2);
+        winningEl.innerText = winning.toFixed(2);
+        drawerBalanceEl.innerText = total.toFixed(2);
+      });
     }
 
     function logout() {
@@ -766,21 +897,37 @@ db.ref("users/" + userId + "/wallet").on("value", (snap) => {
       container.innerHTML = "";
 
       matches.forEach(match => {
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-          <h3>${match.team1} vs ${match.team2}</h3>
-          <div class="team-btn" onclick="selectTeam(${match.id}, '${match.team1}', ${match.rate1})">
-            <span>${match.team1}</span><span class="rate">@${match.rate1}</span>
+        const matchCard = document.createElement("div");
+        matchCard.className = "match-card";
+        matchCard.innerHTML = `
+          <div class="match-header">
+            <div class="match-title">${match.team1} vs ${match.team2}</div>
+            <div class="live-badge">LIVE</div>
           </div>
-          <div class="team-btn" onclick="selectTeam(${match.id}, '${match.team2}', ${match.rate2})">
-            <span>${match.team2}</span><span class="rate">@${match.rate2}</span>
+          <div class="teams">
+            <div class="team">
+              <div class="team-name">${match.team1}</div>
+              <div class="team-logo"><i class="fas fa-shield-alt"></i></div>
+            </div>
+            <div class="vs">VS</div>
+            <div class="team">
+              <div class="team-name">${match.team2}</div>
+              <div class="team-logo"><i class="fas fa-shield-alt"></i></div>
+            </div>
           </div>
-          <input type="number" id="amount-${match.id}" placeholder="Enter Amount">
-          <button onclick="placeBet(${match.id})">Place Bet</button>
-          <div id="selected-${match.id}" style="font-size:14px; margin-top:5px;"></div>
+          <div class="bet-options">
+            <button class="bet-btn" onclick="selectTeam(${match.id}, '${match.team1}', ${match.rate1})">
+              ${match.team1} <span class="bet-rate">${match.rate1}</span>
+            </button>
+            <button class="bet-btn" onclick="selectTeam(${match.id}, '${match.team2}', ${match.rate2})">
+              ${match.team2} <span class="bet-rate">${match.rate2}</span>
+            </button>
+          </div>
+          <input type="number" class="bet-input" id="amount-${match.id}" placeholder="Enter bet amount (₹)">
+          <div class="selected-bet" id="selected-${match.id}"></div>
+          <button class="place-bet-btn" onclick="placeBet(${match.id})">Place Bet</button>
         `;
-        container.appendChild(card);
+        container.appendChild(matchCard);
       });
     }
 
@@ -790,39 +937,27 @@ db.ref("users/" + userId + "/wallet").on("value", (snap) => {
     }
 
     function placeBet(matchId) {
-      const amount = parseFloat(document.getElementById(`amount-${matchId}`).value);
+      const amountInput = document.getElementById(`amount-${matchId}`);
+      const amount = parseFloat(amountInput.value);
       const selected = selectedBets[matchId];
-      if (!selected || isNaN(amount) || amount <= 0) {
-        alert("Select team and valid amount.");
+      
+      if (!selected) {
+        alert("Please select a team first");
         return;
       }
-      if (user.balance < amount) {
-        alert("Insufficient balance!");
+      
+      if (isNaN(amount) || amount <= 0) {
+        alert("Please enter a valid bet amount");
         return;
       }
+      
       const returnAmount = (amount * selected.rate).toFixed(2);
-      const match = matches.find(m => m.id === matchId);
-      const newBet = {
-        match: `${match.team1} vs ${match.team2}`,
-        team: selected.team,
-        rate: selected.rate,
-        amount: amount,
-        return: returnAmount,
-        time: new Date().toLocaleString(),
-        result: "pending"
-      };
-      user.bets = user.bets || [];
-      user.bets.push(newBet);
-      user.balance -= amount;
-      let allUsers = JSON.parse(localStorage.getItem("users")) || [];
-      const index = allUsers.findIndex(u => u.number === user.number);
-      if (index !== -1) {
-        allUsers[index] = user;
-        localStorage.setItem("users", JSON.stringify(allUsers));
-      }
-      localStorage.setItem("loggedInUser", JSON.stringify(user));
-      alert(`✅ Bet placed on ${selected.team}. Return: ₹${returnAmount}`);
-      window.location.href = "history.html";
+      alert(`✅ Bet placed on ${selected.team} for ₹${amount}. Potential return: ₹${returnAmount}`);
+      
+      // Reset selection
+      selectedBets[matchId] = null;
+      document.getElementById(`selected-${matchId}`).innerText = "";
+      amountInput.value = "";
     }
 
     renderMatches();
