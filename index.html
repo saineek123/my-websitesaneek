@@ -655,12 +655,21 @@
     </div>
   </header>
 
-  <div class="main-content">
-    <div class="welcome-banner">
-      <h1>Welcome, <span id="userName">User</span>!</h1>
-      <p>Your ultimate betting experience starts here</p>
-    </div>
+  
     
+    <!-- Drawer में पहले से यही रहेगा — कोई बदलाव नहीं -->
+
+<!-- ✅ Welcome Banner के अंदर Balance Breakdown जोड़ दो -->
+<div class="welcome-banner">
+  <h1>Welcome, <span id="userName">User</span>!</h1>
+  <p>Your ultimate betting experience starts here</p>
+  <p style="margin-top:10px; font-size: 14px; color:#00f7ff;">
+    💳 Recharge: ₹<span id="rechargeBalance">0.00</span> |
+    🎁 Bonus: ₹<span id="bonusBalance">0.00</span> |
+    🏆 Winning: ₹<span id="winningBalance">0.00</span>
+  </p>
+</div>
+
     <div class="promo-banner">
       <div class="promo-card">
         <div class="promo-image">
@@ -775,14 +784,8 @@
       </div>
     </div>
     
-    <div class="section-title">
-      <i class="fas fa-bolt"></i>
-      <h2>Live Matches</h2>
-    </div>
     
-    <div class="matches-container" id="matchesContainer">
-      <!-- Match cards will be generated here -->
-    </div>
+   
     
     <div class="logout">
       <button class="logout-btn" onclick="logout()">Logout</button>
@@ -793,8 +796,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
-  <!-- Replace the existing Firebase script block with this corrected version -->
-<script>
+ <script>
   const firebaseConfig = {
     apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
     authDomain: "betting-app-43800.firebaseapp.com",
@@ -803,57 +805,13 @@
   };
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
-  
+
   function toggleDrawer() {
     const drawer = document.getElementById("drawer");
     const overlay = document.getElementById("overlay");
     drawer.classList.toggle("open");
     overlay.classList.toggle("show");
   }
-  
-  // Mines game data
-  let minesData = {
-    gamesPlayed: 0,
-    totalWins: 0,
-    lastWin: 0
-  };
-  
-  // Load mines data from localStorage
-  function loadMinesData() {
-    const savedData = localStorage.getItem("minesData");
-    if (savedData) {
-      minesData = JSON.parse(savedData);
-      updateMinesUI();
-    }
-  }
-  
-  // Save mines data to localStorage
-  function saveMinesData() {
-    localStorage.setItem("minesData", JSON.stringify(minesData));
-  }
-  
-  // Update mines UI
-  function updateMinesUI() {
-    document.getElementById("minesGamesPlayed").textContent = minesData.gamesPlayed;
-    document.getElementById("minesTotalWins").textContent = minesData.totalWins.toFixed(2);
-    document.getElementById("minesLastWin").textContent = minesData.lastWin.toFixed(2);
-  }
-  
-  // Simulate a win for demo purposes
-  function simulateMinesWin() {
-    minesData.gamesPlayed++;
-    const winAmount = Math.floor(Math.random() * 500) + 50;
-    minesData.totalWins += winAmount;
-    minesData.lastWin = winAmount;
-    saveMinesData();
-    updateMinesUI();
-  }
-  
-  // Initialize mines data
-  loadMinesData();
-  
-  // Simulate a win every 30 seconds for demo
-  setInterval(simulateMinesWin, 30000);
 
   const user = JSON.parse(localStorage.getItem("loggedInUser"));
   if (!user) {
@@ -867,6 +825,9 @@
   if (userId) {
     const totalEl = document.getElementById("totalBalance");
     const drawerBalanceEl = document.getElementById("drawerBalance");
+    const rechargeEl = document.getElementById("rechargeBalance");
+    const bonusEl = document.getElementById("bonusBalance");
+    const winningEl = document.getElementById("winningBalance");
 
     db.ref("users/" + userId + "/wallet").on("value", (snap) => {
       const wallet = snap.val() || {};
@@ -877,6 +838,9 @@
 
       totalEl.innerText = total.toFixed(2);
       drawerBalanceEl.innerText = total.toFixed(2);
+      rechargeEl.innerText = recharge.toFixed(2);
+      bonusEl.innerText = bonus.toFixed(2);
+      winningEl.innerText = winning.toFixed(2);
     });
   }
 
@@ -934,24 +898,23 @@
   }
 
   function placeBet(matchId) {
-    const amountInput = document.getElementById(`amount-${match.id}`);
+    const amountInput = document.getElementById(`amount-${matchId}`);
     const amount = parseFloat(amountInput.value);
     const selected = selectedBets[matchId];
-    
+
     if (!selected) {
       alert("Please select a team first");
       return;
     }
-    
+
     if (isNaN(amount) || amount <= 0) {
       alert("Please enter a valid bet amount");
       return;
     }
-    
+
     const returnAmount = (amount * selected.rate).toFixed(2);
     alert(`✅ Bet placed on ${selected.team} for ₹${amount}. Potential return: ₹${returnAmount}`);
-    
-    // Reset selection
+
     selectedBets[matchId] = null;
     document.getElementById(`selected-${matchId}`).innerText = "";
     amountInput.value = "";
@@ -959,5 +922,6 @@
 
   renderMatches();
 </script>
+
 </body>
 </html>
