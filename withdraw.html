@@ -396,10 +396,11 @@
     <div class="info-box">
       <div class="info-title"><i class="fas fa-info-circle"></i> Important Notes</div>
       <div>
+        • Ensure UPI ID or Bank details are correct<br>
         • Minimum withdrawal amount is ₹100<br>
-        • Withdrawals processed within 24-48 hours<br>
+        • Withdrawals processed within 24- hours<br>
         • Only winning balance can be withdrawn<br>
-        • Bank transfers may take 1-3 business days<br>
+        • Bank transfers may take 1- business days<br>
         • Contact support for any issues
       </div>
     </div>
@@ -412,145 +413,128 @@
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<!-- Tera same HTML, bas script tag mein neeche ka code daal de -->
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
-      authDomain: "betting-app-43800.firebaseapp.com",
-      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
-      projectId: "betting-app-43800",
-      storageBucket: "betting-app-43800.appspot.com",
-      messagingSenderId: "752263307747",
-      appId: "1:752263307747:web:183e06d62bc5920fc700d6"
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+    authDomain: "betting-app-43800.firebaseapp.com",
+    databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+    projectId: "betting-app-43800",
+    storageBucket: "betting-app-43800.appspot.com",
+    messagingSenderId: "752263307747",
+    appId: "1:752263307747:web:183e06d62bc5920fc700d6"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const userId = localStorage.getItem("userId");
+  if (!userId) {
+    alert("Please login to withdraw funds");
+    window.location.href = "login.html";
+  }
+
+  let winningBalance = 0;
+  const balanceAmount = document.getElementById("balanceAmount");
+
+  db.ref(`users/${userId}/wallet`).on("value", snap => {
+    const wallet = snap.val() || {};
+    winningBalance = wallet.winning || 0;
+    balanceAmount.textContent = '₹' + winningBalance.toFixed(2);
+  });
+
+  const methodButtons = document.querySelectorAll('.method-btn');
+  const upiSection = document.querySelector('.upi-details');
+  const bankSection = document.querySelector('.bank-details');
+
+  methodButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      methodButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (btn.dataset.method === "upi") {
+        upiSection.classList.add('active');
+        bankSection.classList.remove('active');
+      } else {
+        upiSection.classList.remove('active');
+        bankSection.classList.add('active');
+      }
+    });
+  });
+
+  const withdrawForm = document.getElementById("withdrawForm");
+  const submitBtn = document.getElementById("submitWithdrawBtn");
+
+  withdrawForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const method = document.querySelector(".method-btn.active").dataset.method;
+
+    let amount = 0;
+    let withdrawData = {
+      method: method,
+      date: new Date().toLocaleString(),
+      status: "pending"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    const userId = localStorage.getItem("userId");
-    if (!userId) {
-      alert("Please login to withdraw funds");
-      window.location.href = "login.html";
+    if (method === "upi") {
+      amount = parseFloat(document.getElementById("amount").value);
+      const upi = document.getElementById("upi").value.trim();
+      if (!upi) {
+        alert("Please enter UPI ID.");
+        return;
+      }
+      withdrawData.upi = upi;
+    } else {
+      amount = parseFloat(document.getElementById("bankAmount").value);
+      const accountNumber = document.getElementById("accountNumber").value.trim();
+      const ifsc = document.getElementById("ifsc").value.trim();
+      const holder = document.getElementById("accountHolderName").value.trim();
+      if (!accountNumber || !ifsc || !holder) {
+        alert("Please fill all bank details.");
+        return;
+      }
+      withdrawData.account = accountNumber;
+      withdrawData.ifsc = ifsc;
+      withdrawData.holder = holder;
     }
 
-    let winningBalance = 0;
+    if (isNaN(amount) || amount < 100) {
+      alert("Minimum withdrawal amount is ₹100.");
+      return;
+    }
+    if (amount > winningBalance) {
+      alert("Insufficient balance.");
+      return;
+    }
 
-    // Load only winning balance
-    db.ref("users/" + userId + "/wallet").on("value", (snap) => {
-      const wallet = snap.val() || {};
-      winningBalance = wallet.winning || 0;
-      document.getElementById("balanceAmount").textContent = '₹' + winningBalance.toFixed(2);
-    });
+    withdrawData.amount = amount;
 
-    // Method toggle functionality
-    const methodButtons = document.querySelectorAll('.method-btn');
-    const upiSection = document.querySelector('.upi-details');
-    const bankSection = document.querySelector('.bank-details');
-    
-    methodButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        // Update active button
-        methodButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        
-        // Show corresponding form section
-        const method = btn.dataset.method;
-        if (method === 'upi') {
-          upiSection.classList.add('active');
-          bankSection.classList.remove('active');
-        } else {
-          upiSection.classList.remove('active');
-          bankSection.classList.add('active');
-        }
-      });
-    });
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
-    document.getElementById("withdrawForm").addEventListener("submit", function (e) {
-      e.preventDefault();
-
-      // Determine active method
-      const activeMethod = document.querySelector('.method-btn.active').dataset.method;
-      
-      let amount, upi, accountNumber, ifsc, holder;
-      
-      if (activeMethod === 'upi') {
-        amount = parseFloat(document.getElementById("amount").value);
-        upi = document.getElementById("upi").value.trim();
-        accountNumber = "";
-        ifsc = "";
-        holder = "";
-      } else {
-        amount = parseFloat(document.getElementById("bankAmount").value);
-        upi = "";
-        accountNumber = document.getElementById("accountNumber").value.trim();
-        ifsc = document.getElementById("ifsc").value.trim();
-        holder = document.getElementById("accountHolderName").value.trim();
-      }
-
-      if (!amount || isNaN(amount)) {
-        alert("Please enter a valid amount.");
-        return;
-      }
-
-      if (amount < 100) {
-        alert("❌ Minimum withdrawal amount is ₹100.");
-        return;
-      }
-
-      if (activeMethod === 'upi' && !upi) {
-        alert("Please enter your UPI ID.");
-        return;
-      }
-
-      if (activeMethod === 'bank' && (!accountNumber || !ifsc || !holder)) {
-        alert("Please enter all bank details.");
-        return;
-      }
-
-      if (amount > winningBalance) {
-        alert("❌ You do not have enough winnings balance to withdraw.");
-        return;
-      }
-
-      // Show loading state on button
-      const submitBtn = document.getElementById("submitWithdrawBtn");
-      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-      submitBtn.disabled = true;
-
-      const withdrawRequest = {
-        amount,
-        upi,
-        account: accountNumber,
-        ifsc,
-        holder,
-        method: activeMethod,
-        date: new Date().toLocaleString(),
-        status: "pending"
-      };
-
-      // Deduct winnings balance from Firebase
-      const userWalletRef = db.ref("users/" + userId + "/wallet");
-      userWalletRef.transaction(wallet => {
+    try {
+      await db.ref(`users/${userId}/wallet`).transaction(wallet => {
         if (wallet && wallet.winning >= amount) {
           wallet.winning -= amount;
           return wallet;
         } else {
-          alert("Insufficient winnings balance during processing.");
-          return; // abort
+          throw new Error("Insufficient balance during processing.");
         }
-      }).then(() => {
-        // Store withdraw request
-        return db.ref("withdraws/" + userId).push(withdrawRequest);
-      }).then(() => {
-        alert("✅ Withdrawal request submitted successfully!");
-        document.getElementById("withdrawForm").reset();
-      }).catch((error) => {
-        alert("Error: " + error.message);
-      }).finally(() => {
-        submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Withdrawal Request';
-        submitBtn.disabled = false;
       });
-    });
-  </script>
+
+      await db.ref(`withdraws/${userId}`).push(withdrawData);
+
+      alert("✅ Withdrawal request submitted successfully!");
+      withdrawForm.reset();
+    } catch (err) {
+      alert("Error: " + err.message);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Withdrawal Request';
+    }
+  });
+</script>
+
 </body>
 </html>
