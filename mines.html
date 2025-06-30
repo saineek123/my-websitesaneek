@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Mines Game</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dragon vs Tiger | Real-time Game</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <style>
     * {
       margin: 0;
@@ -17,151 +19,381 @@
       background: linear-gradient(135deg, #0f0c29, #1a1a2e, #16213e);
       color: #e0e0e0;
       min-height: 100vh;
-      padding: 20px;
+      padding: 15px;
+      overflow-x: hidden;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
     
     .game-container {
-      max-width: 800px;
+      max-width: 900px;
       width: 100%;
+      padding: 15px;
+      background: rgba(20, 20, 35, 0.6);
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 229, 255, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .game-container::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at center, rgba(0, 229, 255, 0.1) 0%, transparent 70%);
+      z-index: -1;
+    }
+    
+    /* Mobile-first header */
+    header {
       display: flex;
       flex-direction: column;
-      gap: 25px;
+      align-items: center;
+      gap: 15px;
+      padding: 15px;
+      background: linear-gradient(90deg, #0f0c29, #302b63);
+      border-radius: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
     
-    header {
-      text-align: center;
-      margin-bottom: 15px;
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
     
-    header h1 {
-      font-size: 2.8rem;
-      font-weight: 700;
-      background: linear-gradient(90deg, #00e5ff, #00b8d4);
+    .logo h1 {
+      font-size: 1.8rem;
+      background: linear-gradient(90deg, #ff7e5f, #feb47b);
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
-      margin-bottom: 10px;
+      letter-spacing: 0.5px;
     }
     
-    header p {
-      font-size: 1.1rem;
-      color: #a0a0d0;
-      max-width: 500px;
-      margin: 0 auto;
+    .logo i {
+      font-size: 2rem;
+      color: #ff7e5f;
+      animation: dragonPulse 2s infinite alternate;
+    }
+    
+    @keyframes dragonPulse {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.1); }
     }
     
     .wallet-info {
-      background: rgba(20, 20, 35, 0.5);
-      border-radius: 16px;
-      padding: 25px;
-      border: 1px solid rgba(0, 229, 255, 0.1);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-      text-align: center;
-    }
-    
-    .wallet-info h2 {
-      font-size: 1.6rem;
-      margin-bottom: 20px;
-      background: linear-gradient(90deg, #00e5ff, #00b8d4);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 10px;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 8px 16px;
+      border-radius: 25px;
+      font-weight: 600;
+      font-size: 0.95rem;
     }
     
-    .balance-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 15px;
-      margin-top: 20px;
-    }
-    
-    .balance-card {
-      background: rgba(30, 30, 50, 0.7);
-      border-radius: 12px;
-      padding: 15px;
-      text-align: center;
-      border: 1px solid rgba(0, 229, 255, 0.1);
-    }
-    
-    .balance-card h3 {
-      font-size: 1rem;
-      margin-bottom: 8px;
-      color: #a0a0d0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
-    }
-    
-    .balance-card .amount {
-      font-size: 1.4rem;
-      font-weight: bold;
+    .wallet-info i {
       color: #00e5ff;
     }
     
-    .bonus-btn {
-      margin-top: 20px;
-      padding: 14px 30px;
-      border-radius: 50px;
-      border: none;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      background: linear-gradient(90deg, #00e5ff, #00b8d4);
-      color: #000;
-      display: inline-flex;
-      justify-content: center;
-      align-items: center;
-      gap: 10px;
-      box-shadow: 0 5px 15px rgba(0, 229, 255, 0.3);
+    .game-area {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
     }
     
-    .bonus-btn:hover {
-      background: linear-gradient(90deg, #00d0eb, #00a0c0);
-      transform: translateY(-3px);
-      box-shadow: 0 8px 20px rgba(0, 229, 255, 0.4);
+    /* Balance grid for mobile */
+    .balance-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 15px;
     }
     
-    .game-controls {
-      background: rgba(20, 20, 35, 0.5);
-      border-radius: 16px;
-      padding: 25px;
-      border: 1px solid rgba(0, 229, 255, 0.1);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    .balance-card {
+      padding: 15px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: transform 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .balance-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .balance-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+      z-index: 1;
+    }
+    
+    .balance-card h3 {
+      font-size: 0.9rem;
+      color: #a0a0d0;
+    }
+    
+    .balance-amount {
+      font-size: 1.2rem;
+      font-weight: bold;
+      z-index: 2;
+    }
+    
+    .recharge-card { background: linear-gradient(135deg, #0f3460, #1a1a2e); }
+    .bonus-card { background: linear-gradient(135deg, #3a1c71, #d76d77); }
+    .winning-card { background: linear-gradient(135deg, #11998e, #38ef7d); }
+    .total-card { background: linear-gradient(135deg, #f46b45, #eea849); }
+    
+    /* Cards section for mobile */
+    .cards-section {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 20px;
+      position: relative;
+      padding: 20px 0;
     }
+    
+    .vs-badge {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #ff3c00;
+      color: white;
+      font-weight: bold;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      z-index: 10;
+      box-shadow: 0 0 25px rgba(255, 60, 0, 0.7);
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(255, 60, 0, 0.7); }
+      70% { box-shadow: 0 0 0 15px rgba(255, 60, 0, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 60, 0, 0); }
+    }
+    
+    .card-container {
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      padding: 20px;
+      border-radius: 18px;
+      background: rgba(20, 20, 35, 0.5);
+      border: 1px solid rgba(0, 229, 255, 0.1);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s ease;
+      position: relative;
+      min-height: 260px;
+    }
+    
+    .card-container:hover {
+      border-color: rgba(0, 229, 255, 0.3);
+      box-shadow: 0 8px 25px rgba(0, 229, 255, 0.2);
+    }
+    
+    .card-container.winner {
+      box-shadow: 0 0 35px rgba(0, 255, 153, 0.5);
+      border-color: rgba(0, 255, 153, 0.3);
+    }
+    
+    .dragon-container {
+      border-top: 5px solid #ff7e5f;
+    }
+    
+    .tiger-container {
+      border-top: 5px solid #4facfe;
+    }
+    
+    .tie-container {
+      border-top: 5px solid #834d9b;
+      max-width: 300px;
+      margin: 0 auto;
+    }
+    
+    .card-label {
+      font-size: 1.5rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .dragon-label { color: #ff7e5f; }
+    .tiger-label { color: #4facfe; }
+    .tie-label { color: #d04ed6; }
+    
+    .card {
+      width: 130px;
+      height: 190px;
+      border-radius: 12px;
+      background: linear-gradient(145deg, #292929, #1a1a1a);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 50px;
+      font-weight: bold;
+      color: #fff;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.5s;
+    }
+    
+    .card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, rgba(255,255,255,0.1), transparent);
+      z-index: 1;
+    }
+    
+    .card.winner {
+      box-shadow: 0 0 35px 10px rgba(0, 255, 153, 0.7);
+      transform: scale(1.05);
+      animation: winner-glow 1.5s infinite alternate;
+    }
+    
+    @keyframes winner-glow {
+      from { box-shadow: 0 0 20px 3px rgba(0, 255, 153, 0.7); }
+      to { box-shadow: 0 0 35px 12px rgba(0, 255, 153, 1); }
+    }
+    
+    .odds {
+      font-size: 1rem;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 6px 12px;
+      border-radius: 18px;
+      font-weight: 600;
+    }
+    
+    .bet-section {
+      background: rgba(20, 20, 35, 0.6);
+      border-radius: 18px;
+      padding: 20px;
+      border: 1px solid rgba(0, 229, 255, 0.1);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    .bet-options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin: 20px 0;
+    }
+    
+    .bet-btn {
+      background: linear-gradient(135deg, #222, #333);
+      color: #fff;
+      padding: 16px;
+      border-radius: 12px;
+      border: none;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .bet-btn::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, rgba(255,255,255,0.1), transparent);
+    }
+    
+    .bet-btn:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    }
+    
+    .bet-btn.selected {
+      transform: scale(1.03);
+      box-shadow: 0 0 20px rgba(255,255,255,0.3);
+    }
+    
+    .dragon-btn {
+      background: linear-gradient(135deg, #ff7e5f, #feb47b);
+      color: #000;
+    }
+    
+    .tiger-btn {
+      background: linear-gradient(135deg, #4facfe, #00f2fe);
+      color: #000;
+    }
+    
+    .tie-btn {
+      background: linear-gradient(135deg, #834d9b, #d04ed6);
+      color: #fff;
+    }
+    
+    .selected-choice {
+      font-size: 1.2rem;
+      text-align: center;
+      margin: 20px 0;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+      display: inline-block;
+      min-width: 200px;
+    }
+    
+    .choice-dragon { color: #ff7e5f; }
+    .choice-tiger { color: #4facfe; }
+    .choice-tie { color: #d04ed6; }
     
     .bet-control {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 15px;
-      width: 100%;
-      max-width: 400px;
-    }
-    
-    .bet-label {
-      font-size: 1.2rem;
-      color: #a0a0d0;
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      margin: 25px 0;
     }
     
     .bet-input {
       position: relative;
       width: 100%;
+      max-width: 300px;
     }
     
     .bet-input i {
@@ -170,165 +402,235 @@
       top: 50%;
       transform: translateY(-50%);
       color: #00e5ff;
-      font-size: 18px;
+      font-size: 20px;
     }
     
-    .bet-input input {
+    input[type="number"] {
       width: 100%;
-      padding: 14px 15px 14px 45px;
+      padding: 16px 16px 16px 50px;
+      border: 2px solid #00e5ff;
+      border-radius: 12px;
+      font-size: 1.1rem;
       background: rgba(20, 20, 35, 0.7);
-      border: 1px solid rgba(0, 229, 255, 0.2);
-      border-radius: 10px;
-      color: #fff;
-      font-size: 16px;
-      transition: all 0.3s ease;
+      color: white;
+      text-align: center;
+      transition: all 0.3s;
     }
     
-    .bet-input input:focus {
+    input[type="number"]:focus {
       outline: none;
-      border-color: #00e5ff;
-      box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.2);
-      background: rgba(25, 25, 45, 0.8);
-    }
-    
-    .action-buttons {
-      display: flex;
-      gap: 15px;
-      width: 100%;
-      max-width: 400px;
+      border-color: #ff3c00;
+      box-shadow: 0 0 15px rgba(255, 60, 0, 0.5);
     }
     
     .action-btn {
-      flex: 1;
-      padding: 14px;
-      border-radius: 10px;
+      background: linear-gradient(135deg, #00b09b, #96c93d);
+      color: white;
+      font-weight: bold;
+      padding: 16px 40px;
       border: none;
-      font-size: 16px;
-      font-weight: 600;
+      border-radius: 12px;
+      font-size: 1.2rem;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.3s;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
       display: flex;
-      justify-content: center;
       align-items: center;
-      gap: 8px;
-    }
-    
-    .start-btn {
-      background: linear-gradient(90deg, #00e5ff, #00b8d4);
-      color: #000;
-    }
-    
-    .cashout-btn {
-      background: linear-gradient(90deg, #ff416c, #ff4b2b);
-      color: #fff;
+      gap: 10px;
+      width: 100%;
+      max-width: 300px;
+      justify-content: center;
     }
     
     .action-btn:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(150, 201, 61, 0.5);
     }
     
-    .mines-container {
-      background: rgba(20, 20, 35, 0.5);
-      border-radius: 16px;
-      padding: 25px;
-      border: 1px solid rgba(0, 229, 255, 0.1);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    .action-btn:disabled {
+      background: linear-gradient(135deg, #555, #777);
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
     }
     
-    .game-info {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 20px;
-      font-size: 1.2rem;
-      color: #00e5ff;
-    }
-    
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 12px;
-      margin: 0 auto;
-      max-width: 500px;
-    }
-    
-    .cell {
-      position: relative;
-      background: rgba(30, 30, 50, 0.7);
-      border-radius: 10px;
-      cursor: pointer;
-      aspect-ratio: 1/1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 24px;
+    .result {
+      margin: 25px 0;
+      font-size: 1.5rem;
       font-weight: bold;
-      transition: all 0.3s ease;
-      border: 2px solid rgba(0, 229, 255, 0.1);
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      padding: 20px;
+      border-radius: 12px;
+      min-height: 90px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.5s;
+      line-height: 1.4;
+    }
+    
+    .win-result {
+      background: linear-gradient(135deg, #11998e, #38ef7d);
+      animation: win-pulse 1s infinite alternate;
+      color: #000;
+    }
+    
+    @keyframes win-pulse {
+      from { box-shadow: 0 0 20px rgba(17, 153, 142, 0.5); }
+      to { box-shadow: 0 0 35px rgba(56, 239, 125, 0.8); }
+    }
+    
+    .lose-result {
+      background: linear-gradient(135deg, #ff416c, #ff4b2b);
+    }
+    
+    .timer-container {
+      text-align: center;
+      margin: 15px 0;
+    }
+    
+    .timer {
+      font-size: 3rem;
+      font-weight: bold;
+      color: #00e5ff;
+      text-shadow: 0 0 8px rgba(0, 229, 255, 0.7);
+      margin: 8px 0;
+      animation: pulseText 1s infinite alternate;
+    }
+    
+    @keyframes pulseText {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.05); }
+    }
+    
+    .timer-label {
+      font-size: 1.1rem;
+      color: #a0a0d0;
+    }
+    
+    .history {
+      margin-top: 30px;
+      padding: 20px;
+      background: rgba(20, 20, 35, 0.6);
+      border-radius: 18px;
+      border: 1px solid rgba(0, 229, 255, 0.1);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+      overflow-x: auto;
+    }
+    
+    .history h3 {
+      font-size: 1.4rem;
+      margin-bottom: 20px;
+      color: #00e5ff;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+    
+    table {
+      width: 100%;
+      min-width: 600px;
+      color: #ccc;
+      font-size: 1rem;
+      border-collapse: collapse;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.5);
+      border-radius: 12px;
       overflow: hidden;
     }
     
-    .cell::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: radial-gradient(circle, rgba(0, 229, 255, 0.1) 0%, transparent 70%);
-      opacity: 0;
-      transition: opacity 0.3s ease;
+    thead {
+      background: linear-gradient(135deg, #0f0c29, #302b63);
     }
     
-    .cell:hover::before {
-      opacity: 1;
+    th {
+      padding: 14px 12px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.95rem;
     }
     
-    .cell:hover {
-      transform: translateY(-5px);
-      border-color: rgba(0, 229, 255, 0.3);
+    tbody tr {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      transition: background 0.3s;
     }
     
-    .cell.revealed {
-      background: rgba(40, 40, 60, 0.9);
-      transform: scale(0.95);
+    tbody tr:hover {
+      background: rgba(0, 0, 0, 0.4);
     }
     
-    .cell.mine {
-      background: linear-gradient(135deg, #ff416c, #ff4b2b);
-      animation: mineReveal 0.5s ease;
+    td {
+      padding: 14px 12px;
+      text-align: center;
+      font-size: 0.9rem;
     }
     
-    @keyframes mineReveal {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-      100% { transform: scale(1); }
+    .win-row { color: #38ef7d; }
+    .loss-row { color: #ff4b2b; }
+    
+    .win-badge {
+      background: rgba(56, 239, 125, 0.2);
+      padding: 6px 12px;
+      border-radius: 15px;
+      font-weight: bold;
+      font-size: 0.9rem;
     }
     
-    .cell.safe {
-      background: linear-gradient(135deg, #00b09b, #96c93d);
-      animation: safeReveal 0.3s ease;
+    .loss-badge {
+      background: rgba(255, 75, 43, 0.2);
+      padding: 6px 12px;
+      border-radius: 15px;
+      font-weight: bold;
+      font-size: 0.9rem;
     }
     
-    @keyframes safeReveal {
-      0% { transform: scale(0.8); }
-      100% { transform: scale(1); }
+    footer {
+      text-align: center;
+      margin-top: 30px;
+      padding: 15px;
+      color: #8888bb;
+      font-size: 0.9rem;
+    }
+    
+    /* Animations */
+    @keyframes cardDeal {
+      0% { transform: translateY(-100px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+    
+    .card {
+      animation: cardDeal 0.5s ease-out;
+    }
+    
+    /* Floating animation for tie container */
+    @keyframes float {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0); }
+    }
+    
+    .tie-container {
+      animation: float 4s ease-in-out infinite;
     }
     
     .notification {
       position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 15px 25px;
-      background: rgba(30, 30, 50, 0.9);
+      top: 15px;
+      right: 15px;
+      left: 15px;
+      padding: 12px 20px;
+      background: rgba(30, 30, 50, 0.95);
       border-left: 4px solid #00e5ff;
       border-radius: 8px;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       transform: translateX(110%);
       transition: transform 0.4s ease;
       z-index: 1000;
       backdrop-filter: blur(10px);
+      text-align: center;
+      max-width: 400px;
+      margin: 0 auto;
     }
     
     .notification.show {
@@ -343,311 +645,552 @@
       border-left-color: #00ff99;
     }
     
-    footer {
-      text-align: center;
-      margin-top: 30px;
-      padding: 20px;
-      color: #8888bb;
-      font-size: 0.9rem;
-    }
-    
-    @media (max-width: 600px) {
-      .grid {
-        grid-template-columns: repeat(3, 1fr);
+    /* Tablet and desktop styles */
+    @media (min-width: 768px) {
+      .game-container {
+        padding: 25px;
       }
       
-      .action-buttons {
-        flex-direction: column;
+      header {
+        flex-direction: row;
+        justify-content: space-between;
       }
       
-      header h1 {
+      .logo h1 {
         font-size: 2.2rem;
       }
+      
+      .balance-container {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+      }
+      
+      .cards-section {
+        flex-direction: row;
+        justify-content: space-between;
+        gap: 25px;
+      }
+      
+      .vs-badge {
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+      
+      .card-container {
+        min-height: 320px;
+      }
+      
+      .card {
+        width: 150px;
+        height: 220px;
+        font-size: 60px;
+      }
+      
+      .bet-options {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 15px;
+      }
+      
+      .bet-btn {
+        min-width: 180px;
+        padding: 16px;
+      }
+      
+      .bet-control {
+        flex-direction: row;
+        justify-content: center;
+        gap: 20px;
+      }
+      
+      .action-btn {
+        max-width: 200px;
+      }
+      
+      .history {
+        padding: 25px;
+      }
+      
+      .notification {
+        left: auto;
+        right: 20px;
+        max-width: 350px;
+      }
     }
     
-    /* Animation for multiplier */
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-      100% { transform: scale(1); }
-    }
-    
-    .pulse {
-      animation: pulse 0.5s ease;
-    }
-    
-    /* Wallet loading animation */
-    .balance-loading {
-      display: inline-block;
-      width: 60px;
-      height: 24px;
-      background: linear-gradient(90deg, rgba(0, 229, 255, 0.2), rgba(0, 229, 255, 0.4), rgba(0, 229, 255, 0.2));
-      background-size: 200% 100%;
-      border-radius: 4px;
-      animation: loadingAnimation 1.5s infinite;
-    }
-    
-    @keyframes loadingAnimation {
-      0% { background-position: 100% 0; }
-      100% { background-position: -100% 0; }
+    @media (min-width: 992px) {
+      .logo h1 {
+        font-size: 2.5rem;
+      }
+      
+      .balance-card {
+        padding: 20px;
+      }
+      
+      .balance-card h3 {
+        font-size: 1rem;
+      }
+      
+      .balance-amount {
+        font-size: 1.4rem;
+      }
+      
+      .card {
+        width: 180px;
+        height: 260px;
+      }
+      
+      .bet-btn {
+        min-width: 200px;
+        padding: 18px 30px;
+        font-size: 1.3rem;
+      }
     }
   </style>
 </head>
 <body>
   <div class="game-container">
     <header>
-      <h1><i class="fas fa-gem"></i> Mines Game</h1>
-      <p>Find gems to multiply your bet! Avoid mines to cash out your winnings.</p>
+      <div class="logo">
+        <i class="fas fa-dragon"></i>
+        <h1>DRAGON vs TIGER</h1>
+      </div>
+      <div class="wallet-info">
+        <i class="fas fa-wallet"></i>
+        Total: ₹<span id="balance">0.00</span>
+      </div>
     </header>
     
-    <div class="wallet-info">
-      <h2><i class="fas fa-wallet"></i> Your Wallet</h2>
+    <div class="game-area">
+      <div class="balance-container">
+        <div class="balance-card recharge-card">
+          <h3>Recharge</h3>
+          <div class="balance-amount">₹<span id="rechargeBal">0.00</span></div>
+        </div>
+        <div class="balance-card bonus-card">
+          <h3>Bonus</h3>
+          <div class="balance-amount">₹<span id="bonusBal">0.00</span></div>
+        </div>
+        <div class="balance-card winning-card">
+          <h3>Winning</h3>
+          <div class="balance-amount">₹<span id="winningBal">0.00</span></div>
+        </div>
+        <div class="balance-card total-card">
+          <h3>Total</h3>
+          <div class="balance-amount">₹<span id="totalBalance">0.00</span></div>
+        </div>
+      </div>
       
-      <div class="balance-grid">
-        <div class="balance-card">
-          <h3><i class="fas fa-money-bill"></i> Total</h3>
-          <div class="amount">
-            <span id="totalBalance" class="balance-loading"></span>
+      <div class="cards-section">
+        <div class="card-container dragon-container">
+          <div class="card-label dragon-label">
+            <i class="fas fa-dragon"></i> Dragon
           </div>
+          <div class="card" id="dragonCard">?</div>
+          <div class="odds">Payout: 1:2</div>
         </div>
         
-        <div class="balance-card">
-          <h3><i class="fas fa-credit-card"></i> Recharge</h3>
-          <div class="amount">
-            <span id="rechargeBalance" class="balance-loading"></span>
+        <div class="vs-badge">VS</div>
+        
+        <div class="card-container tiger-container">
+          <div class="card-label tiger-label">
+            <i class="fas fa-paw"></i> Tiger
           </div>
+          <div class="card" id="tigerCard">?</div>
+          <div class="odds">Payout: 1:2</div>
+        </div>
+      </div>
+      
+      <div class="card-container tie-container">
+        <div class="card-label tie-label">
+          <i class="fas fa-handshake"></i> Tie
+        </div>
+        <div class="card" id="tieCard">-</div>
+        <div class="odds">Payout: 1:9</div>
+      </div>
+      
+      <div class="timer-container">
+        <div class="timer-label">Next Result In:</div>
+        <div class="timer" id="timer">30</div>
+      </div>
+      
+      <div class="bet-section">
+        <div class="bet-options">
+          <button class="bet-btn dragon-btn" onclick="selectChoice('dragon')">
+            <i class="fas fa-dragon"></i> Dragon (1:2)
+          </button>
+          <button class="bet-btn tie-btn" onclick="selectChoice('tie')">
+            <i class="fas fa-handshake"></i> Tie (1:9)
+          </button>
+          <button class="bet-btn tiger-btn" onclick="selectChoice('tiger')">
+            <i class="fas fa-paw"></i> Tiger (1:2)
+          </button>
         </div>
         
-        <div class="balance-card">
-          <h3><i class="fas fa-gift"></i> Bonus</h3>
-          <div class="amount">
-            <span id="bonusBalance" class="balance-loading"></span>
-          </div>
+        <div class="selected-choice">
+          Selected: <span id="selectedChoiceText" class="choice-dragon">None</span>
         </div>
         
-        <div class="balance-card">
-          <h3><i class="fas fa-trophy"></i> Winning</h3>
-          <div class="amount">
-            <span id="winningBalance" class="balance-loading"></span>
+        <div class="bet-control">
+          <div class="bet-input">
+            <i class="fas fa-rupee-sign"></i>
+            <input type="number" id="betAmount" min="10" value="100" placeholder="Enter Bet Amount" />
           </div>
+          <button class="action-btn" id="placeBetBtn" onclick="placeBet()">
+            <i class="fas fa-play"></i> Place Bet
+          </button>
         </div>
       </div>
       
-      <button class="bonus-btn" onclick="claimBonus()">
-        <i class="fas fa-gift"></i> Claim ₹5 Daily Bonus
-      </button>
-    </div>
-    
-    <div class="game-controls">
-      <div class="bet-control">
-        <div class="bet-label">
-          <i class="fas fa-coins"></i> Enter Bet Amount:
-          <select id="mineCount">
-            <option value="3">3 Mines (Safe)</option>
-            <option value="5" selected>5 Mines (Medium)</option>
-            <option value="10">10 Mines (Risky)</option>
-            <option value="15">15 Mines (High Risk)</option>
-            <option value="20">20 Mines (Deadly 😈)</option>
-          </select>
-        </div>
-        <div class="bet-input">
-          <i class="fas fa-rupee-sign"></i>
-          <input type="number" id="betAmount" placeholder="Enter amount" />
-        </div>
+      <div class="result" id="resultMsg">
+        Place your bet to start the game!
       </div>
       
-      <div class="action-buttons">
-        <button class="action-btn start-btn" onclick="startGame()">
-          <i class="fas fa-play"></i> Start Game
-        </button>
-        <button class="action-btn cashout-btn" onclick="cashOut()">
-          <i class="fas fa-money-bill-wave"></i> Cash Out
-        </button>
-      </div>
-    </div>
-    
-    <div class="mines-container">
-      <div class="game-info">
-        <div><i class="fas fa-gem"></i> Gems Revealed: <span id="gemsRevealed">0</span></div>
-        <div><i class="fas fa-chart-line"></i> Multiplier: <span id="multiplierText">x1</span></div>
-        <div><i class="fas fa-bomb"></i> Mines: <span id="mineCountText">5</span></div>
-      </div>
-      
-      <div class="grid" id="grid">
-        <!-- Game grid will be generated here -->
-        <div class="cell">?</div>
-        <div class="cell">?</div>
-        <div class="cell">?</div>
-        <div class="cell">?</div>
-        <div class="cell">?</div>
-        <div class="cell">?</div>
-        <div class="cell">?</div>
-        <div class="cell">?</div>
-        <div class="cell">?</div>
-        <div class="cell">?</div>
-        <div class="cell">?</div>
-        <div class="cell">?</div>
-        <div class="cell">?</div>
-        <div class="cell">?</div>
-        <div class="cell">?</div>
-        <div class="cell">?</div>
-        <div class="cell">?</div>
-        <div class="cell">?</div>
-        <div class="cell">?</div>
-        <div class="cell">?</div>
-        <div class="cell">?</div>
-        <div class="cell">?</div>
-        <div class="cell">?</div>
-        <div class="cell">?</div>
-        <div class="cell">?</div>
+      <div class="history">
+        <h3><i class="fas fa-history"></i> Your Bet History</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Choice</th>
+              <th>Dragon</th>
+              <th>Tiger</th>
+              <th>Result</th>
+              <th>Bet</th>
+              <th>Win</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody">
+            <tr><td colspan="7">Loading your bet history...</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
     
     <footer>
-      <p>© 2023 Mines Game. All rights reserved. Play responsibly.</p>
+      <p>© 2023 Dragon vs Tiger Game. Play Responsibly.</p>
     </footer>
   </div>
-  
+
   <div id="notification" class="notification"></div>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-
   <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
-    authDomain: "betting-app-43800.firebaseapp.com",
-    databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
-    projectId: "betting-app-43800",
-    storageBucket: "betting-app-43800.appspot.com",
-    messagingSenderId: "752263307747",
-    appId: "1:752263307747:web:183e06d62bc5920fc700d6"
-  };
-  
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-
-  const userId = localStorage.getItem('userId');
-  if (!userId) {
-    alert("Please login first.");
-    window.location.href = "login.html";
-  }
-
-  let walletData = {};
-
-  function updateWalletUI() {
-    const recharge = walletData.recharge || 0;
-    const bonus = walletData.bonus || 0;
-    const winning = walletData.winning || 0;
-    const total = recharge + bonus + winning;
-
-    // Remove loading animations
-    document.querySelectorAll('.balance-loading').forEach(el => {
-      el.classList.remove('balance-loading');
-    });
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+      authDomain: "betting-app-43800.firebaseapp.com",
+      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+      projectId: "betting-app-43800",
+      storageBucket: "betting-app-43800.appspot.com",
+      messagingSenderId: "752263307747",
+      appId: "1:752263307747:web:183e06d62bc5920fc700d6"
+    };
     
-    // Update values
-    document.getElementById("totalBalance").innerText = "₹" + total.toFixed(2);
-    document.getElementById("rechargeBalance").innerText = "₹" + recharge.toFixed(2);
-    document.getElementById("bonusBalance").innerText = "₹" + bonus.toFixed(2);
-    document.getElementById("winningBalance").innerText = "₹" + winning.toFixed(2);
-  }
-
-  function loadWallet() {
-    const walletRef = db.ref('users/' + userId + '/wallet');
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
     
-    walletRef.on('value', (snapshot) => {
-      if (snapshot.exists()) {
-        walletData = snapshot.val();
-        console.log("Wallet data loaded:", walletData);
-        updateWalletUI();
-      } else {
-        console.log("No wallet data available");
-        // Set default values
-        walletData = {
-          recharge: 0,
-          bonus: 0,
-          winning: 0
-        };
-        updateWalletUI();
+    // Game state variables
+    let recharge = 0;
+    let bonus = 0;
+    let winning = 0;
+    let selectedChoice = null;
+    let countdown;
+    let timerValue = 30;
+    let gameActive = false;
+    let userId = null;
+    let currentBet = 0;
+    
+    // DOM elements
+    const timerEl = document.getElementById('timer');
+    const placeBetBtn = document.getElementById('placeBetBtn');
+    const notificationEl = document.getElementById('notification');
+    
+    // Initialize the game
+    document.addEventListener('DOMContentLoaded', function() {
+      // Check if user is logged in
+      userId = localStorage.getItem('userId');
+      if (!userId) {
+        showNotification("Please login to play", "error");
+        setTimeout(() => {
+          window.location.href = "login.html";
+        }, 2000);
+        return;
       }
-    }, (error) => {
-      console.error("Error loading wallet:", error);
-      showNotification("Error loading wallet data", "error");
-    });
-  }
-
-  // Show notification function
-  function showNotification(message, type = "info") {
-    const notification = document.getElementById("notification");
-    notification.innerText = message;
-    notification.className = "notification";
-    
-    if (type === "error") {
-      notification.classList.add("error");
-    } else if (type === "win") {
-      notification.classList.add("win");
-    }
-    
-    notification.classList.add("show");
-    
-    setTimeout(() => {
-      notification.classList.remove("show");
-    }, 3000);
-  }
-
-  // Claim bonus function
-  function claimBonus() {
-    // Check if bonus was already claimed today
-    const lastClaimed = localStorage.getItem('lastBonusClaim');
-    const today = new Date().toDateString();
-    
-    if (lastClaimed === today) {
-      showNotification("You've already claimed your daily bonus today", "error");
-      return;
-    }
-    
-    // Add bonus
-    const bonusRef = db.ref('users/' + userId + '/wallet/bonus');
-    bonusRef.transaction((currentBonus) => {
-      return (currentBonus || 0) + 5;
+      
+      // Load user balance
+      loadUserBalance();
+      
+      // Load user history
+      loadUserHistory();
+      
+      // Start the timer
+      startTimer();
     });
     
-    // Update UI
-    walletData.bonus = (walletData.bonus || 0) + 5;
-    updateWalletUI();
-    
-    // Store claim date
-    localStorage.setItem('lastBonusClaim', today);
-    
-    showNotification("₹5 bonus claimed successfully!", "win");
-  }
-
-  // Initialize when page loads
-  document.addEventListener("DOMContentLoaded", function() {
-    loadWallet();
-    
-    // Add click handlers to cells
-    document.querySelectorAll('.cell').forEach(cell => {
-      cell.addEventListener('click', function() {
-        if (!this.classList.contains('revealed')) {
-          this.classList.add('revealed');
-          this.textContent = Math.random() > 0.3 ? '💎' : '💣';
-          this.classList.add(Math.random() > 0.3 ? 'safe' : 'mine');
+    // Load user balance from Firebase
+    function loadUserBalance() {
+      db.ref('users/' + userId + '/wallet').on('value', (snapshot) => {
+        const wallet = snapshot.val();
+        if (wallet) {
+          recharge = wallet.recharge || 0;
+          bonus = wallet.bonus || 0;
+          winning = wallet.winning || 0;
+          updateBalanceDisplay();
         }
       });
-    });
-  });
-  
-  // Game functions (placeholder)
-  function startGame() {
-    showNotification("Game started! Click on cells to reveal gems", "win");
-  }
-  
-  function cashOut() {
-    showNotification("Cashed out successfully! Winnings added to your wallet", "win");
-  }
+    }
+    
+    // Load user history from Firebase
+    function loadUserHistory() {
+      db.ref('users/' + userId + '/dragonTigerHistory').orderByChild('timestamp').limitToLast(10).on('value', (snapshot) => {
+        const history = snapshot.val();
+        const historyBody = document.getElementById('historyBody');
+        
+        if (!history) {
+          historyBody.innerHTML = '<tr><td colspan="7">No bet history found</td></tr>';
+          return;
+        }
+        
+        // Clear history table
+        historyBody.innerHTML = '';
+        
+        // Convert object to array and sort by timestamp
+        const historyArray = Object.values(history).sort((a, b) => b.timestamp - a.timestamp);
+        
+        // Populate history table
+        historyArray.forEach(log => {
+          const row = document.createElement("tr");
+          row.className = log.win ? "win-row" : "loss-row";
+          
+          const date = new Date(log.timestamp);
+          const time = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
+          
+          row.innerHTML = `
+            <td>${log.choice.toUpperCase()}</td>
+            <td>${log.dragon}</td>
+            <td>${log.tiger}</td>
+            <td>${log.result}</td>
+            <td>₹${log.amount}</td>
+            <td>${log.win ? '<span class="win-badge">✅ ₹'+log.payout+'</span>' : '<span class="loss-badge">❌</span>'}</td>
+            <td>${time}</td>
+          `;
+          
+          historyBody.appendChild(row);
+        });
+      });
+    }
+    
+    // Show notification
+    function showNotification(message, type = "info") {
+      notificationEl.innerText = message;
+      notificationEl.className = "notification";
+      notificationEl.classList.add(type);
+      notificationEl.classList.add("show");
+      
+      setTimeout(() => {
+        notificationEl.classList.remove("show");
+      }, 3000);
+    }
+    
+    // Start the countdown timer
+    function startTimer() {
+      countdown = setInterval(() => {
+        timerValue--;
+        timerEl.textContent = timerValue;
+        
+        if (timerValue <= 0) {
+          clearInterval(countdown);
+          if (gameActive) {
+            revealResult();
+          }
+          timerValue = 30;
+          startTimer();
+        }
+      }, 1000);
+    }
+    
+    function selectChoice(value) {
+      if (gameActive) return;
+      
+      selectedChoice = value;
+      document.getElementById("selectedChoiceText").innerText = value.toUpperCase();
+      
+      // Update text color based on choice
+      const choiceText = document.getElementById("selectedChoiceText");
+      choiceText.className = "";
+      if (value === 'dragon') choiceText.classList.add("choice-dragon");
+      if (value === 'tiger') choiceText.classList.add("choice-tiger");
+      if (value === 'tie') choiceText.classList.add("choice-tie");
+      
+      // Highlight selected button
+      document.querySelectorAll('.bet-btn').forEach(btn => {
+        btn.classList.remove('selected');
+      });
+      event.currentTarget.classList.add('selected');
+    }
+    
+    function getRandomCard() {
+      return Math.floor(Math.random() * 13) + 1;
+    }
+    
+    function placeBet() {
+      if (gameActive) return;
+      
+      if (!selectedChoice) {
+        showResult("Please select Dragon, Tiger or Tie", false);
+        return;
+      }
+      
+      const betInput = document.getElementById("betAmount");
+      const bet = parseFloat(betInput.value);
+      
+      if (!bet || bet < 10) {
+        showResult("Minimum ₹10 required", false);
+        return;
+      }
+      
+      const totalBalance = recharge + bonus + winning;
+      if (totalBalance < bet) {
+        showResult("❌ Insufficient balance", false);
+        return;
+      }
+      
+      // Save current bet
+      currentBet = bet;
+      
+      // Deduct bet from winning first, then from recharge
+      if (winning >= bet) {
+        winning -= bet;
+      } else if (recharge >= (bet - winning)) {
+        recharge -= (bet - winning);
+        winning = 0;
+      } else {
+        showResult("❌ Insufficient balance", false);
+        return;
+      }
+      
+      // Update Firebase
+      updateFirebaseBalance();
+      
+      // Show loading state
+      const resultMsg = document.getElementById("resultMsg");
+      resultMsg.textContent = "Bet placed! Waiting for results...";
+      resultMsg.className = "result";
+      
+      // Reset card displays
+      document.getElementById("dragonCard").textContent = "?";
+      document.getElementById("tigerCard").textContent = "?";
+      document.getElementById("tieCard").textContent = "-";
+      document.querySelectorAll(".card-container").forEach(c => c.classList.remove("winner"));
+      
+      // Disable betting during the game
+      gameActive = true;
+      placeBetBtn.disabled = true;
+      document.querySelectorAll('.bet-btn').forEach(btn => {
+        btn.disabled = true;
+      });
+    }
+    
+    function revealResult() {
+      const dragon = getRandomCard();
+      const tiger = getRandomCard();
+      
+      document.getElementById("dragonCard").textContent = dragon;
+      document.getElementById("tigerCard").textContent = tiger;
+      document.getElementById("tieCard").textContent = dragon === tiger ? "✓" : "-";
+      
+      let result = "", winAmount = 0, won = false;
+      
+      if (dragon > tiger) {
+        result = "Dragon Wins";
+        if (selectedChoice === "dragon") {
+          won = true;
+          winAmount = currentBet * 2;
+          document.querySelector(".dragon-container").classList.add("winner");
+        }
+      } else if (tiger > dragon) {
+        result = "Tiger Wins";
+        if (selectedChoice === "tiger") {
+          won = true;
+          winAmount = currentBet * 2;
+          document.querySelector(".tiger-container").classList.add("winner");
+        }
+      } else {
+        result = "It's a Tie!";
+        if (selectedChoice === "tie") {
+          won = true;
+          winAmount = currentBet * 9;
+          document.querySelector(".tie-container").classList.add("winner");
+        }
+      }
+      
+      if (won) {
+        winning += winAmount;
+        showResult(`🎉 You Win ₹${winAmount}! ${result}`, true);
+      } else {
+        showResult(`😞 You Lose! ${result}`, false);
+      }
+      
+      // Update Firebase
+      updateFirebaseBalance();
+      
+      // Save to history
+      saveToHistory(selectedChoice, dragon, tiger, result, currentBet, won, winAmount);
+      
+      // Re-enable betting
+      gameActive = false;
+      placeBetBtn.disabled = false;
+      document.querySelectorAll('.bet-btn').forEach(btn => {
+        btn.disabled = false;
+      });
+      
+      // Reset selected choice
+      selectedChoice = null;
+      document.getElementById("selectedChoiceText").innerText = "None";
+      document.querySelectorAll('.bet-btn').forEach(btn => {
+        btn.classList.remove('selected');
+      });
+    }
+
+    function showResult(message, isWin) {
+      const resultMsg = document.getElementById("resultMsg");
+      resultMsg.textContent = message;
+      resultMsg.className = isWin ? "result win-result" : "result lose-result";
+    }
+
+    function updateBalanceDisplay() {
+      document.getElementById("rechargeBal").textContent = recharge.toFixed(2);
+      document.getElementById("bonusBal").textContent = bonus.toFixed(2);
+      document.getElementById("winningBal").textContent = winning.toFixed(2);
+      document.getElementById("balance").textContent = (recharge + bonus + winning).toFixed(2);
+      document.getElementById("totalBalance").textContent = (recharge + bonus + winning).toFixed(2);
+    }
+    
+    function updateFirebaseBalance() {
+      db.ref('users/' + userId + '/wallet').set({
+        recharge: recharge,
+        bonus: bonus,
+        winning: winning
+      });
+    }
+    
+    function saveToHistory(choice, dragon, tiger, result, amount, win, payout) {
+      const historyRef = db.ref('users/' + userId + '/dragonTigerHistory').push();
+      
+      historyRef.set({
+        choice: choice,
+        dragon: dragon,
+        tiger: tiger,
+        result: result,
+        amount: amount,
+        win: win,
+        payout: payout,
+        timestamp: Date.now()
+      });
+    }
   </script>
 </body>
 </html>
