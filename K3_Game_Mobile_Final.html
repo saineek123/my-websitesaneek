@@ -1,78 +1,668 @@
-<!-- FINAL: K3 Game with Wallet Breakdown, 30s Timer, Live Bets, and Last 10 Results -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>K3 Dice Game</title>
+  <title>K3 Dice Game | Premium Edition</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #f857a6, #ff5858); margin:0; color:white; }
-    .header { text-align:center; padding:16px; font-size:22px; font-weight:bold; background: rgba(0,0,0,0.2); }
-    .wallet { padding:12px 16px; background: rgba(255,255,255,0.1); font-size:16px; }
-    .wallet-row { display: flex; justify-content: space-between; align-items: center; }
-    .wallet span { font-weight:bold; color:#ffff00; }
-    .wallet-breakdown { font-size: 14px; margin-top: 6px; color: #fff; }
-    .wallet button { background:#00e0ff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; }
-    .container { max-width: 420px; margin:auto; padding: 20px; }
-    .dice-container { display: flex; justify-content: center; gap: 20px; margin: 20px 0; }
-    .dice { width: 60px; height: 60px; background: white; border-radius: 12px; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); padding: 10px; box-shadow: 0 0 10px #000; }
-    .dot { width: 10px; height: 10px; background: red; border-radius: 50%; align-self: center; justify-self: center; }
-    .hidden { visibility: hidden; }
-    .bet-grid { display: flex; flex-wrap: wrap; justify-content:center; gap:8px; margin-bottom:16px; }
-    .bet-grid button { padding:10px; min-width:70px; font-size:16px; border-radius:10px; border:none; background:white; color:#f857a6; font-weight:bold; cursor:pointer; }
-    .bet-grid button.active { background:#f857a6; color:white; }
-    .quick-buttons { display:flex; justify-content:center; gap:10px; margin-bottom:10px; }
-    .quick-buttons button { background:#ffe600; border:none; border-radius:8px; padding:8px 14px; cursor:pointer; font-weight:bold; }
-    input[type='number'], .place-bet { width:90%; margin:10px auto; display:block; padding:10px; border-radius:10px; font-size:16px; border:none; }
-    .place-bet { background:#00ffab; font-weight:bold; cursor:pointer; }
-    .user-bets, .result { text-align:center; margin-top:10px; }
-    .user-bets span { background:white; color:black; padding:4px 10px; margin:2px; border-radius:8px; display:inline-block; }
-    .history { margin-top:20px; text-align:center; }
-    .history span { background:white; color:black; padding:4px 10px; margin:2px; border-radius:8px; display:inline-block; }
-    .popup { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; color:black; padding:20px; border-radius:10px; box-shadow:0 0 15px rgba(0,0,0,0.3); text-align:center; z-index:999; }
-    .popup.win { background:#00ffcc; }
-    .popup.lose { background:#ffcccc; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      min-height: 100vh;
+      color: #fff;
+      overflow-x: hidden;
+      padding: 20px;
+      position: relative;
+    }
+    
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0) 70%);
+      z-index: -1;
+    }
+    
+    .header {
+      text-align: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .header::before {
+      content: "";
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0) 70%);
+      z-index: -1;
+    }
+    
+    .header h1 {
+      font-size: 2.2rem;
+      margin-bottom: 8px;
+      background: linear-gradient(90deg, #ff9a9e, #fad0c4, #fad0c4, #a1c4fd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .header p {
+      color: #d1d1d1;
+      font-size: 1rem;
+    }
+    
+    .wallet {
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .wallet::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 5px;
+      background: linear-gradient(90deg, #ff9a9e, #fad0c4, #a1c4fd);
+    }
+    
+    .wallet-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .wallet-balance {
+      font-size: 1.8rem;
+      font-weight: bold;
+      background: linear-gradient(90deg, #ff9a9e, #fad0c4, #a1c4fd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .wallet-buttons {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .wallet-btn {
+      padding: 10px 20px;
+      border-radius: 50px;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    .wallet-btn.deposit {
+      background: linear-gradient(90deg, #11998e, #38ef7d);
+      color: white;
+    }
+    
+    .wallet-btn.withdraw {
+      background: linear-gradient(90deg, #ff416c, #ff4b2b);
+      color: white;
+    }
+    
+    .wallet-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+    
+    .wallet-breakdown {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 15px;
+    }
+    
+    .breakdown-item {
+      background: rgba(255, 255, 255, 0.08);
+      padding: 12px;
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .breakdown-item span {
+      font-weight: bold;
+      color: #ffff00;
+      font-size: 1.1rem;
+    }
+    
+    .game-container {
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 20px;
+      padding: 25px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .game-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 25px;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 15px;
+      border-radius: 15px;
+    }
+    
+    .timer-box, .period-box {
+      text-align: center;
+      padding: 10px 20px;
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.3);
+      flex: 1;
+      margin: 0 5px;
+    }
+    
+    .timer-box {
+      background: linear-gradient(90deg, #ff416c, #ff4b2b);
+    }
+    
+    .period-box {
+      background: linear-gradient(90deg, #4b6cb7, #182848);
+    }
+    
+    .timer-value {
+      font-size: 1.8rem;
+      font-weight: bold;
+      margin-top: 5px;
+    }
+    
+    .dice-container {
+      display: flex;
+      justify-content: center;
+      gap: 25px;
+      margin: 30px 0;
+    }
+    
+    .dice {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(145deg, #ffffff, #e6e6e6);
+      border-radius: 16px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      padding: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4), 
+                  inset 0 -5px 10px rgba(0,0,0,0.2),
+                  inset 0 5px 10px rgba(255,255,255,0.8);
+      position: relative;
+      transform-style: preserve-3d;
+      transform: rotateX(15deg) rotateY(15deg);
+      animation: diceFloat 3s infinite ease-in-out;
+    }
+    
+    .dice:nth-child(2) {
+      animation-delay: 0.5s;
+    }
+    
+    .dice:nth-child(3) {
+      animation-delay: 1s;
+    }
+    
+    @keyframes diceFloat {
+      0%, 100% { transform: translateY(0) rotateX(15deg) rotateY(15deg); }
+      50% { transform: translateY(-10px) rotateX(20deg) rotateY(20deg); }
+    }
+    
+    .dot {
+      width: 14px;
+      height: 14px;
+      background: #ff416c;
+      border-radius: 50%;
+      align-self: center;
+      justify-self: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .hidden {
+      visibility: hidden;
+    }
+    
+    .bet-section {
+      margin: 25px 0;
+    }
+    
+    .section-title {
+      text-align: center;
+      margin-bottom: 15px;
+      font-size: 1.4rem;
+      background: linear-gradient(90deg, #ff9a9e, #fad0c4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    
+    .bet-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .bet-btn {
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .bet-btn::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0));
+      z-index: 1;
+      pointer-events: none;
+    }
+    
+    .bet-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+      background: rgba(255, 255, 255, 0.15);
+    }
+    
+    .bet-btn.active {
+      background: linear-gradient(90deg, #ff416c, #ff4b2b);
+      box-shadow: 0 0 15px rgba(255,75,43,0.5);
+      transform: scale(1.05);
+    }
+    
+    .quick-buttons {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .quick-amt {
+      padding: 10px 20px;
+      border-radius: 50px;
+      border: none;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .quick-amt:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-3px);
+    }
+    
+    .bet-input-group {
+      position: relative;
+      margin-bottom: 20px;
+    }
+    
+    .bet-input {
+      width: 100%;
+      padding: 16px 20px;
+      border-radius: 50px;
+      border: none;
+      background: rgba(0, 0, 0, 0.3);
+      color: white;
+      font-size: 1.1rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      outline: none;
+      transition: all 0.3s ease;
+    }
+    
+    .bet-input:focus {
+      border-color: rgba(255, 75, 43, 0.5);
+      box-shadow: 0 0 15px rgba(255,75,43,0.3);
+    }
+    
+    .bet-input::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .place-bet {
+      width: 100%;
+      padding: 16px;
+      border-radius: 50px;
+      border: none;
+      background: linear-gradient(90deg, #11998e, #38ef7d);
+      color: white;
+      font-weight: bold;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .place-bet:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+    }
+    
+    .place-bet:active {
+      transform: translateY(1px);
+    }
+    
+    .user-bets {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 15px;
+      padding: 15px;
+      margin-top: 25px;
+      min-height: 80px;
+    }
+    
+    .user-bets-title {
+      text-align: center;
+      margin-bottom: 10px;
+      color: #a1c4fd;
+    }
+    
+    .user-bets-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    
+    .bet-chip {
+      background: linear-gradient(90deg, #ff9a9e, #fad0c4);
+      color: #333;
+      padding: 8px 15px;
+      border-radius: 50px;
+      font-weight: bold;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .bet-chip i {
+      color: #ff416c;
+    }
+    
+    .history {
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 20px;
+      padding: 25px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .history-title {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 1.4rem;
+      background: linear-gradient(90deg, #a1c4fd, #c2e9fb);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    
+    .history-items {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+    }
+    
+    .history-item {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-weight: bold;
+      min-width: 100px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+    
+    .history-item:hover {
+      transform: translateY(-5px);
+      background: rgba(255, 255, 255, 0.15);
+    }
+    
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      color: #333;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 15px 50px rgba(0,0,0,0.5);
+      text-align: center;
+      z-index: 1000;
+      width: 90%;
+      max-width: 400px;
+      animation: popIn 0.5s ease;
+    }
+    
+    @keyframes popIn {
+      0% { transform: translate(-50%, -60%); opacity: 0; }
+      100% { transform: translate(-50%, -50%); opacity: 1; }
+    }
+    
+    .popup.win {
+      background: linear-gradient(135deg, #00ffcc, #00ffaa);
+    }
+    
+    .popup.lose {
+      background: linear-gradient(135deg, #ffcccc, #ff9999);
+    }
+    
+    .popup h2 {
+      margin-bottom: 15px;
+      font-size: 1.8rem;
+    }
+    
+    .popup p {
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+    }
+    
+    .popup-close {
+      padding: 10px 25px;
+      border-radius: 50px;
+      border: none;
+      background: #333;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .popup-close:hover {
+      background: #555;
+    }
+    
+    @media (max-width: 768px) {
+      .bet-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      
+      .dice {
+        width: 70px;
+        height: 70px;
+      }
+      
+      .wallet-breakdown {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .bet-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .dice {
+        width: 60px;
+        height: 60px;
+      }
+      
+      .wallet-buttons {
+        flex-direction: column;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="header">🎲 K3 Dice Game</div>
+  <div class="header">
+    <h1><i class="fas fa-dice"></i> K3 DICE GAME</h1>
+    <p>Roll the dice and win big with premium experience</p>
+  </div>
+  
   <div class="wallet">
     <div class="wallet-row">
-      Wallet: ₹<span id="wallet">0</span>
-      <div>
-        <a href="recharge.html"><button>Deposit</button></a>
-        <a href="withdraw.html"><button>Withdraw</button></a>
+      <div class="wallet-balance">₹<span id="wallet">0</span></div>
+      <div class="wallet-buttons">
+        <a href="recharge.html"><button class="wallet-btn deposit"><i class="fas fa-plus"></i> Deposit</button></a>
+        <a href="withdraw.html"><button class="wallet-btn withdraw"><i class="fas fa-money-bill-wave"></i> Withdraw</button></a>
       </div>
     </div>
+    
     <div class="wallet-breakdown">
-      💳 Recharge: ₹<span id="rechargeBalance">0</span> |
-      🎁 Bonus: ₹<span id="bonusBalance">0</span> |
-      🏆 Winning: ₹<span id="winningBalance">0</span> |
-      💰 Total: ₹<span id="totalBalance">0</span>
+      <div class="breakdown-item">
+        <div><i class="fas fa-credit-card"></i> Recharge:</div>
+        <span id="rechargeBalance">0</span>
+      </div>
+      <div class="breakdown-item">
+        <div><i class="fas fa-gift"></i> Bonus:</div>
+        <span id="bonusBalance">0</span>
+      </div>
+      <div class="breakdown-item">
+        <div><i class="fas fa-trophy"></i> Winning:</div>
+        <span id="winningBalance">0</span>
+      </div>
+      <div class="breakdown-item">
+        <div><i class="fas fa-wallet"></i> Total:</div>
+        <span id="totalBalance">0</span>
+      </div>
     </div>
   </div>
-  <div class="container">
-    <div style="text-align:center;">⏳ Time left: <span id="timer">--</span>s</div>
-    <div style="text-align:center;">Period: <span id="periodId">--</span></div>
+  
+  <div class="game-container">
+    <div class="game-info">
+      <div class="timer-box">
+        <div>⏳ Time Left</div>
+        <div class="timer-value" id="timer">--</div>
+      </div>
+      <div class="period-box">
+        <div>Period ID</div>
+        <div class="period-value" id="periodId">--</div>
+      </div>
+    </div>
+    
     <div class="dice-container">
-      <div class="dice" id="dice1">🎲</div>
-      <div class="dice" id="dice2">🎲</div>
-      <div class="dice" id="dice3">🎲</div>
+      <div class="dice" id="dice1"></div>
+      <div class="dice" id="dice2"></div>
+      <div class="dice" id="dice3"></div>
     </div>
-    <div class="bet-grid" id="betButtons"></div>
-    <div class="quick-buttons">
-      <button onclick="setAmt(10)">₹10</button>
-      <button onclick="setAmt(50)">₹50</button>
-      <button onclick="setAmt(100)">₹100</button>
-      <button onclick="setAmt(500)">₹500</button>
+    
+    <div class="bet-section">
+      <h3 class="section-title"><i class="fas fa-bullseye"></i> SELECT YOUR BET</h3>
+      <div class="bet-grid" id="betButtons">
+        <!-- Bet buttons will be generated by JS -->
+      </div>
+      
+      <div class="quick-buttons">
+        <button class="quick-amt" onclick="setAmt(10)">₹10</button>
+        <button class="quick-amt" onclick="setAmt(50)">₹50</button>
+        <button class="quick-amt" onclick="setAmt(100)">₹100</button>
+        <button class="quick-amt" onclick="setAmt(500)">₹500</button>
+      </div>
+      
+      <div class="bet-input-group">
+        <input type="number" id="amount" class="bet-input" placeholder="Enter Amount ₹" />
+      </div>
+      
+      <button class="place-bet" onclick="placeBet()">
+        <i class="fas fa-paper-plane"></i> PLACE BET
+      </button>
     </div>
-    <input type="number" id="amount" placeholder="Enter Amount ₹" />
-    <button class="place-bet" onclick="placeBet()">Place Bet</button>
-    <div class="user-bets" id="userBetsBox"></div>
-    <div class="result" id="resultBox"></div>
-    <div class="history" id="historyBox">Loading history...</div>
+    
+    <div class="user-bets">
+      <div class="user-bets-title"><i class="fas fa-ticket-alt"></i> YOUR ACTIVE BETS</div>
+      <div class="user-bets-container" id="userBetsBox">
+        <!-- Active bets will be displayed here -->
+      </div>
+    </div>
+  </div>
+  
+  <div class="history">
+    <h3 class="history-title"><i class="fas fa-history"></i> LAST 10 RESULTS</h3>
+    <div class="history-items" id="historyBox">
+      <!-- History will be displayed here -->
+    </div>
   </div>
 
   <script>
@@ -95,9 +685,9 @@
         const winning = wallet.winning || 0;
         const total = recharge + bonus + winning;
         document.getElementById("wallet").innerText = total.toFixed(2);
-        document.getElementById("rechargeBalance").innerText = recharge;
-        document.getElementById("bonusBalance").innerText = bonus;
-        document.getElementById("winningBalance").innerText = winning;
+        document.getElementById("rechargeBalance").innerText = recharge.toFixed(2);
+        document.getElementById("bonusBalance").innerText = bonus.toFixed(2);
+        document.getElementById("winningBalance").innerText = winning.toFixed(2);
         document.getElementById("totalBalance").innerText = total.toFixed(2);
       });
     };
@@ -127,18 +717,21 @@
 
     function startTimer(secondsLeft) {
       clearInterval(timerInterval);
-      document.getElementById("timer").innerText = secondsLeft;
+      document.getElementById("timer").innerText = secondsLeft + "s";
       timerInterval = setInterval(() => {
         secondsLeft--;
-        document.getElementById("timer").innerText = secondsLeft;
-        if (secondsLeft <= 0) clearInterval(timerInterval);
+        document.getElementById("timer").innerText = secondsLeft + "s";
+        if (secondsLeft <= 0) {
+          clearInterval(timerInterval);
+          document.getElementById("timer").innerText = "0s";
+        }
       }, 1000);
     }
 
     function loadMatch() {
       db.ref("k3game/currentMatchId").on("value", snap => {
         currentMatchId = snap.val();
-        document.getElementById("periodId").innerText = currentMatchId;
+        document.getElementById("periodId").innerText = currentMatchId || "--";
       });
 
       db.ref("k3game/currentMatchStartTime").on("value", snap => {
@@ -147,6 +740,7 @@
         const elapsed = Math.floor((Date.now() - start) / 1000);
         const remaining = 30 - elapsed;
         if (remaining > 0) startTimer(remaining);
+        else document.getElementById("timer").innerText = "0s";
       });
 
       db.ref("k3game/matches").on("value", snap => {
@@ -168,9 +762,10 @@
         historyBox.innerHTML = '';
         history.forEach(h => {
           const total = (h.dice1 || 0) + (h.dice2 || 0) + (h.dice3 || 0);
-          const span = document.createElement("span");
-          span.innerText = `🎲 ${h.dice1}-${h.dice2}-${h.dice3} = ${total}`;
-          historyBox.appendChild(span);
+          const historyItem = document.createElement("div");
+          historyItem.className = "history-item";
+          historyItem.innerText = `🎲 ${h.dice1}-${h.dice2}-${h.dice3} = ${total}`;
+          historyBox.appendChild(historyItem);
         });
       });
     }
@@ -184,10 +779,11 @@
     const betButtonsBox = document.getElementById("betButtons");
     betOptions.forEach(option => {
       const btn = document.createElement("button");
+      btn.className = "bet-btn";
       btn.innerText = option;
       btn.onclick = () => {
         selectedBet = option;
-        document.querySelectorAll("#betButtons button").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".bet-btn").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
       };
       betButtonsBox.appendChild(btn);
@@ -203,13 +799,22 @@
       betRef.set({ amount: betAmount });
 
       const userBetsBox = document.getElementById("userBetsBox");
-      const span = document.createElement("span");
-      span.innerText = `${betType} - ₹${betAmount}`;
-      userBetsBox.appendChild(span);
+      const chip = document.createElement("div");
+      chip.className = "bet-chip";
+      chip.innerHTML = `<i class="fas fa-coins"></i> ${betType} - ₹${betAmount}`;
+      userBetsBox.appendChild(chip);
+      
+      // Clear input
+      document.getElementById("amount").value = "";
     }
 
     loadMatch();
     loadHistory();
+    
+    // Initial dice rendering
+    renderDice("dice1", 1);
+    renderDice("dice2", 2);
+    renderDice("dice3", 3);
   </script>
 </body>
 </html>
