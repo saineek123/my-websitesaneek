@@ -402,6 +402,10 @@
     </div>
   </div>
 
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
@@ -414,41 +418,58 @@
   const db = firebase.database();
   const auth = firebase.auth();
 
-  // ✅ FIXED: Set authentication persistence to LOCAL
-  auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-    .then(() => {
-      // Now check auth state
-      auth.onAuthStateChanged((user) => {
-        if (user) {
-          loadUserData(user.uid);
-        } else {
-          window.location.href = "login.html";
-        }
-      });
-    })
-    .catch((error) => {
-      console.error("Persistence error:", error);
-      window.location.href = "login.html";
+  // ✅ Fix: Local persistence
+  auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(() => {
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        loadUserData(user.uid);
+      } else {
+        window.location.href = "login.html";
+      }
     });
-
-  // ... (rest of your elements) ...
+  }).catch((error) => {
+    console.error(error);
+    window.location.href = "login.html";
+  });
 
   function loadUserData(userId) {
-    // ✅ FIXED: Use real-time listener for user data
     const userRef = db.ref('users/' + userId);
-    
     userRef.on('value', (snapshot) => {
       const userData = snapshot.val();
       if (userData) {
-        // ... (your existing user data code) ...
+        document.getElementById("userName").textContent = userData.name || "No Name";
+        document.getElementById("userEmail").textContent = userData.email || "N/A";
+        document.getElementById("userPhone").textContent = userData.phone || "N/A";
+        document.getElementById("accountId").textContent = userId;
+        document.getElementById("verificationStatus").textContent = userData.verified ? "Verified" : "Not Verified";
+      } else {
+        document.getElementById("userName").textContent = "No User Data";
       }
     });
 
-    // ... (your wallet code) ...
+    const walletRef = db.ref('users/' + userId + '/wallet');
+    walletRef.on('value', (snap) => {
+      const wallet = snap.val() || {};
+      const recharge = wallet.recharge || 0;
+      const bonus = wallet.bonus || 0;
+      const winning = wallet.winning || 0;
+      const total = recharge + bonus + winning;
+
+      document.getElementById("rechargeBalance").textContent = recharge.toFixed(2);
+      document.getElementById("bonusBalance").textContent = bonus.toFixed(2);
+      document.getElementById("winningBalance").textContent = winning.toFixed(2);
+      document.getElementById("totalBalance").textContent = total.toFixed(2);
+    });
   }
 
-  // ... (other functions remain the same) ...
+  function logout() {
+    auth.signOut().then(() => {
+      localStorage.clear();
+      window.location.href = "login.html";
+    });
+  }
 </script>
+
 
 </body>
 </html>
