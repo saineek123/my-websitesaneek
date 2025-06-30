@@ -231,7 +231,6 @@
                   inset 0 5px 10px rgba(255,255,255,0.8);
       position: relative;
       transform-style: preserve-3d;
-      transform: rotateX(15deg) rotateY(15deg);
       animation: diceFloat 3s infinite ease-in-out;
     }
     
@@ -244,8 +243,8 @@
     }
     
     @keyframes diceFloat {
-      0%, 100% { transform: translateY(0) rotateX(15deg) rotateY(15deg); }
-      50% { transform: translateY(-10px) rotateX(20deg) rotateY(20deg); }
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-10px) rotate(10deg); }
     }
     
     .dot {
@@ -504,6 +503,7 @@
       width: 90%;
       max-width: 400px;
       animation: popIn 0.5s ease;
+      display: none;
     }
     
     @keyframes popIn {
@@ -542,6 +542,47 @@
     
     .popup-close:hover {
       background: #555;
+    }
+    
+    .result-display {
+      text-align: center;
+      margin: 20px 0;
+      padding: 15px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 15px;
+      font-size: 1.4rem;
+      font-weight: bold;
+      display: none;
+    }
+    
+    .result-display.win {
+      background: linear-gradient(90deg, #00b09b, #96c93d);
+      display: block;
+    }
+    
+    .result-display.lose {
+      background: linear-gradient(90deg, #ff416c, #ff4b2b);
+      display: block;
+    }
+    
+    .dice-rolling {
+      animation: rollDice 0.5s ease-in-out infinite;
+    }
+    
+    @keyframes rollDice {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(90deg); }
+      50% { transform: rotate(180deg); }
+      75% { transform: rotate(270deg); }
+    }
+    
+    .dice-result {
+      animation: diceResult 1s ease;
+    }
+    
+    @keyframes diceResult {
+      0% { transform: scale(0.5); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
     }
     
     @media (max-width: 768px) {
@@ -628,6 +669,11 @@
       <div class="dice" id="dice3"></div>
     </div>
     
+    <div class="result-display" id="resultDisplay">
+      <div id="resultMessage">Result: <span id="diceResult">--</span></div>
+      <div id="payoutMessage">Payout: ₹<span id="payoutAmount">0</span></div>
+    </div>
+    
     <div class="bet-section">
       <h3 class="section-title"><i class="fas fa-bullseye"></i> SELECT YOUR BET</h3>
       <div class="bet-grid" id="betButtons">
@@ -665,6 +711,19 @@
     </div>
   </div>
 
+  <div class="popup" id="winPopup">
+    <h2>🎉 Congratulations! 🎉</h2>
+    <p>You won <span id="winAmount">0</span> on your bet!</p>
+    <p>Amount has been added to your wallet.</p>
+    <button class="popup-close" onclick="document.getElementById('winPopup').style.display='none'">OK</button>
+  </div>
+  
+  <div class="popup" id="losePopup">
+    <h2>😔 Better Luck Next Time!</h2>
+    <p>Your bet didn't win this round.</p>
+    <button class="popup-close" onclick="document.getElementById('losePopup').style.display='none'">OK</button>
+  </div>
+
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
@@ -676,6 +735,10 @@
     const db = firebase.database();
 
     const userId = localStorage.getItem("userId") || "guest";
+    let currentBets = [];
+    let currentMatchId = null;
+    let timerInterval = null;
+    let currentRoundComplete = false;
 
     const updateWallet = () => {
       db.ref("users/" + userId + "/wallet").on("value", snap => {
@@ -712,8 +775,42 @@
       });
     }
 
-    let currentMatchId = null;
-    let timerInterval = null;
+    function animateDiceRoll() {
+      const dice1 = document.getElementById("dice1");
+      const dice2 = document.getElementById("dice2");
+      const dice3 = document.getElementById("dice3");
+      
+      dice1.classList.add("dice-rolling");
+      dice2.classList.add("dice-rolling");
+      dice3.classList.add("dice-rolling");
+      
+      // Show random values during animation
+      renderDice("dice1", Math.floor(Math.random() * 6) + 1);
+      renderDice("dice2", Math.floor(Math.random() * 6) + 1);
+      renderDice("dice3", Math.floor(Math.random() * 6) + 1);
+    }
+
+    function stopDiceRoll(dice1, dice2, dice3) {
+      const diceElements = [
+        document.getElementById("dice1"),
+        document.getElementById("dice2"),
+        document.getElementById("dice3")
+      ];
+      
+      diceElements.forEach(dice => {
+        dice.classList.remove("dice-rolling");
+        dice.classList.add("dice-result");
+      });
+      
+      renderDice("dice1", dice1);
+      renderDice("dice2", dice2);
+      renderDice("dice3", dice3);
+      
+      // Show result
+      const total = dice1 + dice2 + dice3;
+      document.getElementById("diceResult").innerText = `${dice1} + ${dice2} + ${dice3} = ${total}`;
+      document.getElementById("resultDisplay").style.display = "block";
+    }
 
     function startTimer(secondsLeft) {
       clearInterval(timerInterval);
@@ -721,17 +818,39 @@
       timerInterval = setInterval(() => {
         secondsLeft--;
         document.getElementById("timer").innerText = secondsLeft + "s";
+        
         if (secondsLeft <= 0) {
           clearInterval(timerInterval);
           document.getElementById("timer").innerText = "0s";
+          currentRoundComplete = true;
+          
+          // Simulate dice roll animation
+          animateDiceRoll();
+          
+          // Show result after animation
+          setTimeout(() => {
+            processRoundResult();
+          }, 2000);
         }
       }, 1000);
     }
 
     function loadMatch() {
       db.ref("k3game/currentMatchId").on("value", snap => {
-        currentMatchId = snap.val();
-        document.getElementById("periodId").innerText = currentMatchId || "--";
+        const newMatchId = snap.val();
+        if (newMatchId && newMatchId !== currentMatchId) {
+          // New match started
+          currentMatchId = newMatchId;
+          document.getElementById("periodId").innerText = newMatchId || "--";
+          
+          // Clear previous bets
+          document.getElementById("userBetsBox").innerHTML = '';
+          currentBets = [];
+          
+          // Hide result display
+          document.getElementById("resultDisplay").style.display = "none";
+          currentRoundComplete = false;
+        }
       });
 
       db.ref("k3game/currentMatchStartTime").on("value", snap => {
@@ -739,8 +858,11 @@
         if (!start) return;
         const elapsed = Math.floor((Date.now() - start) / 1000);
         const remaining = 30 - elapsed;
-        if (remaining > 0) startTimer(remaining);
-        else document.getElementById("timer").innerText = "0s";
+        if (remaining > 0) {
+          startTimer(remaining);
+        } else {
+          document.getElementById("timer").innerText = "0s";
+        }
       });
 
       db.ref("k3game/matches").on("value", snap => {
@@ -748,9 +870,57 @@
         const match = data[currentMatchId];
         if (!match || !match.result) return;
         const { dice1, dice2, dice3 } = match.result;
-        renderDice("dice1", dice1);
-        renderDice("dice2", dice2);
-        renderDice("dice3", dice3);
+        stopDiceRoll(dice1, dice2, dice3);
+      });
+    }
+
+    function processRoundResult() {
+      if (!currentMatchId) return;
+      
+      db.ref("k3game/matches/" + currentMatchId + "/result").once('value').then(snap => {
+        const result = snap.val();
+        if (!result) return;
+        
+        const { dice1, dice2, dice3 } = result;
+        const total = dice1 + dice2 + dice3;
+        
+        // Calculate payout
+        let totalPayout = 0;
+        let hasWinningBet = false;
+        
+        currentBets.forEach(bet => {
+          if (bet.type === "Big" && total >= 11 && total <= 17) {
+            totalPayout += bet.amount * 1.95; // Payout 1.95x
+            hasWinningBet = true;
+          } else if (bet.type === "Small" && total >= 4 && total <= 10) {
+            totalPayout += bet.amount * 1.95; // Payout 1.95x
+            hasWinningBet = true;
+          } else if (parseInt(bet.type) === total) {
+            totalPayout += bet.amount * 6; // Payout 6x
+            hasWinningBet = true;
+          }
+        });
+        
+        // Update wallet if there are winnings
+        if (totalPayout > 0) {
+          const walletRef = db.ref("users/" + userId + "/wallet");
+          walletRef.once('value').then(walletSnap => {
+            const wallet = walletSnap.val() || { recharge: 0, bonus: 0, winning: 0 };
+            wallet.winning += totalPayout;
+            walletRef.set(wallet);
+            
+            // Show win message
+            document.getElementById("winAmount").innerText = "₹" + totalPayout.toFixed(2);
+            document.getElementById("winPopup").style.display = "block";
+          });
+        } else if (currentBets.length > 0) {
+          // Show lose message if there were bets
+          document.getElementById("losePopup").style.display = "block";
+        }
+        
+        // Update result display
+        document.getElementById("payoutAmount").innerText = totalPayout.toFixed(2);
+        document.getElementById("resultDisplay").className = "result-display " + (totalPayout > 0 ? "win" : "lose");
       });
     }
 
@@ -775,7 +945,7 @@
     }
 
     let selectedBet = null;
-    const betOptions = ["Big", "Small", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17"];
+    const betOptions = ["Big", "Small", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18"];
     const betButtonsBox = document.getElementById("betButtons");
     betOptions.forEach(option => {
       const btn = document.createElement("button");
@@ -790,24 +960,72 @@
     });
 
     function placeBet() {
-      const betAmount = parseInt(document.getElementById("amount").value);
+      const betAmount = parseFloat(document.getElementById("amount").value);
       if (!betAmount || betAmount <= 0) return alert("Enter valid amount");
       if (!currentMatchId) return alert("No active match");
+      if (currentRoundComplete) return alert("Round completed! Wait for next round");
       const betType = selectedBet;
       if (!betType) return alert("Select a bet");
-      const betRef = db.ref(`k3game/matches/${currentMatchId}/bets/${userId}/${betType}`);
-      betRef.set({ amount: betAmount });
-
-      const userBetsBox = document.getElementById("userBetsBox");
-      const chip = document.createElement("div");
-      chip.className = "bet-chip";
-      chip.innerHTML = `<i class="fas fa-coins"></i> ${betType} - ₹${betAmount}`;
-      userBetsBox.appendChild(chip);
       
-      // Clear input
-      document.getElementById("amount").value = "";
+      // Deduct from wallet
+      const walletRef = db.ref("users/" + userId + "/wallet");
+      walletRef.once('value').then(snap => {
+        const wallet = snap.val() || { recharge: 0, bonus: 0, winning: 0 };
+        const totalBalance = (wallet.recharge || 0) + (wallet.bonus || 0) + (wallet.winning || 0);
+        
+        if (totalBalance < betAmount) {
+          alert("Insufficient balance");
+          return;
+        }
+        
+        // Deduct from recharge first
+        if (wallet.recharge >= betAmount) {
+          wallet.recharge -= betAmount;
+        } else if (wallet.bonus >= betAmount) {
+          wallet.bonus -= betAmount;
+        } else if (wallet.winning >= betAmount) {
+          wallet.winning -= betAmount;
+        } else {
+          // Deduct from multiple sources
+          let remaining = betAmount;
+          if (wallet.recharge > 0) {
+            const deductRecharge = Math.min(wallet.recharge, remaining);
+            wallet.recharge -= deductRecharge;
+            remaining -= deductRecharge;
+          }
+          if (remaining > 0 && wallet.bonus > 0) {
+            const deductBonus = Math.min(wallet.bonus, remaining);
+            wallet.bonus -= deductBonus;
+            remaining -= deductBonus;
+          }
+          if (remaining > 0 && wallet.winning > 0) {
+            wallet.winning -= remaining;
+          }
+        }
+        
+        // Update Firebase
+        walletRef.set(wallet);
+        
+        // Add to active bets
+        const betRef = db.ref(`k3game/matches/${currentMatchId}/bets/${userId}/${betType}`);
+        betRef.set({ amount: betAmount });
+
+        // Add to local display
+        const userBetsBox = document.getElementById("userBetsBox");
+        const chip = document.createElement("div");
+        chip.className = "bet-chip";
+        chip.innerHTML = `<i class="fas fa-coins"></i> ${betType} - ₹${betAmount}`;
+        userBetsBox.appendChild(chip);
+        
+        // Store bet locally
+        currentBets.push({ type: betType, amount: betAmount });
+        
+        // Clear input
+        document.getElementById("amount").value = "";
+      });
     }
 
+    // Initialize
     loadMatch();
     loadHistory();
     
