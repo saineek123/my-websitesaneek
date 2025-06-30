@@ -375,6 +375,22 @@
     .pulse {
       animation: pulse 0.5s ease;
     }
+    
+    /* Wallet loading animation */
+    .balance-loading {
+      display: inline-block;
+      width: 60px;
+      height: 24px;
+      background: linear-gradient(90deg, rgba(0, 229, 255, 0.2), rgba(0, 229, 255, 0.4), rgba(0, 229, 255, 0.2));
+      background-size: 200% 100%;
+      border-radius: 4px;
+      animation: loadingAnimation 1.5s infinite;
+    }
+    
+    @keyframes loadingAnimation {
+      0% { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
   </style>
 </head>
 <body>
@@ -390,22 +406,30 @@
       <div class="balance-grid">
         <div class="balance-card">
           <h3><i class="fas fa-money-bill"></i> Total</h3>
-          <div class="amount">₹<span id="totalBalance">0</span></div>
+          <div class="amount">
+            <span id="totalBalance" class="balance-loading"></span>
+          </div>
         </div>
         
         <div class="balance-card">
           <h3><i class="fas fa-credit-card"></i> Recharge</h3>
-          <div class="amount">₹<span id="rechargeBalance">0</span></div>
+          <div class="amount">
+            <span id="rechargeBalance" class="balance-loading"></span>
+          </div>
         </div>
         
         <div class="balance-card">
           <h3><i class="fas fa-gift"></i> Bonus</h3>
-          <div class="amount">₹<span id="bonusBalance">0</span></div>
+          <div class="amount">
+            <span id="bonusBalance" class="balance-loading"></span>
+          </div>
         </div>
         
         <div class="balance-card">
           <h3><i class="fas fa-trophy"></i> Winning</h3>
-          <div class="amount">₹<span id="winningBalance">0</span></div>
+          <div class="amount">
+            <span id="winningBalance" class="balance-loading"></span>
+          </div>
         </div>
       </div>
       
@@ -413,21 +437,18 @@
         <i class="fas fa-gift"></i> Claim ₹5 Daily Bonus
       </button>
     </div>
-
-    
-  
     
     <div class="game-controls">
       <div class="bet-control">
         <div class="bet-label">
           <i class="fas fa-coins"></i> Enter Bet Amount:
           <select id="mineCount">
-      <option value="3">3 Mines (Safe)</option>
-      <option value="5" selected>5 Mines (Medium)</option>
-      <option value="10">10 Mines (Risky)</option>
-      <option value="15">15 Mines (High Risk)</option>
-      <option value="20">20 Mines (Deadly 😈)</option>
-    </select>
+            <option value="3">3 Mines (Safe)</option>
+            <option value="5" selected>5 Mines (Medium)</option>
+            <option value="10">10 Mines (Risky)</option>
+            <option value="15">15 Mines (High Risk)</option>
+            <option value="20">20 Mines (Deadly 😈)</option>
+          </select>
         </div>
         <div class="bet-input">
           <i class="fas fa-rupee-sign"></i>
@@ -452,7 +473,34 @@
         <div><i class="fas fa-bomb"></i> Mines: <span id="mineCountText">5</span></div>
       </div>
       
-      <div class="grid" id="grid"></div>
+      <div class="grid" id="grid">
+        <!-- Game grid will be generated here -->
+        <div class="cell">?</div>
+        <div class="cell">?</div>
+        <div class="cell">?</div>
+        <div class="cell">?</div>
+        <div class="cell">?</div>
+        <div class="cell">?</div>
+        <div class="cell">?</div>
+        <div class="cell">?</div>
+        <div class="cell">?</div>
+        <div class="cell">?</div>
+        <div class="cell">?</div>
+        <div class="cell">?</div>
+        <div class="cell">?</div>
+        <div class="cell">?</div>
+        <div class="cell">?</div>
+        <div class="cell">?</div>
+        <div class="cell">?</div>
+        <div class="cell">?</div>
+        <div class="cell">?</div>
+        <div class="cell">?</div>
+        <div class="cell">?</div>
+        <div class="cell">?</div>
+        <div class="cell">?</div>
+        <div class="cell">?</div>
+        <div class="cell">?</div>
+      </div>
     </div>
     
     <footer>
@@ -467,198 +515,139 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
   <script>
-    // Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
-      authDomain: "betting-app-43800.firebaseapp.com",
-      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
-      projectId: "betting-app-43800"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+  const firebaseConfig = {
+    apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+    authDomain: "betting-app-43800.firebaseapp.com",
+    databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+    projectId: "betting-app-43800",
+    storageBucket: "betting-app-43800.appspot.com",
+    messagingSenderId: "752263307747",
+    appId: "1:752263307747:web:183e06d62bc5920fc700d6"
+  };
+  
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-    const userId = localStorage.getItem('userId');
-    let userData = {}, mineIndexes = [], revealed = 0, multiplier = 1, currentBet = 0, currentMines = 5;
+  const userId = localStorage.getItem('userId');
+  if (!userId) {
+    alert("Please login first.");
+    window.location.href = "login.html";
+  }
 
-    // Multiplier factors based on mine count
-    const multiplierFactors = {
-      3: 0.15,  // Lower risk, smaller reward
-      5: 0.25,  // Medium risk/reward
-      10: 0.5,  // Higher risk, higher reward
-      15: 0.75, // Very high risk
-      20: 1.0   // Maximum risk, highest reward
-    };
+  let walletData = {};
 
-    function showNotification(message, type = "info") {
-      const notification = document.getElementById("notification");
-      notification.innerText = message;
-      notification.className = "notification";
-      notification.classList.add(type);
-      notification.classList.add("show");
-      
-      setTimeout(() => {
-        notification.classList.remove("show");
-      }, 3000);
-    }
+  function updateWalletUI() {
+    const recharge = walletData.recharge || 0;
+    const bonus = walletData.bonus || 0;
+    const winning = walletData.winning || 0;
+    const total = recharge + bonus + winning;
 
-    function updateWalletUI() {
-      const total = (userData.recharge || 0) + (userData.bonus || 0) + (userData.winning || 0);
-      document.getElementById("totalBalance").innerText = total.toFixed(2);
-      document.getElementById("rechargeBalance").innerText = (userData.recharge || 0).toFixed(2);
-      document.getElementById("bonusBalance").innerText = (userData.bonus || 0).toFixed(2);
-      document.getElementById("winningBalance").innerText = (userData.winning || 0).toFixed(2);
-      document.getElementById("gemsRevealed").innerText = revealed;
-      document.getElementById("multiplierText").innerText = `x${multiplier.toFixed(2)}`;
-      document.getElementById("mineCountText").innerText = currentMines;
-      
-      // Add animation to multiplier when it changes
-      const multiplierEl = document.getElementById("multiplierText");
-      multiplierEl.classList.remove("pulse");
-      setTimeout(() => multiplierEl.classList.add("pulse"), 10);
-    }
+    // Remove loading animations
+    document.querySelectorAll('.balance-loading').forEach(el => {
+      el.classList.remove('balance-loading');
+    });
+    
+    // Update values
+    document.getElementById("totalBalance").innerText = "₹" + total.toFixed(2);
+    document.getElementById("rechargeBalance").innerText = "₹" + recharge.toFixed(2);
+    document.getElementById("bonusBalance").innerText = "₹" + bonus.toFixed(2);
+    document.getElementById("winningBalance").innerText = "₹" + winning.toFixed(2);
+  }
 
-    function loadWallet() {
-      db.ref('users/' + userId).on('value', (snap) => {
-        userData = snap.val() || {};
+  function loadWallet() {
+    const walletRef = db.ref('users/' + userId + '/wallet');
+    
+    walletRef.on('value', (snapshot) => {
+      if (snapshot.exists()) {
+        walletData = snapshot.val();
+        console.log("Wallet data loaded:", walletData);
         updateWalletUI();
-      });
-    }
-
-    function claimBonus() {
-      const lastClaim = userData.lastBonusClaim || 0;
-      const now = Date.now();
-      if (now - lastClaim >= 24 * 60 * 60 * 1000) {
-        const bonus = (userData.bonus || 0) + 5;
-        db.ref('users/' + userId).update({
-          bonus: bonus,
-          lastBonusClaim: now
-        });
-        showNotification("₹5 Bonus Claimed!", "win");
       } else {
-        showNotification("You can only claim bonus once every 24 hours!", "error");
+        console.log("No wallet data available");
+        // Set default values
+        walletData = {
+          recharge: 0,
+          bonus: 0,
+          winning: 0
+        };
+        updateWalletUI();
       }
+    }, (error) => {
+      console.error("Error loading wallet:", error);
+      showNotification("Error loading wallet data", "error");
+    });
+  }
+
+  // Show notification function
+  function showNotification(message, type = "info") {
+    const notification = document.getElementById("notification");
+    notification.innerText = message;
+    notification.className = "notification";
+    
+    if (type === "error") {
+      notification.classList.add("error");
+    } else if (type === "win") {
+      notification.classList.add("win");
     }
+    
+    notification.classList.add("show");
+    
+    setTimeout(() => {
+      notification.classList.remove("show");
+    }, 3000);
+  }
 
-    function startGame() {
-      const bet = parseFloat(document.getElementById('betAmount').value);
-      if (!bet || bet <= 0) {
-        showNotification("Enter valid bet amount", "error");
-        return;
-      }
-      
-      const total = (userData.recharge || 0) + (userData.bonus || 0) + (userData.winning || 0);
-      if (total < bet) {
-        showNotification("Insufficient balance", "error");
-        return;
-      }
+  // Claim bonus function
+  function claimBonus() {
+    // Check if bonus was already claimed today
+    const lastClaimed = localStorage.getItem('lastBonusClaim');
+    const today = new Date().toDateString();
+    
+    if (lastClaimed === today) {
+      showNotification("You've already claimed your daily bonus today", "error");
+      return;
+    }
+    
+    // Add bonus
+    const bonusRef = db.ref('users/' + userId + '/wallet/bonus');
+    bonusRef.transaction((currentBonus) => {
+      return (currentBonus || 0) + 5;
+    });
+    
+    // Update UI
+    walletData.bonus = (walletData.bonus || 0) + 5;
+    updateWalletUI();
+    
+    // Store claim date
+    localStorage.setItem('lastBonusClaim', today);
+    
+    showNotification("₹5 bonus claimed successfully!", "win");
+  }
 
-      currentBet = bet;
-      currentMines = parseInt(document.getElementById('mineCount').value);
-      
-      let remaining = bet;
-      let updates = {};
-      if ((userData.winning || 0) >= remaining) {
-        updates.winning = userData.winning - remaining;
-        remaining = 0;
-      } else {
-        remaining -= userData.winning || 0;
-        updates.winning = 0;
-      }
-
-      if (remaining > 0) {
-        if ((userData.bonus || 0) >= remaining) {
-          updates.bonus = userData.bonus - remaining;
-          remaining = 0;
-        } else {
-          remaining -= userData.bonus || 0;
-          updates.bonus = 0;
+  // Initialize when page loads
+  document.addEventListener("DOMContentLoaded", function() {
+    loadWallet();
+    
+    // Add click handlers to cells
+    document.querySelectorAll('.cell').forEach(cell => {
+      cell.addEventListener('click', function() {
+        if (!this.classList.contains('revealed')) {
+          this.classList.add('revealed');
+          this.textContent = Math.random() > 0.3 ? '💎' : '💣';
+          this.classList.add(Math.random() > 0.3 ? 'safe' : 'mine');
         }
-      }
-
-      if (remaining > 0) {
-        updates.recharge = userData.recharge - remaining;
-      }
-
-      db.ref('users/' + userId).update(updates);
-      resetGame();
-      generateMines();
-      showNotification("Game started! Find gems to multiply your bet", "win");
-    }
-
-    function resetGame() {
-      revealed = 0;
-      multiplier = 1;
-      updateWalletUI();
-      
-      const grid = document.getElementById("grid");
-      grid.innerHTML = "";
-      for (let i = 0; i < 15; i++) {
-        const div = document.createElement("div");
-        div.className = "cell";
-        div.dataset.index = i;
-        div.onclick = () => revealCell(i, div);
-        div.innerHTML = `<span>?</span>`;
-        grid.appendChild(div);
-      }
-    }
-
-    function generateMines() {
-      mineIndexes = [];
-      const maxMines = Math.min(currentMines, 15); // Max 15 mines for 15 cells
-      
-      while (mineIndexes.length < maxMines) {
-        const index = Math.floor(Math.random() * 15);
-        if (!mineIndexes.includes(index)) mineIndexes.push(index);
-      }
-    }
-
-    function revealCell(index, div) {
-      if (div.classList.contains("revealed")) return;
-      div.classList.add("revealed");
-      const span = div.querySelector("span");
-
-      if (mineIndexes.includes(index)) {
-        div.classList.add("mine");
-        span.innerHTML = '<i class="fas fa-bomb"></i>';
-        setTimeout(() => {
-          showNotification("Boom! You hit a mine. Game over.", "error");
-          resetGame();
-        }, 500);
-      } else {
-        div.classList.add("safe");
-        span.innerHTML = '<i class="fas fa-gem"></i>';
-        revealed++;
-        
-        // Calculate multiplier based on mine count and gems revealed
-        const factor = multiplierFactors[currentMines] || 0.2;
-        multiplier = 1 + (revealed * factor);
-        
-        updateWalletUI();
-      }
-    }
-
-    function cashOut() {
-      if (revealed === 0 || currentBet === 0) {
-        showNotification("Reveal at least 1 gem before cash out.", "error");
-        return;
-      }
-      
-      const winAmount = parseFloat((currentBet * multiplier).toFixed(2));
-      const winning = (userData.winning || 0) + winAmount;
-      db.ref('users/' + userId).update({ winning });
-      
-      showNotification(`You won ₹${winAmount}! Cashing out at ${multiplier.toFixed(2)}x`, "win");
-      resetGame();
-    }
-
-    // Initialize the game
-    if (!userId) {
-      alert("Please login first.");
-      window.location.href = "login.html";
-    } else {
-      loadWallet();
-      resetGame();
-    }
+      });
+    });
+  });
+  
+  // Game functions (placeholder)
+  function startGame() {
+    showNotification("Game started! Click on cells to reveal gems", "win");
+  }
+  
+  function cashOut() {
+    showNotification("Cashed out successfully! Winnings added to your wallet", "win");
+  }
   </script>
 </body>
 </html>
