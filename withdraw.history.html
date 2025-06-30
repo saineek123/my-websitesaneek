@@ -3,40 +3,440 @@
 <head>
   <meta charset="UTF-8">
   <title>Withdraw History</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
+    :root {
+      --primary: #00bcd4;
+      --primary-dark: #0097a7;
+      --bg-dark: #121212;
+      --card-bg: #1e1e1e;
+      --card-border: #2d2d2d;
+      --text-light: #f5f5f5;
+      --text-gray: #b0b0b0;
+      --success: #4caf50;
+      --warning: #ff9800;
+      --danger: #f44336;
+      --pending: #ff9800;
+      --processing: #2196f3;
+      --completed: #4caf50;
+      --failed: #f44336;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #121212;
-      color: #fff;
-      padding: 20px;
+      background: var(--bg-dark);
+      color: var(--text-light);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding-bottom: 20px;
     }
-    h2 {
+
+    header {
+      background: linear-gradient(135deg, #1a1a1a, #0d0d0d);
+      padding: 18px 16px;
       text-align: center;
-      margin-bottom: 20px;
-      color: #ff4081;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
-    .history {
-      max-width: 600px;
-      margin: 0 auto;
-      background: #1e1e1e;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(255,64,129,0.2);
-    }
-    .entry {
-      border-bottom: 1px solid #333;
-      padding: 10px 0;
-    }
-    .entry:last-child {
+    
+    .back-btn {
+      background: rgba(255, 255, 255, 0.1);
       border: none;
+      color: var(--primary);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .back-btn:hover {
+      background: rgba(0, 188, 212, 0.2);
+      transform: translateX(-3px);
+    }
+
+    header h1 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 0 16px;
+    }
+
+    .filter-section {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--card-border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      align-items: center;
+    }
+
+    .filter-label {
+      font-weight: 500;
+      color: var(--text-gray);
+    }
+
+    .filter-select {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: var(--text-light);
+      padding: 10px 15px;
+      font-size: 1rem;
+      flex: 1;
+      min-width: 150px;
+    }
+
+    .stats-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 15px;
+      text-align: center;
+      border: 1px solid var(--card-border);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .stat-value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin: 5px 0;
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-gray);
+    }
+
+    .total .stat-value { color: var(--primary); }
+    .success .stat-value { color: var(--success); }
+    .pending .stat-value { color: var(--pending); }
+    .failed .stat-value { color: var(--danger); }
+
+    .history-card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--card-border);
+      margin-bottom: 20px;
+    }
+
+    .history-header {
+      padding: 18px 20px;
+      background: linear-gradient(90deg, #006064, #00838f);
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .history-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .history-list {
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .entry {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      transition: background 0.3s ease;
+    }
+
+    .entry:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .entry:last-child {
+      border-bottom: none;
+    }
+
+    .entry-info {
+      flex: 1;
+    }
+
+    .entry-amount {
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-bottom: 5px;
+    }
+
+    .entry-details {
+      display: flex;
+      gap: 15px;
+      font-size: 0.9rem;
+      color: var(--text-gray);
+    }
+
+    .entry-date, .entry-id {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .entry-status {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      min-width: 100px;
+      text-align: center;
+    }
+
+    .status-pending {
+      background: rgba(255, 152, 0, 0.15);
+      color: var(--warning);
+    }
+
+    .status-processing {
+      background: rgba(33, 150, 243, 0.15);
+      color: var(--processing);
+    }
+
+    .status-completed {
+      background: rgba(76, 175, 80, 0.15);
+      color: var(--success);
+    }
+
+    .status-failed {
+      background: rgba(244, 67, 54, 0.15);
+      color: var(--danger);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-gray);
+    }
+
+    .empty-state i {
+      font-size: 3rem;
+      margin-bottom: 15px;
+      color: var(--primary);
+      opacity: 0.5;
+    }
+
+    .empty-state p {
+      margin-top: 10px;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .page-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-light);
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .page-btn:hover, .page-btn.active {
+      background: var(--primary);
+      color: #000;
+    }
+
+    .page-btn.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 600px) {
+      .filter-section {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .entry {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      
+      .entry-status {
+        align-self: flex-end;
+      }
+      
+      .entry-details {
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .stats-section {
+        grid-template-columns: 1fr 1fr;
+      }
+      
+      .history-header {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+      }
     }
   </style>
 </head>
 <body>
-  <h2>💸 Withdraw History</h2>
-  <div class="history" id="withdrawList">Loading...</div>
+  <header>
+    <button class="back-btn" onclick="window.history.back()">
+      <i class="fas fa-arrow-left"></i>
+    </button>
+    <h1><i class="fas fa-file-invoice-dollar"></i> Withdraw History</h1>
+    <div style="width: 40px;"></div>
+  </header>
 
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <div class="container">
+    <div class="filter-section">
+      <span class="filter-label"><i class="fas fa-filter"></i> Filter:</span>
+      <select class="filter-select" id="statusFilter">
+        <option value="all">All Statuses</option>
+        <option value="pending">Pending</option>
+        <option value="processing">Processing</option>
+        <option value="completed">Completed</option>
+        <option value="failed">Failed</option>
+      </select>
+      <select class="filter-select" id="timeFilter">
+        <option value="all">All Time</option>
+        <option value="week">Last 7 Days</option>
+        <option value="month">Last 30 Days</option>
+        <option value="3months">Last 3 Months</option>
+      </select>
+    </div>
+    
+    
+    <div class="history-card">
+      <div class="history-header">
+        <div class="history-title">
+          <i class="fas fa-history"></i> Recent Withdrawals
+        </div>
+        <div class="history-count">
+          <span id="countValue">12</span> transactions
+        </div>
+      </div>
+      
+      <div class="history-list" id="withdrawList">
+        <!-- Entries will be loaded here -->
+        <div class="entry">
+          <div class="entry-info">
+            <div class="entry-amount">₹2,500</div>
+            <div class="entry-details">
+              <div class="entry-date"><i class="far fa-calendar"></i> 15 Jun 2025</div>
+              <div class="entry-id"><i class="fas fa-hashtag"></i> WD7852</div>
+            </div>
+          </div>
+          <div class="entry-status status-completed">Completed</div>
+        </div>
+        
+        <div class="entry">
+          <div class="entry-info">
+            <div class="entry-amount">₹1,200</div>
+            <div class="entry-details">
+              <div class="entry-date"><i class="far fa-calendar"></i> 12 Jun 2025</div>
+              <div class="entry-id"><i class="fas fa-hashtag"></i> WD7841</div>
+            </div>
+          </div>
+          <div class="entry-status status-pending">Pending</div>
+        </div>
+        
+        <div class="entry">
+          <div class="entry-info">
+            <div class="entry-amount">₹3,000</div>
+            <div class="entry-details">
+              <div class="entry-date"><i class="far fa-calendar"></i> 10 Jun 2025</div>
+              <div class="entry-id"><i class="fas fa-hashtag"></i> WD7829</div>
+            </div>
+          </div>
+          <div class="entry-status status-completed">Completed</div>
+        </div>
+        
+        <div class="entry">
+          <div class="entry-info">
+            <div class="entry-amount">₹500</div>
+            <div class="entry-details">
+              <div class="entry-date"><i class="far fa-calendar"></i> 5 Jun 2025</div>
+              <div class="entry-id"><i class="fas fa-hashtag"></i> WD7815</div>
+            </div>
+          </div>
+          <div class="entry-status status-failed">Failed</div>
+        </div>
+        
+        <div class="entry">
+          <div class="entry-info">
+            <div class="entry-amount">₹1,800</div>
+            <div class="entry-details">
+              <div class="entry-date"><i class="far fa-calendar"></i> 2 Jun 2025</div>
+              <div class="entry-id"><i class="fas fa-hashtag"></i> WD7809</div>
+            </div>
+          </div>
+          <div class="entry-status status-processing">Processing</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="pagination">
+      <button class="page-btn disabled"><i class="fas fa-chevron-left"></i></button>
+      <button class="page-btn active">1</button>
+      <button class="page-btn">2</button>
+      <button class="page-btn">3</button>
+      <button class="page-btn"><i class="fas fa-chevron-right"></i></button>
+    </div>
+  </div>
+
+
+ <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script>
     const firebaseConfig = {
