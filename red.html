@@ -1,175 +1,329 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Color Betting Game</title>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <style>
-    body { margin: 0; font-family: 'Poppins', sans-serif; background: #111; color: #fff; }
-    .wallet { display: flex; flex-direction: column; align-items: center; padding: 10px 15px; background: #222; }
-    .wallet span { color: yellow; font-weight: bold; }
-    .wallet .breakdown { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 8px; }
-    .wallet .box { background: #333; padding: 8px 12px; border-radius: 6px; font-size: 14px; }
-    .wallet .box b { color: #0ff; }
-    .wallet .actions { margin-top: 8px; }
-    .wallet .actions button { margin: 0 5px; padding: 5px 10px; border: none; border-radius: 6px; background: #0ff; color: #000; font-weight: bold; }
+<script>
+  // ✅ Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+    authDomain: "betting-app-43800.firebaseapp.com",
+    databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+    projectId: "betting-app-43800"
+  };
+  
+  // ✅ Firebase Init
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const auth = firebase.auth();
 
-    .header { text-align: center; padding: 15px 0; font-size: 24px; background: #000; color: #0ff; }
-    .container { padding: 15px; text-align: center; }
-    .container input, .container button { width: 90%; max-width: 300px; margin: 10px auto; padding: 10px; font-size: 16px; border-radius: 6px; border: none; }
-    .color-btns button { width: 30%; margin: 1%; font-size: 18px; font-weight: bold; }
-    .red { background: red; color: white; }
-    .black { background: black; color: white; }
-    .violet { background: purple; color: white; }
-    .info { margin-top: 10px; font-size: 16px; }
-    .history { margin-top: 20px; font-size: 14px; color: #ccc; }
-    .popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 20px; border-radius: 10px; z-index: 999; font-weight: bold; text-align: center; }
-    .win { background: #00ffcc; color: black; }
-    .lose { background: #ffcccc; color: black; }
-  </style>
-</head>
-<body>
-  <div class="wallet">
-    <div>Total Wallet: ₹<span id="wallet">0</span></div>
-    <div class="breakdown">
-      <div class="box">Recharge: ₹<b id="recharge">0</b></div>
-      <div class="box">Bonus: ₹<b id="bonus">0</b></div>
-      <div class="box">Winning: ₹<b id="winning">0</b></div>
-    </div>
-    <div class="actions">
-      <a href="recharge.html"><button>Deposit</button></a>
-      <a href="withdraw.html"><button>Withdraw</button></a>
-    </div>
-  </div>
+  // ✅ Firebase Anonymous Auth
+  auth.signInAnonymously().catch(error => {
+    console.error("Firebase auth error:", error);
+  });
 
-  <div class="header">🎯 Color Betting Game</div>
+  // ✅ UserId index.html जइसन
+  const userId = localStorage.getItem("userId");
+  if (!userId) {
+    window.location.href = "login.html";
+  }
 
-  <div class="container">
-    <div class="info">
-      Period: <span id="periodId">--</span><br>
-      ⏳ Time left: <span id="timer">--</span>s
-    </div>
+  // ✅ Wallet Elements
+  const walletEls = {
+    recharge: document.getElementById("rechargeBalance"),
+    bonus: document.getElementById("bonusBalance"),
+    winning: document.getElementById("winningBalance"),
+    total: document.getElementById("totalBalance"),
+    wallet: document.getElementById("wallet")
+  };
 
-    <input type="number" id="amount" placeholder="Enter Amount ₹" />
+  // ✅ Game State
+  let currentBets = [];
+  let selectedBetType = null;
+  let selectedAmount = 50;
+  let timerValue = 30;
+  let currentResult = 0;
+  let currentRoundId = "";
+  let roundActive = false;
 
-    <div class="color-btns">
-      <button class="red" onclick="placeBet('red')">RED</button>
-      <button class="black" onclick="placeBet('black')">BLACK</button>
-      <button class="violet" onclick="placeBet('violet')">VIOLET</button>
-    </div>
+  // ✅ Realtime listener - user ka asli balance Firebase se
+  db.ref("users/" + userId + "/wallet").on("value", snap => {
+    const wallet = snap.val() || {};
+    const recharge = wallet.recharge || 0;
+    const bonus = wallet.bonus || 0;
+    const winning = wallet.winning || 0;
+    const total = recharge + bonus + winning;
 
-    <div id="userBetsBox" class="info"></div>
-    <div id="resultBox" class="info" style="font-size: 20px; margin-top: 10px;"></div>
-    <div id="historyBox" class="history"></div>
-  </div>
+    walletEls.recharge.innerText = recharge.toFixed(2);
+    walletEls.bonus.innerText = bonus.toFixed(2);
+    walletEls.winning.innerText = winning.toFixed(2);
+    walletEls.total.innerText = total.toFixed(2);
+    walletEls.wallet.innerText = total.toFixed(2);
+  });
 
-  <div id="popupBox"></div>
+  // ✅ Game init
+  function initGame() {
+    document.getElementById("historyLoader").style.display = "block";
+    startNewRound();
+    loadGameHistory();
+    startTimer();
 
-  <script>
-    const config = {
-      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
-      authDomain: "betting-app-43800.firebaseapp.com",
-      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
-      projectId: "betting-app-43800"
-    };
-    firebase.initializeApp(config);
-    const db = firebase.database();
-
-    const userId = localStorage.getItem("userId");
-    if (!userId) window.location.href = "login.html";
-
-    let balance = 0;
-    let currentBet = null, currentMatchId = null, history = [];
-
-    function updateWallet() {
-      const path = "users/" + userId + "/walletBreakup";
-      db.ref(path).on("value", (snap) => {
-        const data = snap.val() || {};
-        const recharge = parseFloat(data.recharge) || 0;
-        const bonus = parseFloat(data.bonus) || 0;
-        const winning = parseFloat(data.winning) || 0;
-
-        const total = recharge + bonus + winning;
-
-        document.getElementById("wallet").innerText = total.toFixed(2);
-        document.getElementById("recharge").innerText = recharge.toFixed(2);
-        document.getElementById("bonus").innerText = bonus.toFixed(2);
-        document.getElementById("winning").innerText = winning.toFixed(2);
-
-        balance = total;
-      });
-    }
-
-    function placeBet(color) {
-      const amt = parseFloat(document.getElementById("amount").value);
-      if (!amt || amt <= 0 || amt > balance || !currentMatchId) return alert("Invalid or insufficient balance!");
-
-      currentBet = { color, amount: amt };
-      db.ref("users/" + userId + "/walletBreakup/winning").transaction(w => (w || 0) - amt);
-      db.ref("colorGame/matches/" + currentMatchId + "/bets/" + userId).set(currentBet);
-      document.getElementById("userBetsBox").innerText = `You bet ₹${amt} on ${color.toUpperCase()}`;
-    }
-
-    function showPopup(msg, type) {
-      const box = document.getElementById("popupBox");
-      box.innerHTML = `<div class="popup ${type}">${msg}</div>`;
-      setTimeout(() => box.innerHTML = '', 3000);
-    }
-
-    function showResult(result) {
-      document.getElementById("resultBox").innerText = `🎯 RESULT: ${result.toUpperCase()}`;
-      if (currentBet) {
-        if (currentBet.color === result) {
-          let winAmt = result === "violet" ? currentBet.amount * 5 : currentBet.amount * 2;
-          db.ref("users/" + userId + "/walletBreakup/winning").transaction(w => (w || 0) + winAmt);
-          showPopup("🎉 You won ₹" + winAmt.toFixed(2), 'win');
-        } else {
-          showPopup("😞 You lost!", 'lose');
-        }
-        currentBet = null;
-      }
-    }
-
-    db.ref("colorGame/currentMatchId").on("value", snap => {
-      const matchId = snap.val();
-      if (!matchId) return;
-      currentMatchId = matchId;
-      document.getElementById("periodId").innerText = matchId;
-      document.getElementById("resultBox").innerText = "";
-      document.getElementById("userBetsBox").innerText = "";
-
-      db.ref("colorGame/matches/" + matchId + "/startTime").once("value").then(snap => {
-        const startTime = snap.val();
-        if (!startTime) return;
-
-        const timerEl = document.getElementById("timer");
-        clearInterval(window.timerInterval);
-        const updateTimer = () => {
-          const left = Math.max(0, 30 - Math.floor((Date.now() - startTime) / 1000));
-          timerEl.innerText = left;
-          if (left <= 0) clearInterval(window.timerInterval);
-        };
-        updateTimer();
-        window.timerInterval = setInterval(updateTimer, 1000);
-      });
-
-      db.ref("colorGame/matches/" + matchId + "/result").on("value", snap => {
-        const result = snap.val();
-        if (!result) return;
-        showResult(result);
-        history.unshift({ matchId, result });
-        if (history.length > 10) history.pop();
-
-        document.getElementById("historyBox").innerHTML = `
-          <div><b>History:</b> ${history.map(h => `<span>${h.result}</span>`).join(' | ')}</div>
-          <div><b>Periods:</b> ${history.map(h => `<span>${h.matchId}</span>`).join(' | ')}</div>
-        `;
+    document.querySelectorAll('.bet-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        setBetType(this.getAttribute('data-type'));
       });
     });
 
-    updateWallet();
-  </script>
-</body>
-</html>
+    listenForRoundResults();
+  }
+
+  // ✅ Listen round results Firebase
+  function listenForRoundResults() {
+    db.ref("rounds").on("child_added", snapshot => {
+      const round = snapshot.val();
+      if (round.result !== undefined && round.roundId === currentRoundId) {
+        processRoundResult(round.result);
+      }
+    });
+  }
+
+  // ✅ Start New Round
+  function startNewRound() {
+    currentRoundId = "R-" + Date.now().toString().slice(-6);
+    document.getElementById("periodId").innerText = "#" + currentRoundId;
+    currentBets = [];
+    document.getElementById("userBetsBox").innerHTML = '<div class="bet-chip">No active bets</div>';
+    document.getElementById("resultDisplay").className = "result-display";
+    document.getElementById("resultMessage").innerText = "Waiting for next round...";
+    document.getElementById("payoutAmount").innerText = "0.00";
+    updateNumberDisplay("?");
+
+    timerValue = 30;
+    document.getElementById("timer").innerText = `${timerValue}s`;
+    roundActive = true;
+  }
+
+  // ✅ Timer
+  function startTimer() {
+    setInterval(() => {
+      if (roundActive) {
+        timerValue--;
+        document.getElementById("timer").innerText = `${timerValue}s`;
+
+        if (timerValue <= 0) {
+          generateRoundResult();
+        }
+      }
+    }, 1000);
+  }
+
+  // ✅ Generate Result
+  function generateRoundResult() {
+    roundActive = false;
+    currentResult = Math.floor(Math.random() * 10);
+    db.ref("rounds/" + currentRoundId).set({
+      roundId: currentRoundId,
+      result: currentResult,
+      timestamp: Date.now()
+    });
+
+    const display = document.getElementById('numberDisplay');
+    display.classList.add('rolling');
+    setTimeout(() => {
+      display.classList.remove('rolling');
+      updateNumberDisplay(currentResult);
+      processRoundResult(currentResult);
+    }, 1500);
+  }
+
+  // ✅ Result Process
+  function processRoundResult(result) {
+    const resultType = result >= 5 ? "Big" : "Small";
+    const colorType = result % 2 === 0 ? "Red" : "Green";
+
+    let payout = 0;
+
+    currentBets.forEach(bet => {
+      if ((bet.type === "big" && resultType === "Big") || 
+          (bet.type === "small" && resultType === "Small") ||
+          (bet.type === "red" && colorType === "Red") ||
+          (bet.type === "green" && colorType === "Green")) {
+        payout += bet.amount * 1.95;
+      }
+    });
+
+    document.getElementById("resultMessage").innerText = `Result: ${result} (${resultType} | ${colorType})`;
+    document.getElementById("payoutAmount").innerText = payout.toFixed(2);
+
+    if (payout > 0) {
+      db.ref("users/" + userId + "/wallet").once("value").then(snap => {
+        let wallet = snap.val() || {};
+        wallet.winning = (wallet.winning || 0) + payout;
+        db.ref("users/" + userId + "/wallet").update({ winning: wallet.winning });
+      });
+      document.getElementById("resultDisplay").className = "result-display win";
+      showNotification(`You won ₹${payout.toFixed(2)}!`, "success");
+    } else if (currentBets.length > 0) {
+      document.getElementById("resultDisplay").className = "result-display lose";
+      showNotification("Better luck next time!", "error");
+    }
+
+    addToHistory(result, resultType, colorType, payout > 0);
+    setTimeout(startNewRound, 5000);
+  }
+
+  function updateNumberDisplay(number) {
+    const display = document.getElementById('numberDisplay');
+    const faces = display.querySelectorAll('.number-face');
+    faces.forEach(face => {
+      face.textContent = number;
+      if (number === "?") {
+        face.style.color = '#333';
+      } else if (number % 2 === 0) {
+        face.style.color = '#ff416c';
+      } else {
+        face.style.color = '#00b09b';
+      }
+    });
+  }
+
+  function setAmt(amt) {
+    document.getElementById("amount").value = amt;
+    selectedAmount = amt;
+    document.querySelectorAll('.quick-amt').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+  }
+
+  function placeBet() {
+    if (!selectedBetType) {
+      showNotification("Please select a bet type!", "error");
+      return;
+    }
+
+    const amount = parseFloat(document.getElementById("amount").value);
+    if (amount < 10) {
+      showNotification("Minimum bet is ₹10!", "error");
+      return;
+    }
+
+    db.ref("users/" + userId + "/wallet").once("value").then(snap => {
+      let wallet = snap.val() || {};
+      let recharge = wallet.recharge || 0;
+      let bonus = wallet.bonus || 0;
+      let winning = wallet.winning || 0;
+
+      let remaining = amount;
+
+      if (recharge >= remaining) {
+        recharge -= remaining;
+        remaining = 0;
+      } else {
+        remaining -= recharge;
+        recharge = 0;
+      }
+
+      if (remaining > 0 && bonus >= remaining) {
+        bonus -= remaining;
+        remaining = 0;
+      } else if (remaining > 0) {
+        remaining -= bonus;
+        bonus = 0;
+      }
+
+      if (remaining > 0 && winning >= remaining) {
+        winning -= remaining;
+        remaining = 0;
+      }
+
+      if (remaining > 0) {
+        showNotification("Insufficient balance!", "error");
+        return;
+      }
+
+      db.ref("users/" + userId + "/wallet").update({ recharge: recharge, bonus: bonus, winning: winning });
+
+      const betData = {
+        type: selectedBetType,
+        amount: amount,
+        roundId: currentRoundId,
+        userId: userId,
+        timestamp: Date.now()
+      };
+
+      db.ref("bets/" + currentRoundId + "/" + userId).set(betData);
+      currentBets.push(betData);
+
+      const betsContainer = document.getElementById("userBetsBox");
+      if (betsContainer.innerHTML.includes("No active bets")) {
+        betsContainer.innerHTML = '';
+      }
+      const chip = document.createElement("div");
+      chip.className = `bet-chip ${selectedBetType}`;
+      chip.innerHTML = `<i class="fas fa-circle"></i> ${selectedBetType.charAt(0).toUpperCase() + selectedBetType.slice(1)} - ₹${amount}`;
+      betsContainer.appendChild(chip);
+
+      showNotification(`Bet placed: ₹${amount} on ${selectedBetType}`, "success");
+    });
+  }
+
+  function setBetType(type) {
+    selectedBetType = type;
+    document.querySelectorAll('.bet-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+  }
+
+  function depositFunds() {
+    const amount = 1000;
+    db.ref("users/" + userId + "/wallet").once("value").then(snap => {
+      let wallet = snap.val() || {};
+      wallet.recharge = (wallet.recharge || 0) + amount;
+      db.ref("users/" + userId + "/wallet").update({ recharge: wallet.recharge });
+      showNotification(`₹${amount} deposited successfully!`, "success");
+    });
+  }
+
+  function withdrawFunds() {
+    db.ref("users/" + userId + "/wallet").once("value").then(snap => {
+      let wallet = snap.val() || {};
+      if ((wallet.winning || 0) < 500) {
+        showNotification("Minimum withdrawal is ₹500 from winnings", "error");
+        return;
+      }
+      wallet.winning -= 500;
+      db.ref("users/" + userId + "/wallet").update({ winning: wallet.winning });
+      showNotification(`₹500 withdrawal requested!`, "success");
+    });
+  }
+
+  function addToHistory(digit, size, color, isWin) {
+    const historyBox = document.getElementById("historyBox");
+    const historyItem = document.createElement("div");
+    historyItem.className = `history-item ${isWin ? 'win' : 'lose'}`;
+    historyItem.innerHTML = `<div>🎲 ${digit}</div><div class="result-type">${size} | ${color}</div>`;
+    historyBox.insertBefore(historyItem, historyBox.firstChild);
+    if (historyBox.children.length > 10) {
+      historyBox.removeChild(historyBox.lastChild);
+    }
+  }
+
+  function loadGameHistory() {
+    setTimeout(() => {
+      document.getElementById("historyLoader").style.display = "none";
+    }, 1000);
+  }
+
+  function showNotification(message, type) {
+    const notification = document.createElement("div");
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    setTimeout(() => { notification.classList.add("show"); }, 10);
+    setTimeout(() => {
+      notification.classList.remove("show");
+      setTimeout(() => { document.body.removeChild(notification); }, 300);
+    }, 3000);
+  }
+
+  window.onload = function() {
+    initGame();
+  };
+</script>
