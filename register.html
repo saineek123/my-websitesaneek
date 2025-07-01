@@ -301,6 +301,10 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
   import { getDatabase, ref, set, push, get, update, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+import { 
+  getAuth, 
+  createUserWithEmailAndPassword 
+} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
@@ -324,61 +328,52 @@
     }
     return code;
   }
+window.registerUser = async function () {
+  const phone = document.getElementById("phone").value.trim();
+  const name = document.getElementById("name").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const referralCodeInput = document.getElementById("referralCodeInput").value.trim();
+  const msg = document.getElementById("msg");
+  msg.className = 'msg';
 
-  window.registerUser = async function () {
-    const phone = document.getElementById("phone").value.trim();
-    const name = document.getElementById("name").value.trim();
-    const password = document.getElementById("password").value.trim();
-    const referralCodeInput = document.getElementById("referralCodeInput").value.trim();
-    const msg = document.getElementById("msg");
-    msg.className = 'msg';
+  if (!phone || !name || !password) {
+    msg.textContent = "Please fill all required fields.";
+    msg.classList.add('error');
+    return;
+  }
 
-    if (!phone || !name || !password) {
-      msg.textContent = "Please fill all required fields.";
-      msg.classList.add('error');
-      return;
-    }
-
-    const phoneQuery = query(ref(db, "users"), orderByChild("phone"), equalTo(phone));
-    const phoneSnapshot = await get(phoneQuery);
-    if (phoneSnapshot.exists()) {
-      msg.textContent = "Phone number already registered ❌";
-      msg.classList.add('error');
-      return;
-    }
+  try {
+    // First create authentication user
+    const auth = getAuth();
+    const email = `${phone}@yourdomain.com`; // Create email from phone
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const userId = userCredential.user.uid;
 
     const referralCode = generateReferralCode();
-    const userId = push(ref(db, 'users')).key;
-
+    
     const userData = {
-      phone, name, password, referralCode,
+      phone,
+      name,
+      referralCode,
       wallet: 0,
       referredBy: referralCodeInput || null
     };
 
-    try {
-      await set(ref(db, 'users/' + userId), userData);
-      msg.textContent = "Registered successfully ✔";
-      msg.classList.add('success');
+    // Now write to database
+    await set(ref(db, 'users/' + userId), userData);
+    
+    msg.textContent = "Registered successfully ✔";
+    msg.classList.add('success');
 
-      if (referralCodeInput) {
-        const refQuery = query(ref(db, "users"), orderByChild("referralCode"), equalTo(referralCodeInput));
-        const snapshot = await get(refQuery);
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          const referrerKey = Object.keys(data)[0];
-          const referrer = data[referrerKey];
-          const updatedWallet = (referrer.wallet || 0) + 10;
-          await update(ref(db, "users/" + referrerKey), { wallet: updatedWallet });
-        }
-      }
+    // ... rest of your referral code logic ...
 
-      setTimeout(() => { window.location.href = "login.html"; }, 1500);
-    } catch (error) {
-      msg.textContent = "Error: " + error.message;
-      msg.classList.add('error');
-    }
-  };
+    setTimeout(() => { window.location.href = "login.html"; }, 1500);
+  } catch (error) {
+    console.error("Registration error:", error);
+    msg.textContent = "Error: " + error.message;
+    msg.classList.add('error');
+  }
+};
 
   window.goToLogin = function () {
     window.location.href = "login.html";
