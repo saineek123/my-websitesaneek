@@ -1,4 +1,766 @@
-<script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Big & Small Number Game</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Updated Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #1a2a3a, #0d1b2a);
+      min-height: 100vh;
+      color: #fff;
+      overflow-x: hidden;
+      padding: 20px;
+      position: relative;
+    }
+    
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0) 70%);
+      z-index: -1;
+    }
+    
+    .header {
+      text-align: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .header h1 {
+      font-size: 2.2rem;
+      margin-bottom: 8px;
+      background: linear-gradient(90deg, #ff9a9e, #fad0c4, #a1c4fd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .header p {
+      color: #d1d1d1;
+      font-size: 1rem;
+    }
+    
+    .wallet {
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .wallet::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 5px;
+      background: linear-gradient(90deg, #ff416c, #ff4b2b, #38ef7d);
+    }
+    
+    .wallet-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .wallet-balance {
+      font-size: 1.8rem;
+      font-weight: bold;
+      background: linear-gradient(90deg, #ff9a9e, #fad0c4, #a1c4fd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .wallet-buttons {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .wallet-btn {
+      padding: 10px 20px;
+      border-radius: 50px;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    .wallet-btn.deposit {
+      background: linear-gradient(90deg, #11998e, #38ef7d);
+      color: white;
+    }
+    
+    .wallet-btn.withdraw {
+      background: linear-gradient(90deg, #ff416c, #ff4b2b);
+      color: white;
+    }
+    
+    .wallet-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+    
+    .wallet-breakdown {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 15px;
+    }
+    
+    .breakdown-item {
+      background: rgba(255, 255, 255, 0.08);
+      padding: 12px;
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .breakdown-item span {
+      font-weight: bold;
+      color: #ffff00;
+      font-size: 1.1rem;
+    }
+    
+    .game-container {
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 20px;
+      padding: 25px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .game-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 25px;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 15px;
+      border-radius: 15px;
+    }
+    
+    .timer-box, .period-box {
+      text-align: center;
+      padding: 10px 20px;
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.3);
+      flex: 1;
+      margin: 0 5px;
+    }
+    
+    .timer-box {
+      background: linear-gradient(90deg, #ff416c, #ff4b2b);
+    }
+    
+    .period-box {
+      background: linear-gradient(90deg, #4b6cb7, #182848);
+    }
+    
+    .timer-value {
+      font-size: 1.8rem;
+      font-weight: bold;
+      margin-top: 5px;
+    }
+    
+    /* 3D Number Display */
+    .number-container {
+      perspective: 1000px;
+      margin: 40px 0;
+      display: flex;
+      justify-content: center;
+    }
+    
+    .number-display {
+      width: 150px;
+      height: 150px;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.5s ease;
+    }
+    
+    .number-display.rolling {
+      animation: rollNumber 1.5s ease-out;
+    }
+    
+    @keyframes rollNumber {
+      0% { transform: rotateX(0) rotateY(0); }
+      100% { transform: rotateX(720deg) rotateY(720deg); }
+    }
+    
+    .number-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(145deg, #ffffff, #e6e6e6);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 5rem;
+      font-weight: bold;
+      backface-visibility: hidden;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4), 
+                  inset 0 -5px 10px rgba(0,0,0,0.2),
+                  inset 0 5px 10px rgba(255,255,255,0.8);
+    }
+    
+    .number-face.front {
+      transform: translateZ(75px);
+    }
+    
+    .number-face.back {
+      transform: rotateY(180deg) translateZ(75px);
+    }
+    
+    .number-face.right {
+      transform: rotateY(90deg) translateZ(75px);
+    }
+    
+    .number-face.left {
+      transform: rotateY(-90deg) translateZ(75px);
+    }
+    
+    .number-face.top {
+      transform: rotateX(90deg) translateZ(75px);
+    }
+    
+    .number-face.bottom {
+      transform: rotateX(-90deg) translateZ(75px);
+    }
+    
+    .result-display {
+      text-align: center;
+      margin: 20px 0;
+      padding: 15px;
+      border-radius: 15px;
+      font-size: 1.4rem;
+      font-weight: bold;
+    }
+    
+    .result-display.win {
+      background: linear-gradient(90deg, #00b09b, #96c93d);
+    }
+    
+    .result-display.lose {
+      background: linear-gradient(90deg, #ff416c, #ff4b2b);
+    }
+    
+    .bet-section {
+      margin: 25px 0;
+    }
+    
+    .section-title {
+      text-align: center;
+      margin-bottom: 15px;
+      font-size: 1.4rem;
+      background: linear-gradient(90deg, #ff9a9e, #fad0c4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    
+    .bet-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .bet-btn {
+      padding: 15px;
+      border-radius: 15px;
+      border: none;
+      color: white;
+      font-weight: bold;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100px;
+    }
+    
+    .bet-btn.big {
+      background: linear-gradient(135deg, #4b6cb7, #182848);
+    }
+    
+    .bet-btn.small {
+      background: linear-gradient(135deg, #11998e, #38ef7d);
+    }
+    
+    .bet-btn.red {
+      background: linear-gradient(135deg, #ff416c, #ff4b2b);
+    }
+    
+    .bet-btn.green {
+      background: linear-gradient(135deg, #00b09b, #96c93d);
+    }
+    
+    .bet-btn:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+    }
+    
+    .bet-btn.active {
+      box-shadow: 0 0 20px rgba(255,255,255,0.5);
+      transform: scale(1.05);
+    }
+    
+    .bet-btn i {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+    
+    .quick-buttons {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .quick-amt {
+      padding: 10px 20px;
+      border-radius: 50px;
+      border: none;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .quick-amt:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-3px);
+    }
+    
+    .quick-amt.active {
+      background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+      color: #333;
+    }
+    
+    .bet-input-group {
+      position: relative;
+      margin-bottom: 20px;
+    }
+    
+    .bet-input {
+      width: 100%;
+      padding: 16px 20px;
+      border-radius: 50px;
+      border: none;
+      background: rgba(0, 0, 0, 0.3);
+      color: white;
+      font-size: 1.1rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      outline: none;
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+    
+    .bet-input:focus {
+      border-color: rgba(255, 75, 43, 0.5);
+      box-shadow: 0 0 15px rgba(255,75,43,0.3);
+    }
+    
+    .bet-input::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .place-bet {
+      width: 100%;
+      padding: 16px;
+      border-radius: 50px;
+      border: none;
+      background: linear-gradient(90deg, #ff9a9e, #fad0c4);
+      color: #333;
+      font-weight: bold;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .place-bet:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+    }
+    
+    .place-bet:active {
+      transform: translateY(1px);
+    }
+    
+    .user-bets {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 15px;
+      padding: 15px;
+      margin-top: 25px;
+      min-height: 80px;
+    }
+    
+    .user-bets-title {
+      text-align: center;
+      margin-bottom: 10px;
+      color: #a1c4fd;
+    }
+    
+    .user-bets-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    
+    .bet-chip {
+      padding: 8px 15px;
+      border-radius: 50px;
+      font-weight: bold;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .bet-chip.big {
+      background: linear-gradient(135deg, #4b6cb7, #182848);
+      color: white;
+    }
+    
+    .bet-chip.small {
+      background: linear-gradient(135deg, #11998e, #38ef7d);
+      color: white;
+    }
+    
+    .bet-chip.red {
+      background: linear-gradient(135deg, #ff416c, #ff4b2b);
+      color: white;
+    }
+    
+    .bet-chip.green {
+      background: linear-gradient(135deg, #00b09b, #96c93d);
+      color: white;
+    }
+    
+    .history {
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 20px;
+      padding: 25px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .history-title {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 1.4rem;
+      background: linear-gradient(90deg, #a1c4fd, #c2e9fb);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    
+    .history-items {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+    }
+    
+    .history-item {
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-weight: bold;
+      min-width: 100px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .history-item.win {
+      background: linear-gradient(135deg, #00b09b, #96c93d);
+    }
+    
+    .history-item.lose {
+      background: linear-gradient(135deg, #ff416c, #ff4b2b);
+    }
+    
+    .history-item .result-type {
+      font-size: 0.9rem;
+      margin-top: 5px;
+    }
+    
+    .history-item:hover {
+      transform: translateY(-5px);
+    }
+    
+    /* Loading spinner */
+    .loader {
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top: 4px solid #38ef7d;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+      display: none;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Notification */
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 25px;
+      border-radius: 12px;
+      color: white;
+      font-weight: bold;
+      z-index: 1000;
+      opacity: 0;
+      transform: translateX(100%);
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    
+    .notification.show {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    
+    .notification.success {
+      background: linear-gradient(135deg, #00b09b, #96c93d);
+    }
+    
+    .notification.error {
+      background: linear-gradient(135deg, #ff416c, #ff4b2b);
+    }
+    
+    .notification.info {
+      background: linear-gradient(135deg, #4b6cb7, #182848);
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .number-display {
+        width: 120px;
+        height: 120px;
+      }
+      
+      .number-face {
+        font-size: 4rem;
+      }
+      
+      .wallet-breakdown {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .number-display {
+        width: 100px;
+        height: 100px;
+      }
+      
+      .number-face {
+        font-size: 3.5rem;
+      }
+      
+      .wallet-buttons {
+        flex-direction: column;
+      }
+      
+      .bet-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><i class="fas fa-dice"></i> Big & Small Number Game</h1>
+    <p>Real-time betting with automatic results</p>
+  </div>
+  
+  <div class="wallet">
+    <div class="wallet-row">
+      <div class="wallet-balance">₹<span id="wallet">0.00</span></div>
+      <div class="wallet-buttons">
+        <button class="wallet-btn deposit" onclick="depositFunds()"><i class="fas fa-plus"></i> Deposit</button>
+        <button class="wallet-btn withdraw" onclick="withdrawFunds()"><i class="fas fa-money-bill-wave"></i> Withdraw</button>
+      </div>
+    </div>
+    
+    <div class="wallet-breakdown">
+      <div class="breakdown-item">
+        <div><i class="fas fa-credit-card"></i> Recharge:</div>
+        <span id="rechargeBalance">0.00</span>
+      </div>
+      <div class="breakdown-item">
+        <div><i class="fas fa-gift"></i> Bonus:</div>
+        <span id="bonusBalance">0.00</span>
+      </div>
+      <div class="breakdown-item">
+        <div><i class="fas fa-trophy"></i> Winning:</div>
+        <span id="winningBalance">0.00</span>
+      </div>
+      <div class="breakdown-item">
+        <div><i class="fas fa-wallet"></i> Total:</div>
+        <span id="totalBalance">0.00</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="game-container">
+    <div class="game-info">
+      <div class="timer-box">
+        <div>⏳ Time Left</div>
+        <div class="timer-value" id="timer">30s</div>
+      </div>
+      <div class="period-box">
+        <div>Round ID</div>
+        <div class="period-value" id="periodId">Loading...</div>
+      </div>
+    </div>
+    
+    <!-- 3D Number Display -->
+    <div class="number-container">
+      <div class="number-display" id="numberDisplay">
+        <div class="number-face front">?</div>
+        <div class="number-face back">?</div>
+        <div class="number-face right">?</div>
+        <div class="number-face left">?</div>
+        <div class="number-face top">?</div>
+        <div class="number-face bottom">?</div>
+      </div>
+    </div>
+    
+    <div class="result-display" id="resultDisplay">
+      <div id="resultMessage">Waiting for next round...</div>
+      <div id="payoutMessage">Payout: ₹<span id="payoutAmount">0.00</span></div>
+    </div>
+    
+    <div class="bet-section">
+      <h3 class="section-title"><i class="fas fa-bullseye"></i> SELECT YOUR BET</h3>
+      <div class="bet-grid" id="betButtons">
+        <button class="bet-btn big" data-type="big">
+          <i class="fas fa-arrow-up"></i>
+          <span>Big (5-9)</span>
+          <small>Payout: 1.95x</small>
+        </button>
+        <button class="bet-btn small" data-type="small">
+          <i class="fas fa-arrow-down"></i>
+          <span>Small (0-4)</span>
+          <small>Payout: 1.95x</small>
+        </button>
+        <button class="bet-btn red" data-type="red">
+          <i class="fas fa-circle" style="color: #ff416c"></i>
+          <span>Red (Even)</span>
+          <small>Payout: 1.95x</small>
+        </button>
+        <button class="bet-btn green" data-type="green">
+          <i class="fas fa-circle" style="color: #00b09b"></i>
+          <span>Green (Odd)</span>
+          <small>Payout: 1.95x</small>
+        </button>
+      </div>
+      
+      <div class="quick-buttons">
+        <button class="quick-amt" onclick="setAmt(10)">₹10</button>
+        <button class="quick-amt active" onclick="setAmt(50)">₹50</button>
+        <button class="quick-amt" onclick="setAmt(100)">₹100</button>
+        <button class="quick-amt" onclick="setAmt(500)">₹500</button>
+      </div>
+      
+      <div class="bet-input-group">
+        <input type="number" id="amount" class="bet-input" placeholder="Enter Amount ₹" value="50" min="10" max="1000" />
+      </div>
+      
+      <button class="place-bet" onclick="placeBet()">
+        <i class="fas fa-paper-plane"></i> PLACE BET
+      </button>
+    </div>
+    
+    <div class="user-bets">
+      <div class="user-bets-title"><i class="fas fa-ticket-alt"></i> YOUR ACTIVE BETS</div>
+      <div class="user-bets-container" id="userBetsBox">
+        <!-- Bets will be added here dynamically -->
+        <div class="bet-chip">No active bets</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="history">
+    <h3 class="history-title"><i class="fas fa-history"></i> LAST 10 RESULTS</h3>
+    <div class="history-items" id="historyBox">
+      <!-- History will be added dynamically -->
+      <div class="loader" id="historyLoader"></div>
+    </div>
+  </div>
+  <script>
   // ✅ Firebase configuration
   const firebaseConfig = {
     apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
@@ -327,3 +1089,6 @@
     initGame();
   };
 </script>
+
+</body>
+</html>
