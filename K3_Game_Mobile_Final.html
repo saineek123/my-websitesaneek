@@ -739,6 +739,7 @@
     let currentMatchId = null;
     let timerInterval = null;
     let currentRoundComplete = false;
+    let lastProcessedMatch = null;
 
     const updateWallet = () => {
       db.ref("users/" + userId + "/wallet").on("value", snap => {
@@ -850,6 +851,7 @@
           // Hide result display
           document.getElementById("resultDisplay").style.display = "none";
           currentRoundComplete = false;
+          lastProcessedMatch = null;
         }
       });
 
@@ -869,8 +871,14 @@
         const data = snap.val() || {};
         const match = data[currentMatchId];
         if (!match || !match.result) return;
+        
         const { dice1, dice2, dice3 } = match.result;
-        stopDiceRoll(dice1, dice2, dice3);
+        
+        // Only process if we haven't already processed this match
+        if (lastProcessedMatch !== currentMatchId) {
+          stopDiceRoll(dice1, dice2, dice3);
+          lastProcessedMatch = currentMatchId;
+        }
       });
     }
 
@@ -925,16 +933,25 @@
     }
 
     function loadHistory() {
-      db.ref("k3game/history").limitToLast(10).on("value", snap => {
+      db.ref("k3game/matches").orderByKey().limitToLast(10).on("value", snap => {
         const data = snap.val() || {};
-        const history = Object.values(data).slice(-10).reverse();
+        const matches = Object.entries(data).reverse(); // Reverse to get latest first
+        
         const historyBox = document.getElementById("historyBox");
         historyBox.innerHTML = '';
-        history.forEach(h => {
-          const total = (h.dice1 || 0) + (h.dice2 || 0) + (h.dice3 || 0);
+
+        matches.forEach(([matchId, matchData]) => {
+          if (!matchData.result) return;
+          
+          const { dice1, dice2, dice3 } = matchData.result;
+          const total = dice1 + dice2 + dice3;
+          
           const historyItem = document.createElement("div");
           historyItem.className = "history-item";
-          historyItem.innerText = `🎲 ${h.dice1}-${h.dice2}-${h.dice3} = ${total}`;
+          historyItem.innerHTML = `
+            <div>🎲 ${dice1}-${dice2}-${dice3}</div>
+            <div>= ${total}</div>
+          `;
           historyBox.appendChild(historyItem);
         });
       });
