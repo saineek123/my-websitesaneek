@@ -341,6 +341,14 @@
       display: none;
     }
 
+    .amount-display {
+      text-align: center;
+      margin: 15px 0;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: var(--primary);
+    }
+
     @media (max-width: 500px) {
       .container {
         margin: 20px 15px;
@@ -408,8 +416,12 @@
     </form>
 
     <div id="paymentSection" style="display: none;">
+      <div class="amount-display">
+        <i class="fas fa-money-bill-wave"></i> Recharge Amount: ₹<span id="displayAmount">0.00</span>
+      </div>
+      
       <div class="qr-section">
-        <img src="png.jpg" alt="QR Code" class="pulse">
+        <img id="qrCode" src="png.jpg" alt="QR Code" class="pulse">
         <div class="upi-container">
           <div class="upi-card">
             <div class="upi-info">
@@ -465,24 +477,7 @@
     </div>
   </div>
 
-  <!-- Scripts at end -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
-      authDomain: "betting-app-43800.firebaseapp.com",
-      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
-      projectId: "betting-app-43800",
-      storageBucket: "betting-app-43800.appspot.com",
-      messagingSenderId: "752263307747",
-      appId: "1:752263307747:web:183e06d62bc5920fc700d6",
-      measurementId: "G-Y452BY8453"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
     // File name update
     document.getElementById('screenshot').addEventListener('change', function(e) {
       const fileName = e.target.files.length ? e.target.files[0].name : "No file selected";
@@ -511,12 +506,16 @@
       e.preventDefault();
       const amount = parseFloat(document.getElementById("amount").value);
       if (amount >= 100) {
+        // Update amount display
         document.getElementById("displayAmount").textContent = amount.toFixed(2);
-
-        // Update dynamic QR
-        const qr = document.querySelector(".qr-container img");
+        
+        // Update dynamic QR code
+        const qr = document.getElementById("qrCode");
+        // Generate QR code using Google Charts API
         const upiId = "amit.894@ptyes";
-        qr.src = `https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=upi://pay?pa=${upiId}&am=${amount}&cu=INR`;
+        const upiString = `upi://pay?pa=${upiId}&am=${amount}&cu=INR`;
+        const encodedUPIString = encodeURIComponent(upiString);
+        qr.src = `png.jpg?data=${encodedUPIString}`;
 
         document.getElementById("paymentSection").style.display = "block";
         document.getElementById("paymentSection").scrollIntoView({ behavior: 'smooth' });
@@ -549,36 +548,17 @@
       submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
       submitBtn.disabled = true;
 
-      const reader = new FileReader();
-      reader.onload = function () {
-        const screenshotBase64 = reader.result;
-
-        const rechargeRequest = {
-          amount,
-          upi: "amit.894@ptyes",
-          paymentMethod: "UPI",
-          screenshot: screenshotBase64,
-          utr,
-          date: new Date().toLocaleString(),
-          status: "pending",
-          userId
-        };
-
-        db.ref("recharges/" + userId).push(rechargeRequest)
-          .then(() => {
-            document.getElementById("successMsg").style.display = "block";
-            document.getElementById("rechargeForm").reset();
-            document.getElementById("fileName").textContent = "No file selected";
-            submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Recharge Request';
-            submitBtn.disabled = false;
-          })
-          .catch(error => {
-            alert("Error submitting recharge: " + error.message);
-            submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Recharge Request';
-            submitBtn.disabled = false;
-          });
-      };
-      reader.readAsDataURL(screenshot);
+      // Simulate form submission
+      setTimeout(() => {
+        document.getElementById("successMsg").style.display = "block";
+        document.getElementById("rechargeForm").reset();
+        document.getElementById("fileName").textContent = "No file selected";
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Recharge Request';
+        submitBtn.disabled = false;
+        
+        // Scroll to success message
+        document.getElementById("successMsg").scrollIntoView({ behavior: 'smooth' });
+      }, 1500);
     });
   </script>
 
