@@ -3,75 +3,564 @@
 <head>
   <meta charset="UTF-8" />
   <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body {
-      background-color: #0f0f0f;
-      color: #fff;
-      font-family: 'Segoe UI', sans-serif;
+    * {
       margin: 0;
-      padding: 20px;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-    h2, h3 {
-      color: #00e5ff;
-      text-align: center;
-      margin-top: 20px;
+    
+    body {
+      background: linear-gradient(135deg, #0f0f1d, #1a1a2e);
+      color: #e0e0ff;
+      min-height: 100vh;
+      padding: 0;
     }
-    .section {
-      max-width: 900px;
-      margin: 30px auto;
-      background: #1c1c1c;
-      padding: 20px;
-      border-radius: 10px;
+    
+    /* Header Styles */
+    .admin-header {
+      background: rgba(10, 10, 20, 0.8);
+      backdrop-filter: blur(10px);
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(0, 230, 255, 0.2);
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
     }
-    .item {
-      border-bottom: 1px solid #333;
-      padding: 10px 0;
+    
+    .admin-header h1 {
+      font-size: 1.8rem;
+      background: linear-gradient(90deg, #00e5ff, #00b8d4);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
-    button {
-      margin: 5px;
-      padding: 6px 10px;
-      border: none;
-      border-radius: 5px;
-      background-color: #00e5ff;
-      color: black;
+    
+    .admin-header h1 i {
+      font-size: 1.5rem;
+    }
+    
+    /* Main Layout */
+    .dashboard-container {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      min-height: calc(100vh - 70px);
+    }
+    
+    /* Sidebar */
+    .sidebar {
+      background: rgba(15, 15, 30, 0.9);
+      padding: 20px 0;
+      border-right: 1px solid rgba(0, 230, 255, 0.1);
+      height: 100%;
+    }
+    
+    .sidebar-menu {
+      list-style: none;
+      padding: 0;
+    }
+    
+    .sidebar-menu li {
+      padding: 15px 30px;
+      transition: all 0.3s;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.1rem;
+      border-left: 4px solid transparent;
     }
-    button:hover {
-      background-color: #00cde6;
+    
+    .sidebar-menu li:hover, 
+    .sidebar-menu li.active {
+      background: rgba(0, 230, 255, 0.1);
+      border-left-color: #00e5ff;
     }
-    #logout {
-      position: fixed;
-      top: 15px;
-      right: 20px;
-      background: red;
+    
+    .sidebar-menu li i {
+      width: 24px;
+      text-align: center;
+      color: #00e5ff;
+    }
+    
+    /* Main Content */
+    .main-content {
+      padding: 30px;
+      overflow-y: auto;
+      max-height: calc(100vh - 70px);
+    }
+    
+    /* Summary Cards */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .summary-card {
+      background: rgba(20, 20, 40, 0.7);
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 230, 255, 0.15);
+      transition: transform 0.3s;
+    }
+    
+    .summary-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(0, 230, 255, 0.3);
+    }
+    
+    .card-icon {
+      width: 60px;
+      height: 60px;
+      background: rgba(0, 230, 255, 0.1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      font-size: 24px;
+      color: #00e5ff;
+    }
+    
+    .card-title {
+      color: #a0a0e0;
+      font-size: 1rem;
+      margin-bottom: 5px;
+    }
+    
+    .card-value {
+      font-size: 2.2rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #00e5ff, #00b8d4);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    
+    /* Section Styles */
+    .dashboard-section {
+      background: rgba(20, 20, 40, 0.7);
+      border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 30px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 230, 255, 0.15);
+    }
+    
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid rgba(0, 230, 255, 0.1);
+    }
+    
+    .section-title {
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #00e5ff;
+    }
+    
+    .section-title i {
+      font-size: 1.3rem;
+    }
+    
+    /* List Styles */
+    .item-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .list-item {
+      background: rgba(30, 30, 60, 0.6);
+      border-radius: 12px;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 15px;
+      align-items: center;
+      transition: all 0.3s;
+      border: 1px solid rgba(0, 230, 255, 0.1);
+    }
+    
+    .list-item:hover {
+      background: rgba(40, 40, 80, 0.7);
+      border-color: rgba(0, 230, 255, 0.3);
+    }
+    
+    .item-info p {
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+    
+    .item-info b {
+      color: #00e5ff;
+    }
+    
+    .item-actions {
+      display: flex;
+      gap: 10px;
+    }
+    
+    /* Button Styles */
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s;
+    }
+    
+    .btn-approve {
+      background: linear-gradient(90deg, #00b09b, #96c93d);
       color: white;
+    }
+    
+    .btn-reject {
+      background: linear-gradient(90deg, #ff416c, #ff4b2b);
+      color: white;
+    }
+    
+    .btn-ban {
+      background: linear-gradient(90deg, #ff9a9e, #fad0c4);
+      color: #333;
+    }
+    
+    .btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+    
+    .btn:active {
+      transform: translateY(1px);
+    }
+    
+    .btn-logout {
+      background: linear-gradient(90deg, #ff416c, #ff4b2b);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    /* Tab Content */
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.5s ease-out;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 900px) {
+      .dashboard-container {
+        grid-template-columns: 1fr;
+      }
+      
+      .sidebar {
+        display: none;
+      }
+    }
+    
+    @media (max-width: 600px) {
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .item-actions {
+        flex-direction: column;
+        width: 100%;
+      }
+      
+      .list-item {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    /* Animation */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .dashboard-section {
+      animation: fadeIn 0.5s ease-out;
+    }
+    
+    .summary-card {
+      animation: fadeIn 0.6s ease-out;
+    }
+    
+    .list-item {
+      animation: fadeIn 0.7s ease-out;
+    }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 10px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: rgba(10, 10, 20, 0.5);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(#00e5ff, #00b8d4);
+      border-radius: 5px;
+    }
+    
+    /* Loading indicator */
+    .loader {
+      border: 5px solid rgba(0, 230, 255, 0.2);
+      border-top: 5px solid #00e5ff;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Status badges */
+    .pending {
+      color: #ff9800;
+      font-weight: bold;
+    }
+    
+    .approved {
+      color: #4caf50;
+      font-weight: bold;
+    }
+    
+    .rejected {
+      color: #f44336;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
-  <button id="logout" onclick="logout()">Logout</button>
-  <h2>Admin Dashboard</h2>
+  <header class="admin-header">
+    <h1><i class="fas fa-user-shield"></i> Admin Dashboard</h1>
+    <button class="btn btn-logout" id="logout" onclick="logout()">
+      <i class="fas fa-sign-out-alt"></i> Logout
+    </button>
+  </header>
 
-  <div class="section" id="summary">
-    <h3>📊 Summary</h3>
-    <p id="totalUsers"></p>
-    <p id="totalWithdraws"></p>
-    <p id="totalRecharges"></p>
-  </div>
+  <div class="dashboard-container">
+    <nav class="sidebar">
+      <ul class="sidebar-menu">
+        <li class="active" data-tab="dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</li>
+        <li data-tab="users"><i class="fas fa-users"></i> Users</li>
+        <li data-tab="recharges"><i class="fas fa-money-check-alt"></i> Recharges</li>
+        <li data-tab="withdrawals"><i class="fas fa-money-bill-wave"></i> Withdrawals</li>
+        <li data-tab="settings"><i class="fas fa-cog"></i> Settings</li>
+        <li data-tab="analytics"><i class="fas fa-chart-line"></i> Analytics</li>
+      </ul>
+    </nav>
 
-  <div class="section" id="rechargeRequests">
-    <h3>💰 Recharge Requests</h3>
-    <div id="rechargeList"></div>
-  </div>
+    <main class="main-content">
+      <!-- Dashboard Tab -->
+      <div id="dashboard-tab" class="tab-content active">
+        <div class="summary-grid">
+          <div class="summary-card">
+            <div class="card-icon">
+              <i class="fas fa-users"></i>
+            </div>
+            <div class="card-title">Total Users</div>
+            <div class="card-value" id="totalUsers">0</div>
+          </div>
+          
+          <div class="summary-card">
+            <div class="card-icon">
+              <i class="fas fa-coins"></i>
+            </div>
+            <div class="card-title">Recharge Requests</div>
+            <div class="card-value" id="totalRecharges">0</div>
+          </div>
+          
+          <div class="summary-card">
+            <div class="card-icon">
+              <i class="fas fa-wallet"></i>
+            </div>
+            <div class="card-title">Withdraw Requests</div>
+            <div class="card-value" id="totalWithdraws">0</div>
+          </div>
+        </div>
 
-  <div class="section" id="withdrawRequests">
-    <h3>💸 Withdraw Requests</h3>
-    <div id="withdrawList"></div>
-  </div>
+        <div class="dashboard-section">
+          <div class="section-header">
+            <h2 class="section-title"><i class="fas fa-money-check-alt"></i> Recharge Requests</h2>
+          </div>
+          <div class="item-list" id="rechargeList">
+            <div class="loader"></div>
+          </div>
+        </div>
 
-  <div class="section" id="userList">
-    <h3>👥 User List</h3>
-    <div id="users"></div>
+        <div class="dashboard-section">
+          <div class="section-header">
+            <h2 class="section-title"><i class="fas fa-money-bill-wave"></i> Withdraw Requests</h2>
+          </div>
+          <div class="item-list" id="withdrawList">
+            <div class="loader"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Users Tab -->
+      <div id="users-tab" class="tab-content">
+        <div class="dashboard-section">
+          <div class="section-header">
+            <h2 class="section-title"><i class="fas fa-users"></i> User Management</h2>
+          </div>
+          <div class="item-list" id="users">
+            <div class="loader"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recharges Tab -->
+      <div id="recharges-tab" class="tab-content">
+        <div class="dashboard-section">
+          <div class="section-header">
+            <h2 class="section-title"><i class="fas fa-money-check-alt"></i> Recharge Requests</h2>
+          </div>
+          <div class="item-list" id="rechargeList2">
+            <div class="loader"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Withdrawals Tab -->
+      <div id="withdrawals-tab" class="tab-content">
+        <div class="dashboard-section">
+          <div class="section-header">
+            <h2 class="section-title"><i class="fas fa-money-bill-wave"></i> Withdraw Requests</h2>
+          </div>
+          <div class="item-list" id="withdrawList2">
+            <div class="loader"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Tab -->
+      <div id="settings-tab" class="tab-content">
+        <div class="dashboard-section">
+          <div class="section-header">
+            <h2 class="section-title"><i class="fas fa-cog"></i> System Settings</h2>
+          </div>
+          <div class="item-list">
+            <div class="list-item">
+              <div class="item-info">
+                <p><b>Platform Configuration</b></p>
+                <p>General settings for the platform</p>
+              </div>
+              <div class="item-actions">
+                <button class="btn btn-approve">
+                  <i class="fas fa-edit"></i> Edit
+                </button>
+              </div>
+            </div>
+            
+            <div class="list-item">
+              <div class="item-info">
+                <p><b>Payment Gateways</b></p>
+                <p>Configure payment integrations</p>
+              </div>
+              <div class="item-actions">
+                <button class="btn btn-approve">
+                  <i class="fas fa-edit"></i> Edit
+                </button>
+              </div>
+            </div>
+            
+            <div class="list-item">
+              <div class="item-info">
+                <p><b>Security Settings</b></p>
+                <p>Manage platform security options</p>
+              </div>
+              <div class="item-actions">
+                <button class="btn btn-approve">
+                  <i class="fas fa-edit"></i> Edit
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analytics Tab -->
+      <div id="analytics-tab" class="tab-content">
+        <div class="dashboard-section">
+          <div class="section-header">
+            <h2 class="section-title"><i class="fas fa-chart-line"></i> Platform Analytics</h2>
+          </div>
+          <div class="item-list">
+            <div class="list-item">
+              <div class="item-info">
+                <p><b>User Growth</b></p>
+                <p>Last 30 days: <span class="card-value">+125 users</span></p>
+              </div>
+              <div class="item-actions">
+                <button class="btn btn-approve">
+                  <i class="fas fa-chart-bar"></i> View Report
+                </button>
+              </div>
+            </div>
+            
+            <div class="list-item">
+              <div class="item-info">
+                <p><b>Revenue Analysis</b></p>
+                <p>Current month: <span class="card-value">₹1,42,850</span></p>
+              </div>
+              <div class="item-actions">
+                <button class="btn btn-approve">
+                  <i class="fas fa-chart-bar"></i> View Report
+                </button>
+              </div>
+            </div>
+            
+            <div class="list-item">
+              <div class="item-info">
+                <p><b>Transaction Trends</b></p>
+                <p>Recharges vs Withdrawals</p>
+              </div>
+              <div class="item-actions">
+                <button class="btn btn-approve">
+                  <i class="fas fa-chart-bar"></i> View Report
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
   </div>
 
   <!-- Firebase Scripts -->
@@ -81,6 +570,34 @@
 
   <!-- App Script -->
   <script>
+    // Tab navigation functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      // Get all menu items
+      const menuItems = document.querySelectorAll('.sidebar-menu li');
+      
+      // Add click event to each menu item
+      menuItems.forEach(item => {
+        item.addEventListener('click', function() {
+          // Remove active class from all items
+          menuItems.forEach(i => i.classList.remove('active'));
+          
+          // Add active class to clicked item
+          this.classList.add('active');
+          
+          // Get the tab to show
+          const tabId = this.getAttribute('data-tab') + '-tab';
+          
+          // Hide all tabs
+          document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+          });
+          
+          // Show the selected tab
+          document.getElementById(tabId).classList.add('active');
+        });
+      });
+    });
+
     const firebaseConfig = {
       apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
       authDomain: "betting-app-43800.firebaseapp.com",
@@ -92,23 +609,28 @@
     const db = firebase.database();
     const auth = firebase.auth();
 
+    // Admin status check - FIXED
     auth.onAuthStateChanged((user) => {
       if (user) {
-        const emailKey = user.email.replace(/\./g, '_');
-        db.ref("admins/" + emailKey).once("value").then((snap) => {
-          if (snap.exists()) {
+        // Check admin status from Firebase Realtime Database
+        db.ref("admins/" + user.uid).once("value").then((snap) => {
+          if (snap.exists() && snap.val() === true) {
+            // User is admin - load data
             loadSummary();
             loadRecharges();
             loadWithdraws();
             loadUsers();
           } else {
-            alert("❌ Not admin");
+            // User is not admin
+            alert("❌ You are not authorized as an admin");
             auth.signOut().then(() => window.location.href = "admin-login.html");
           }
-        }).catch((err) => {
-          alert("Database read failed");
+        }).catch((error) => {
+          console.error("Error checking admin status:", error);
+          alert("❌ Failed to verify admin status. Please check Firebase rules.");
         });
       } else {
+        // User is not signed in
         window.location.href = "admin-login.html";
       }
     });
@@ -120,42 +642,100 @@
     }
 
     function loadSummary() {
+      // Total Users - FIXED APPROACH
       db.ref("users").once("value").then((snap) => {
-        document.getElementById("totalUsers").innerText = `Total Users: ${snap.numChildren()}`;
+        let userCount = 0;
+        if (snap.exists()) {
+          userCount = Object.keys(snap.val()).length;
+        }
+        document.getElementById("totalUsers").innerText = userCount;
+      }).catch((error) => {
+        console.error("Error loading users:", error);
+        document.getElementById("totalUsers").innerText = "Error";
       });
+      
+      // Withdraw Requests
       db.ref("withdraws").once("value").then((snap) => {
         let total = 0;
-        snap.forEach(user => total += user.numChildren());
-        document.getElementById("totalWithdraws").innerText = `Total Withdraw Requests: ${total}`;
+        if (snap.exists()) {
+          snap.forEach(user => {
+            if (user.exists()) {
+              total += user.numChildren();
+            }
+          });
+        }
+        document.getElementById("totalWithdraws").innerText = total;
+      }).catch((error) => {
+        console.error("Error loading withdraws:", error);
+        document.getElementById("totalWithdraws").innerText = "Error";
       });
+      
+      // Recharge Requests
       db.ref("recharges").once("value").then((snap) => {
         let total = 0;
-        snap.forEach(user => total += user.numChildren());
-        document.getElementById("totalRecharges").innerText = `Total Recharge Requests: ${total}`;
+        if (snap.exists()) {
+          snap.forEach(user => {
+            if (user.exists()) {
+              total += user.numChildren();
+            }
+          });
+        }
+        document.getElementById("totalRecharges").innerText = total;
+      }).catch((error) => {
+        console.error("Error loading recharges:", error);
+        document.getElementById("totalRecharges").innerText = "Error";
       });
     }
 
     function loadRecharges() {
       db.ref("recharges").once("value").then((snap) => {
         const container = document.getElementById("rechargeList");
+        const container2 = document.getElementById("rechargeList2");
         container.innerHTML = '';
+        container2.innerHTML = '';
+        
+        if (!snap.exists() || snap.numChildren() === 0) {
+          container.innerHTML = '<div class="list-item"><p>No recharge requests found</p></div>';
+          container2.innerHTML = '<div class="list-item"><p>No recharge requests found</p></div>';
+          return;
+        }
+        
         snap.forEach((userNode) => {
           const userId = userNode.key;
           userNode.forEach((rechargeNode) => {
             const data = rechargeNode.val();
             const rechargeId = rechargeNode.key;
             const div = document.createElement("div");
-            div.className = "item";
+            div.className = "list-item";
             div.innerHTML = `
-              <p><b>User:</b> ${userId} <br/><b>Amount:</b> ₹${data.amount} <br/><b>Status:</b> ${data.status}</p>
-              ${data.status === "pending" ? `
-                <button onclick="updateRechargeStatus('${userId}', '${rechargeId}', ${data.amount}, 'approved')">Approve</button>
-                <button onclick="updateRechargeStatus('${userId}', '${rechargeId}', ${data.amount}, 'rejected')">Reject</button>
-              ` : ''}
+              <div class="item-info">
+                <p><b>User ID:</b> ${userId}</p>
+                <p><b>Amount:</b> ₹${data.amount}</p>
+                <p><b>Status:</b> <span class="${data.status === 'pending' ? 'pending' : data.status}">${data.status}</span></p>
+              </div>
+              <div class="item-actions">
+                ${data.status === "pending" ? `
+                  <button class="btn btn-approve" onclick="updateRechargeStatus('${userId}', '${rechargeId}', ${data.amount}, 'approved')">
+                    <i class="fas fa-check"></i> Approve
+                  </button>
+                  <button class="btn btn-reject" onclick="updateRechargeStatus('${userId}', '${rechargeId}', ${data.amount}, 'rejected')">
+                    <i class="fas fa-times"></i> Reject
+                  </button>
+                ` : `
+                  <span class="status-badge">${data.status}</span>
+                `}
+              </div>
             `;
             container.appendChild(div);
+            container2.appendChild(div.cloneNode(true));
           });
         });
+      }).catch((error) => {
+        console.error("Error loading recharges:", error);
+        const container = document.getElementById("rechargeList");
+        const container2 = document.getElementById("rechargeList2");
+        container.innerHTML = '<div class="list-item"><p>❌ Failed to load recharge requests</p></div>';
+        container2.innerHTML = '<div class="list-item"><p>❌ Failed to load recharge requests</p></div>';
       });
     }
 
@@ -167,36 +747,63 @@
           walletRef.transaction(current => (current || 0) + amount);
         }
         loadRecharges();
+      }).catch((error) => {
+        console.error("Error updating recharge status:", error);
+        alert("❌ Failed to update recharge status");
       });
     }
 
     function loadWithdraws() {
       db.ref("withdraws").once("value").then((snap) => {
         const container = document.getElementById("withdrawList");
+        const container2 = document.getElementById("withdrawList2");
         container.innerHTML = '';
+        container2.innerHTML = '';
+        
+        if (!snap.exists() || snap.numChildren() === 0) {
+          container.innerHTML = '<div class="list-item"><p>No withdrawal requests found</p></div>';
+          container2.innerHTML = '<div class="list-item"><p>No withdrawal requests found</p></div>';
+          return;
+        }
+        
         snap.forEach((userSnap) => {
           const userId = userSnap.key;
           userSnap.forEach((reqSnap) => {
             const data = reqSnap.val();
             const withdrawId = reqSnap.key;
             const div = document.createElement("div");
-            div.className = "item";
+            div.className = "list-item";
             div.innerHTML = `
-              <p>
-                <b>User:</b> ${userId} <br/>
-                <b>Amount:</b> ₹${data.amount} <br/>
-                <b>UPI ID:</b> ${data.upi || 'N/A'} <br/>
-                <b>Account No:</b> ${data.account || 'N/A'} <br/>
-                <b>Status:</b> ${data.status}
-              </p>
-              ${data.status === "pending" ? `
-                <button onclick="updateWithdrawStatus('${userId}', '${withdrawId}', '${data.amount}', 'approved')">Approve</button>
-                <button onclick="updateWithdrawStatus('${userId}', '${withdrawId}', '${data.amount}', 'rejected')">Reject</button>
-              ` : ''}
+              <div class="item-info">
+                <p><b>User ID:</b> ${userId}</p>
+                <p><b>Amount:</b> ₹${data.amount}</p>
+                <p><b>UPI ID:</b> ${data.upi || 'N/A'}</p>
+                <p><b>Account No:</b> ${data.account || 'N/A'}</p>
+                <p><b>Status:</b> <span class="${data.status === 'pending' ? 'pending' : data.status}">${data.status}</span></p>
+              </div>
+              <div class="item-actions">
+                ${data.status === "pending" ? `
+                  <button class="btn btn-approve" onclick="updateWithdrawStatus('${userId}', '${withdrawId}', '${data.amount}', 'approved')">
+                    <i class="fas fa-check"></i> Approve
+                  </button>
+                  <button class="btn btn-reject" onclick="updateWithdrawStatus('${userId}', '${withdrawId}', '${data.amount}', 'rejected')">
+                    <i class="fas fa-times"></i> Reject
+                  </button>
+                ` : `
+                  <span class="status-badge">${data.status}</span>
+                `}
+              </div>
             `;
             container.appendChild(div);
+            container2.appendChild(div.cloneNode(true));
           });
         });
+      }).catch((error) => {
+        console.error("Error loading withdraws:", error);
+        const container = document.getElementById("withdrawList");
+        const container2 = document.getElementById("withdrawList2");
+        container.innerHTML = '<div class="list-item"><p>❌ Failed to load withdrawal requests</p></div>';
+        container2.innerHTML = '<div class="list-item"><p>❌ Failed to load withdrawal requests</p></div>';
       });
     }
 
@@ -208,6 +815,9 @@
           walletRef.transaction(current => (current || 0) - parseFloat(amount));
         }
         loadWithdraws();
+      }).catch((error) => {
+        console.error("Error updating withdraw status:", error);
+        alert("❌ Failed to update withdrawal status");
       });
     }
 
@@ -215,21 +825,42 @@
       db.ref("users").once("value").then((snap) => {
         const container = document.getElementById("users");
         container.innerHTML = '';
+        
+        if (!snap.exists() || snap.numChildren() === 0) {
+          container.innerHTML = '<div class="list-item"><p>No users found</p></div>';
+          return;
+        }
+        
         snap.forEach((child) => {
           const user = child.val();
           const div = document.createElement("div");
-          div.className = "item";
+          div.className = "list-item";
           div.innerHTML = `
-            <p><b>${child.key}</b> - Wallet: ₹${user.wallet || 0} ${user.isBanned ? '(BANNED)' : ''}</p>
-            <button onclick="updateBan('${child.key}', ${!user.isBanned})">${user.isBanned ? 'Unban' : 'Ban'}</button>
+            <div class="item-info">
+              <p><b>User ID:</b> ${child.key}</p>
+              <p><b>Wallet:</b> ₹${user.wallet || 0}</p>
+              <p><b>Status:</b> ${user.isBanned ? '<span class="banned">BANNED</span>' : '<span class="active">Active</span>'}</p>
+            </div>
+            <div class="item-actions">
+              <button class="btn ${user.isBanned ? 'btn-approve' : 'btn-ban'}" onclick="updateBan('${child.key}', ${!user.isBanned})">
+                <i class="fas ${user.isBanned ? 'fa-unlock' : 'fa-ban'}"></i> ${user.isBanned ? 'Unban' : 'Ban'}
+              </button>
+            </div>
           `;
           container.appendChild(div);
         });
+      }).catch((error) => {
+        console.error("Error loading users:", error);
+        const container = document.getElementById("users");
+        container.innerHTML = '<div class="list-item"><p>❌ Failed to load users</p></div>';
       });
     }
 
     function updateBan(uid, state) {
-      db.ref("users/" + uid).update({ isBanned: state }).then(() => loadUsers());
+      db.ref("users/" + uid).update({ isBanned: state }).then(() => loadUsers()).catch((error) => {
+        console.error("Error updating user ban status:", error);
+        alert("❌ Failed to update user status");
+      });
     }
   </script>
 </body>
