@@ -465,6 +465,7 @@
     </div>
   </div>
 
+  <!-- Scripts at end -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
@@ -482,21 +483,21 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Update file name display
+    // File name update
     document.getElementById('screenshot').addEventListener('change', function(e) {
       const fileName = e.target.files.length ? e.target.files[0].name : "No file selected";
       document.getElementById('fileName').textContent = fileName;
     });
 
+    // Copy UPI
     function copyUpi() {
       const upiText = document.getElementById("fixedUpi").innerText;
       navigator.clipboard.writeText(upiText).then(() => {
-        // Create visual feedback
         const copyBtn = document.querySelector('.copy-btn');
         copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
         copyBtn.style.background = 'rgba(76, 175, 80, 0.2)';
         copyBtn.style.color = '#4caf50';
-        
+
         setTimeout(() => {
           copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy';
           copyBtn.style.background = 'rgba(0, 188, 212, 0.2)';
@@ -505,25 +506,32 @@
       });
     }
 
+    // Show payment section
     document.getElementById("amountForm").addEventListener("submit", function(e) {
       e.preventDefault();
       const amount = parseFloat(document.getElementById("amount").value);
       if (amount >= 100) {
+        document.getElementById("displayAmount").textContent = amount.toFixed(2);
+
+        // Update dynamic QR
+        const qr = document.querySelector(".qr-container img");
+        const upiId = "amit.894@ptyes";
+        qr.src = `https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=upi://pay?pa=${upiId}&am=${amount}&cu=INR`;
+
         document.getElementById("paymentSection").style.display = "block";
-        // Scroll to payment section
         document.getElementById("paymentSection").scrollIntoView({ behavior: 'smooth' });
       } else {
-        alert("Please enter a minimum amount of ₹100.");
-        document.getElementById("amount").focus();
+        alert("Minimum amount is ₹100");
       }
     });
 
+    // Handle recharge
     document.getElementById("rechargeForm").addEventListener("submit", function (e) {
       e.preventDefault();
 
       const userId = localStorage.getItem("userId");
       if (!userId) {
-        alert("Please login to recharge your wallet");
+        alert("Please login first.");
         window.location.href = "login.html";
         return;
       }
@@ -531,14 +539,12 @@
       const amount = parseFloat(document.getElementById("amount").value);
       const screenshot = document.getElementById("screenshot").files[0];
       const utr = document.getElementById("utr").value;
-      const successMsg = document.getElementById("successMsg");
 
       if (!amount || !screenshot || !utr) {
         alert("Please fill all fields.");
         return;
       }
 
-      // Show loading state on button
       const submitBtn = document.getElementById("submitRechargeBtn");
       submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
       submitBtn.disabled = true;
@@ -549,7 +555,7 @@
 
         const rechargeRequest = {
           amount,
-          upi: "9792368894@ptyes",
+          upi: "amit.894@ptyes",
           paymentMethod: "UPI",
           screenshot: screenshotBase64,
           utr,
@@ -560,19 +566,14 @@
 
         db.ref("recharges/" + userId).push(rechargeRequest)
           .then(() => {
-            successMsg.style.display = "block";
+            document.getElementById("successMsg").style.display = "block";
             document.getElementById("rechargeForm").reset();
             document.getElementById("fileName").textContent = "No file selected";
-            
-            // Reset button
             submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Recharge Request';
             submitBtn.disabled = false;
-            
-            // Scroll to success message
-            successMsg.scrollIntoView({ behavior: 'smooth' });
           })
-          .catch((error) => {
-            alert("Error: " + error.message);
+          .catch(error => {
+            alert("Error submitting recharge: " + error.message);
             submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Recharge Request';
             submitBtn.disabled = false;
           });
