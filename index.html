@@ -668,71 +668,72 @@
     </div>
   </div>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+ <!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
-      authDomain: "betting-app-43800.firebaseapp.com",
-      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
-      projectId: "betting-app-43800"
-    };
-    
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const auth = firebase.auth();
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+    authDomain: "betting-app-43800.firebaseapp.com",
+    databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+    projectId: "betting-app-43800"
+  };
 
-    // Toggle drawer function
-    function toggleDrawer() {
-      const drawer = document.getElementById("drawer");
-      const overlay = document.getElementById("overlay");
-      drawer.classList.toggle("open");
-      overlay.style.display = drawer.classList.contains("open") ? "block" : "none";
-    }
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const auth = firebase.auth();
 
-    // Check user authentication
-    auth.onAuthStateChanged(user => {
-      if (!user) {
-        window.location.href = "login.html";
-      } else {
-        // Set user info
-        document.getElementById("userName").textContent = user.displayName || "User";
-        document.getElementById("drawerUserName").textContent = user.displayName || "User";
-        
-        // Get user data from database
-        const userId = user.uid;
-        db.ref("users/" + userId).on("value", (snapshot) => {
-          const userData = snapshot.val();
-          if (userData) {
-            // Set wallet balances
-            const wallet = userData.wallet || {};
-            const recharge = wallet.recharge || 0;
-            const bonus = wallet.bonus || 0;
-            const winning = wallet.winning || 0;
-            const total = recharge + bonus + winning;
-            
-            document.getElementById("totalBalance").textContent = total.toFixed(2);
-            document.getElementById("drawerBalance").textContent = total.toFixed(2);
-            document.getElementById("rechargeBalance").textContent = recharge.toFixed(2);
-            document.getElementById("bonusBalance").textContent = bonus.toFixed(2);
-            document.getElementById("winningBalance").textContent = winning.toFixed(2);
-          }
-        });
+  // Toggle drawer function
+  function toggleDrawer() {
+    const drawer = document.getElementById("drawer");
+    const overlay = document.getElementById("overlay");
+    drawer.classList.toggle("open");
+    overlay.style.display = drawer.classList.contains("open") ? "block" : "none";
+  }
+
+  // ✅ Get UID from LocalStorage
+  const localUid = localStorage.getItem("userId");
+
+  if (!localUid) {
+    // If not logged in, redirect
+    window.location.href = "login.html";
+  } else {
+    // Fetch wallet using local UID
+    const userId = localUid;
+
+    db.ref("users/" + userId).on("value", (snapshot) => {
+      const userData = snapshot.val();
+      if (userData) {
+        const wallet = userData.wallet || {};
+        const recharge = wallet.recharge || 0;
+        const bonus = wallet.bonus || 0;
+        const winning = wallet.winning || 0;
+        const total = recharge + bonus + winning;
+
+        document.getElementById("userName").textContent = userData.name || "User";
+        document.getElementById("drawerUserName").textContent = userData.name || "User";
+
+        document.getElementById("totalBalance").textContent = total.toFixed(2);
+        document.getElementById("drawerBalance").textContent = total.toFixed(2);
+        document.getElementById("rechargeBalance").textContent = recharge.toFixed(2);
+        document.getElementById("bonusBalance").textContent = bonus.toFixed(2);
+        document.getElementById("winningBalance").textContent = winning.toFixed(2);
       }
     });
+  }
 
-    // Logout function
-    function logout() {
-      auth.signOut().then(() => {
-        window.location.href = "login.html";
-      }).catch((error) => {
-        console.error("Logout error:", error);
-        alert("Logout failed. Please try again.");
-      });
-    }
-  </script>
+  function logout() {
+    auth.signOut().catch((error) => {
+      console.error("Logout error:", error);
+    }).finally(() => {
+      localStorage.removeItem("userId");
+      localStorage.removeItem("loggedInUser");
+      window.location.href = "login.html";
+    });
+  }
+</script>
+
 </body>
 </html>
