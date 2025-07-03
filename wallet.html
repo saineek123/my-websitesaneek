@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -426,6 +427,7 @@
  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
@@ -443,107 +445,47 @@
   const totalEl = document.getElementById('total');
   const transactionList = document.getElementById('transactionList');
 
-  const btnRecharge = document.getElementById('btnRecharge');
-  const btnWithdraw = document.getElementById('btnWithdraw');
-
-  auth.signInAnonymously().catch(console.error);
   auth.onAuthStateChanged(user => {
     if (user) {
       const userId = user.uid;
 
-      // If no wallet, initialize
-      const walletRef = db.ref("users/" + userId + "/wallet");
-      walletRef.once("value").then(snap => {
-        if (!snap.exists()) {
-          walletRef.set({ recharge: 1000, bonus: 50, winning: 0 });
-        }
-      });
-
-      // Listen wallet
-      walletRef.on("value", snap => {
-        const wallet = snap.val() || {};
+      // SAME LOGIC AS INDEX
+      db.ref("users/" + userId).on("value", snapshot => {
+        const userData = snapshot.val() || {};
+        const wallet = userData.wallet || {};
         const recharge = wallet.recharge || 0;
         const bonus = wallet.bonus || 0;
         const winning = wallet.winning || 0;
         const total = recharge + bonus + winning;
 
-        rechargeEl.textContent = formatCurrency(recharge);
-        bonusEl.textContent = formatCurrency(bonus);
-        winningEl.textContent = formatCurrency(winning);
-        totalEl.textContent = formatCurrency(total);
-
-        pulseElement(rechargeEl.parentElement);
-        pulseElement(bonusEl.parentElement);
-        pulseElement(winningEl.parentElement);
-        pulseElement(totalEl);
+        rechargeEl.textContent = `₹${recharge.toFixed(2)}`;
+        bonusEl.textContent = `₹${bonus.toFixed(2)}`;
+        winningEl.textContent = `₹${winning.toFixed(2)}`;
+        totalEl.textContent = `₹${total.toFixed(2)}`;
       });
 
-      // Load transactions
-      db.ref("users/" + userId + "/transactions").limitToLast(3).on("value", snap => {
-        const txns = snap.val() || {};
+      db.ref("users/" + userId + "/transactions").limitToLast(3).on("value", snapshot => {
+        const txns = snapshot.val();
         transactionList.innerHTML = '';
-        const keys = Object.keys(txns);
-        if (keys.length === 0) {
-          transactionList.innerHTML = '<div class="no-transactions">No recent transactions</div>';
-          return;
+        if (txns) {
+          Object.values(txns).reverse().forEach(txn => {
+            const el = document.createElement('div');
+            el.className = 'transaction-item';
+            el.innerHTML = `${txn.type || 'Txn'}: ₹${txn.amount} - ${new Date(txn.timestamp).toLocaleDateString()}`;
+            transactionList.appendChild(el);
+          });
+        } else {
+          transactionList.innerHTML = 'No transactions';
         }
-        const txnArray = Object.entries(txns).map(([id, t]) => ({ id, ...t })).reverse();
-        txnArray.forEach(txn => {
-          transactionList.appendChild(createTransactionItem(txn));
-        });
       });
+
+    } else {
+      window.location.href = "login.html";
     }
   });
 
-  function formatCurrency(amount) {
-    return '₹' + amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
-  }
-
-  function pulseElement(el) {
-    el.classList.add('pulse');
-    setTimeout(() => el.classList.remove('pulse'), 500);
-  }
-
-  function createTransactionItem(transaction) {
-    const item = document.createElement('div');
-    item.className = 'transaction-item';
-
-    let iconClass = 'fas fa-question-circle';
-    let iconBg = 'recharge-icon';
-    let amountClass = 'credit';
-
-    if (transaction.type === 'recharge') {
-      iconClass = 'fas fa-arrow-down';
-      iconBg = 'recharge-icon';
-      amountClass = 'credit';
-    } else if (transaction.type === 'withdraw') {
-      iconClass = 'fas fa-arrow-up';
-      iconBg = 'withdraw-icon';
-      amountClass = 'debit';
-    } else if (transaction.type === 'winning') {
-      iconClass = 'fas fa-trophy';
-      iconBg = 'winning-icon';
-      amountClass = 'credit';
-    }
-
-    const date = new Date(transaction.timestamp);
-    const dateStr = date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-
-    item.innerHTML = `
-      <div class="transaction-icon ${iconBg}"><i class="${iconClass}"></i></div>
-      <div class="transaction-details">
-        <div class="transaction-title">${transaction.description || 'Transaction'}</div>
-        <div class="transaction-date">${dateStr}</div>
-      </div>
-      <div class="transaction-amount ${amountClass}">
-        ${transaction.type === 'withdraw' ? '-' : '+'}${formatCurrency(transaction.amount)}
-      </div>
-    `;
-    return item;
-  }
-
-  btnRecharge.onclick = () => location.href = "recharge.html";
-  btnWithdraw.onclick = () => location.href = "withdraw.html";
+  document.getElementById('btnRecharge').onclick = () => location.href = "recharge.html";
+  document.getElementById('btnWithdraw').onclick = () => location.href = "withdraw.html";
 </script>
 
 
