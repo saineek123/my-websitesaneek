@@ -876,343 +876,269 @@
 
   <div id="notification" class="notification"></div>
 
-  <script>
-    // Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
-      authDomain: "betting-app-43800.firebaseapp.com",
-      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
-      projectId: "betting-app-43800",
-      storageBucket: "betting-app-43800.appspot.com",
-      messagingSenderId: "752263307747",
-      appId: "1:752263307747:web:183e06d62bc5920fc700d6"
-    };
-    
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    
-    // Game state variables
-    let recharge = 0;
-    let bonus = 0;
-    let winning = 0;
-    let selectedChoice = null;
-    let countdown;
-    let timerValue = 30;
-    let gameActive = false;
-    let userId = null;
-    let currentBet = 0;
-    
-    // DOM elements
-    const timerEl = document.getElementById('timer');
-    const placeBetBtn = document.getElementById('placeBetBtn');
-    const notificationEl = document.getElementById('notification');
-    
-    // Initialize the game
-    document.addEventListener('DOMContentLoaded', function() {
-      // Check if user is logged in
-      userId = localStorage.getItem('userId');
-      if (!userId) {
-        showNotification("Please login to play", "error");
-        setTimeout(() => {
-          window.location.href = "login.html";
-        }, 2000);
-        return;
-      }
-      
-      // Load user balance
-      loadUserBalance();
-      
-      // Load user history
-      loadUserHistory();
-      
-      // Start the timer
-      startTimer();
-    });
-    
-    // Load user balance from Firebase
-    function loadUserBalance() {
-      db.ref('users/' + userId + '/wallet').on('value', (snapshot) => {
-        const wallet = snapshot.val();
-        if (wallet) {
-          recharge = wallet.recharge || 0;
-          bonus = wallet.bonus || 0;
-          winning = wallet.winning || 0;
-          updateBalanceDisplay();
-        }
-      });
-    }
-    
-    // Load user history from Firebase
-    function loadUserHistory() {
-      db.ref('users/' + userId + '/dragonTigerHistory').orderByChild('timestamp').limitToLast(10).on('value', (snapshot) => {
-        const history = snapshot.val();
-        const historyBody = document.getElementById('historyBody');
-        
-        if (!history) {
-          historyBody.innerHTML = '<tr><td colspan="7">No bet history found</td></tr>';
-          return;
-        }
-        
-        // Clear history table
-        historyBody.innerHTML = '';
-        
-        // Convert object to array and sort by timestamp
-        const historyArray = Object.values(history).sort((a, b) => b.timestamp - a.timestamp);
-        
-        // Populate history table
-        historyArray.forEach(log => {
-          const row = document.createElement("tr");
-          row.className = log.win ? "win-row" : "loss-row";
-          
-          const date = new Date(log.timestamp);
-          const time = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
-          
-          row.innerHTML = `
-            <td>${log.choice.toUpperCase()}</td>
-            <td>${log.dragon}</td>
-            <td>${log.tiger}</td>
-            <td>${log.result}</td>
-            <td>₹${log.amount}</td>
-            <td>${log.win ? '<span class="win-badge">✅ ₹'+log.payout+'</span>' : '<span class="loss-badge">❌</span>'}</td>
-            <td>${time}</td>
-          `;
-          
-          historyBody.appendChild(row);
-        });
-      });
-    }
-    
-    // Show notification
-    function showNotification(message, type = "info") {
-      notificationEl.innerText = message;
-      notificationEl.className = "notification";
-      notificationEl.classList.add(type);
-      notificationEl.classList.add("show");
-      
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+
+<script>
+  // ✅ Firebase Config
+  const firebaseConfig = {
+    apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+    authDomain: "betting-app-43800.firebaseapp.com",
+    databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+    projectId: "betting-app-43800"
+  };
+
+  // ✅ Init Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const auth = firebase.auth();
+
+  // ✅ Game State
+  let recharge = 0;
+  let bonus = 0;
+  let winning = 0;
+  let selectedChoice = null;
+  let userId = null;
+  let currentBet = 0;
+  let countdown;
+  let timerValue = 30;
+  let gameActive = false;
+
+  // ✅ Elements
+  const rechargeBal = document.getElementById("rechargeBal");
+  const bonusBal = document.getElementById("bonusBal");
+  const winningBal = document.getElementById("winningBal");
+  const totalBalance = document.getElementById("totalBalance");
+  const headerBalance = document.getElementById("balance");
+  const notificationEl = document.getElementById("notification");
+  const timerEl = document.getElementById("timer");
+  const placeBetBtn = document.getElementById("placeBetBtn");
+
+  // ✅ Check Auth
+  auth.onAuthStateChanged(user => {
+    if (!user) {
+      showNotification("Please login to play", "error");
       setTimeout(() => {
-        notificationEl.classList.remove("show");
-      }, 3000);
+        window.location.href = "login.html";
+      }, 1500);
+    } else {
+      userId = user.uid;
+      loadUserBalance();
+      loadUserHistory();
+      startTimer();
     }
-    
-    // Start the countdown timer
-    function startTimer() {
-      countdown = setInterval(() => {
-        timerValue--;
-        timerEl.textContent = timerValue;
-        
-        if (timerValue <= 0) {
-          clearInterval(countdown);
-          if (gameActive) {
-            revealResult();
-          }
-          timerValue = 30;
-          startTimer();
-        }
-      }, 1000);
-    }
-    
-    function selectChoice(value) {
-      if (gameActive) return;
-      
-      selectedChoice = value;
-      document.getElementById("selectedChoiceText").innerText = value.toUpperCase();
-      
-      // Update text color based on choice
-      const choiceText = document.getElementById("selectedChoiceText");
-      choiceText.className = "";
-      if (value === 'dragon') choiceText.classList.add("choice-dragon");
-      if (value === 'tiger') choiceText.classList.add("choice-tiger");
-      if (value === 'tie') choiceText.classList.add("choice-tie");
-      
-      // Highlight selected button
-      document.querySelectorAll('.bet-btn').forEach(btn => {
-        btn.classList.remove('selected');
-      });
-      event.currentTarget.classList.add('selected');
-    }
-    
-    function getRandomCard() {
-      return Math.floor(Math.random() * 13) + 1;
-    }
-    
-    function placeBet() {
-      if (gameActive) return;
-      
-      if (!selectedChoice) {
-        showResult("Please select Dragon, Tiger or Tie", false);
-        return;
-      }
-      
-      const betInput = document.getElementById("betAmount");
-      const bet = parseFloat(betInput.value);
-      
-      if (!bet || bet < 10) {
-        showResult("Minimum ₹10 required", false);
-        return;
-      }
-      
-      const totalBalance = recharge + bonus + winning;
-      if (totalBalance < bet) {
-        showResult("❌ Insufficient balance", false);
-        return;
-      }
-      
-      // Save current bet
-      currentBet = bet;
-      
-      // Deduct bet from winning first, then from recharge
-      if (winning >= bet) {
-        winning -= bet;
-      } else if (recharge >= (bet - winning)) {
-        recharge -= (bet - winning);
-        winning = 0;
-      } else {
-        showResult("❌ Insufficient balance", false);
-        return;
-      }
-      
-      // Update Firebase
-      updateFirebaseBalance();
-      
-      // Show loading state
-      const resultMsg = document.getElementById("resultMsg");
-      resultMsg.textContent = "Bet placed! Waiting for results...";
-      resultMsg.className = "result";
-      
-      // Reset card displays
-      document.getElementById("dragonCard").textContent = "?";
-      document.getElementById("tigerCard").textContent = "?";
-      document.getElementById("tieCard").textContent = "-";
-      document.querySelectorAll(".card-container").forEach(c => c.classList.remove("winner"));
-      
-      // Disable betting during the game
-      gameActive = true;
-      placeBetBtn.disabled = true;
-      document.querySelectorAll('.bet-btn').forEach(btn => {
-        btn.disabled = true;
-      });
-    }
-    
-function revealResult() {
-  let dragon, tiger;
-  const userShouldWin = Math.random() < 0.20; // 20% chance
+  });
 
-  if (userShouldWin && selectedChoice) {
-    // Force user win
-    switch (selectedChoice) {
-      case 'dragon':
+  // ✅ Load Balance
+  function loadUserBalance() {
+    db.ref("users/" + userId + "/wallet").on("value", snapshot => {
+      const wallet = snapshot.val() || {};
+      recharge = wallet.recharge || 0;
+      bonus = wallet.bonus || 0;
+      winning = wallet.winning || 0;
+      updateBalanceDisplay();
+    });
+  }
+
+  // ✅ Load History
+  function loadUserHistory() {
+    db.ref("users/" + userId + "/dragonTigerHistory").orderByChild("timestamp").limitToLast(10).on("value", snapshot => {
+      const history = snapshot.val();
+      const historyBody = document.getElementById("historyBody");
+      if (!history) {
+        historyBody.innerHTML = '<tr><td colspan="7">No bet history found</td></tr>';
+        return;
+      }
+      historyBody.innerHTML = '';
+      const historyArray = Object.values(history).sort((a,b)=> b.timestamp - a.timestamp);
+      historyArray.forEach(log => {
+        const row = document.createElement("tr");
+        row.className = log.win ? "win-row" : "loss-row";
+        const date = new Date(log.timestamp);
+        const time = `${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}:${date.getSeconds().toString().padStart(2,'0')}`;
+        row.innerHTML = `
+          <td>${log.choice.toUpperCase()}</td>
+          <td>${log.dragon}</td>
+          <td>${log.tiger}</td>
+          <td>${log.result}</td>
+          <td>₹${log.amount}</td>
+          <td>${log.win ? '<span class="win-badge">✅ ₹'+log.payout+'</span>' : '<span class="loss-badge">❌</span>'}</td>
+          <td>${time}</td>
+        `;
+        historyBody.appendChild(row);
+      });
+    });
+  }
+
+  // ✅ Update UI
+  function updateBalanceDisplay() {
+    rechargeBal.textContent = recharge.toFixed(2);
+    bonusBal.textContent = bonus.toFixed(2);
+    winningBal.textContent = winning.toFixed(2);
+    totalBalance.textContent = (recharge + bonus + winning).toFixed(2);
+    headerBalance.textContent = (recharge + bonus + winning).toFixed(2);
+  }
+
+  // ✅ Timer
+  function startTimer() {
+    countdown = setInterval(() => {
+      timerValue--;
+      timerEl.textContent = timerValue;
+      if (timerValue <= 0) {
+        clearInterval(countdown);
+        if (gameActive) revealResult();
+        timerValue = 30;
+        startTimer();
+      }
+    }, 1000);
+  }
+
+  // ✅ Notification
+  function showNotification(msg, type="info") {
+    notificationEl.innerText = msg;
+    notificationEl.className = "notification";
+    notificationEl.classList.add(type);
+    notificationEl.classList.add("show");
+    setTimeout(() => notificationEl.classList.remove("show"), 3000);
+  }
+
+  // ✅ Select Choice
+  function selectChoice(value) {
+    if (gameActive) return;
+    selectedChoice = value;
+    const choiceText = document.getElementById("selectedChoiceText");
+    choiceText.innerText = value.toUpperCase();
+    choiceText.className = "";
+    if (value==='dragon') choiceText.classList.add("choice-dragon");
+    if (value==='tiger') choiceText.classList.add("choice-tiger");
+    if (value==='tie') choiceText.classList.add("choice-tie");
+    document.querySelectorAll('.bet-btn').forEach(btn => btn.classList.remove('selected'));
+    event.currentTarget.classList.add('selected');
+  }
+
+  // ✅ Place Bet
+  function placeBet() {
+    if (gameActive) return;
+    if (!selectedChoice) {
+      showResult("Please select Dragon, Tiger or Tie", false);
+      return;
+    }
+    const betInput = document.getElementById("betAmount");
+    const bet = parseFloat(betInput.value);
+    if (!bet || bet < 10) {
+      showResult("Minimum ₹10 required", false);
+      return;
+    }
+    const total = recharge + bonus + winning;
+    if (total < bet) {
+      showResult("❌ Insufficient balance", false);
+      return;
+    }
+    currentBet = bet;
+    if (winning >= bet) {
+      winning -= bet;
+    } else if (recharge >= (bet - winning)) {
+      recharge -= (bet - winning);
+      winning = 0;
+    } else {
+      showResult("❌ Insufficient balance", false);
+      return;
+    }
+    updateFirebaseBalance();
+    document.getElementById("resultMsg").textContent = "Bet placed! Waiting for results...";
+    document.getElementById("resultMsg").className = "result";
+    document.getElementById("dragonCard").textContent = "?";
+    document.getElementById("tigerCard").textContent = "?";
+    document.getElementById("tieCard").textContent = "-";
+    document.querySelectorAll(".card-container").forEach(c => c.classList.remove("winner"));
+    gameActive = true;
+    placeBetBtn.disabled = true;
+    document.querySelectorAll('.bet-btn').forEach(btn => btn.disabled = true);
+  }
+
+  // ✅ Reveal Result
+  function revealResult() {
+    let dragon, tiger;
+    const userShouldWin = Math.random() < 0.20;
+    if (userShouldWin && selectedChoice) {
+      switch (selectedChoice) {
+        case 'dragon':
+          dragon = getRandomCard(); do { tiger = getRandomCard(); } while (tiger >= dragon); break;
+        case 'tiger':
+          tiger = getRandomCard(); do { dragon = getRandomCard(); } while (dragon >= tiger); break;
+        case 'tie':
+          dragon = tiger = getRandomCard(); break;
+      }
+    } else {
+      do {
         dragon = getRandomCard();
-        do { tiger = getRandomCard(); } while (tiger >= dragon);
-        break;
-      case 'tiger':
         tiger = getRandomCard();
-        do { dragon = getRandomCard(); } while (dragon >= tiger);
-        break;
-      case 'tie':
-        dragon = tiger = getRandomCard();
-        break;
+      } while (
+        (selectedChoice==='dragon' && dragon > tiger) ||
+        (selectedChoice==='tiger' && tiger > dragon) ||
+        (selectedChoice==='tie' && dragon === tiger)
+      );
     }
-  } else {
-    // Force user loss
-    do {
-      dragon = getRandomCard();
-      tiger = getRandomCard();
-    } while (
-      (selectedChoice === 'dragon' && dragon > tiger) ||
-      (selectedChoice === 'tiger' && tiger > dragon) ||
-      (selectedChoice === 'tie' && dragon === tiger)
-    );
+    document.getElementById("dragonCard").textContent = dragon;
+    document.getElementById("tigerCard").textContent = tiger;
+    document.getElementById("tieCard").textContent = dragon === tiger ? "✓" : "-";
+
+    let result="", winAmount=0, won=false;
+    if (dragon > tiger) {
+      result = "Dragon Wins";
+      if (selectedChoice==="dragon") { won=true; winAmount=currentBet*2; document.querySelector(".dragon-container").classList.add("winner"); }
+    } else if (tiger > dragon) {
+      result = "Tiger Wins";
+      if (selectedChoice==="tiger") { won=true; winAmount=currentBet*2; document.querySelector(".tiger-container").classList.add("winner"); }
+    } else {
+      result = "It's a Tie!";
+      if (selectedChoice==="tie") { won=true; winAmount=currentBet*9; document.querySelector(".tie-container").classList.add("winner"); }
+    }
+
+    if (won) {
+      winning += winAmount;
+      showResult(`🎉 You Win ₹${winAmount}! ${result}`, true);
+    } else {
+      showResult(`😞 You Lose! ${result}`, false);
+    }
+
+    updateFirebaseBalance();
+    saveToHistory(selectedChoice, dragon, tiger, result, currentBet, won, winAmount);
+
+    gameActive = false;
+    placeBetBtn.disabled = false;
+    document.querySelectorAll('.bet-btn').forEach(btn => btn.disabled = false);
+    selectedChoice = null;
+    document.getElementById("selectedChoiceText").innerText = "None";
+    document.querySelectorAll('.bet-btn').forEach(btn => btn.classList.remove('selected'));
   }
 
-  document.getElementById("dragonCard").textContent = dragon;
-  document.getElementById("tigerCard").textContent = tiger;
-  document.getElementById("tieCard").textContent = dragon === tiger ? "✓" : "-";
-
-  let result = "", winAmount = 0, won = false;
-
-  if (dragon > tiger) {
-    result = "Dragon Wins";
-    if (selectedChoice === "dragon") {
-      won = true;
-      winAmount = currentBet * 2;
-      document.querySelector(".dragon-container").classList.add("winner");
-    }
-  } else if (tiger > dragon) {
-    result = "Tiger Wins";
-    if (selectedChoice === "tiger") {
-      won = true;
-      winAmount = currentBet * 2;
-      document.querySelector(".tiger-container").classList.add("winner");
-    }
-  } else {
-    result = "It's a Tie!";
-    if (selectedChoice === "tie") {
-      won = true;
-      winAmount = currentBet * 9;
-      document.querySelector(".tie-container").classList.add("winner");
-    }
+  function getRandomCard() {
+    return Math.floor(Math.random() * 13) + 1;
   }
 
-  if (won) {
-    winning += winAmount;
-    showResult(`🎉 You Win ₹${winAmount}! ${result}`, true);
-  } else {
-    showResult(`😞 You Lose! ${result}`, false);
+  function showResult(msg, isWin) {
+    const resultMsg = document.getElementById("resultMsg");
+    resultMsg.textContent = msg;
+    resultMsg.className = isWin ? "result win-result" : "result lose-result";
   }
 
-  updateFirebaseBalance();
-  saveToHistory(selectedChoice, dragon, tiger, result, currentBet, won, winAmount);
+  function updateFirebaseBalance() {
+    db.ref("users/" + userId + "/wallet").set({
+      recharge: recharge,
+      bonus: bonus,
+      winning: winning
+    });
+  }
 
-  gameActive = false;
-  placeBetBtn.disabled = false;
-  document.querySelectorAll('.bet-btn').forEach(btn => {
-    btn.disabled = false;
-  });
+  function saveToHistory(choice, dragon, tiger, result, amount, win, payout) {
+    const ref = db.ref("users/" + userId + "/dragonTigerHistory").push();
+    ref.set({
+      choice, dragon, tiger, result, amount, win, payout, timestamp: Date.now()
+    });
+  }
+</script>
 
-  selectedChoice = null;
-  document.getElementById("selectedChoiceText").innerText = "None";
-  document.querySelectorAll('.bet-btn').forEach(btn => {
-    btn.classList.remove('selected');
-  });
-}
-
-    function showResult(message, isWin) {
-      const resultMsg = document.getElementById("resultMsg");
-      resultMsg.textContent = message;
-      resultMsg.className = isWin ? "result win-result" : "result lose-result";
-    }
-
-    function updateBalanceDisplay() {
-      document.getElementById("rechargeBal").textContent = recharge.toFixed(2);
-      document.getElementById("bonusBal").textContent = bonus.toFixed(2);
-      document.getElementById("winningBal").textContent = winning.toFixed(2);
-      document.getElementById("balance").textContent = (recharge + bonus + winning).toFixed(2);
-      document.getElementById("totalBalance").textContent = (recharge + bonus + winning).toFixed(2);
-    }
-    
-    function updateFirebaseBalance() {
-      db.ref('users/' + userId + '/wallet').set({
-        recharge: recharge,
-        bonus: bonus,
-        winning: winning
-      });
-    }
-    
-    function saveToHistory(choice, dragon, tiger, result, amount, win, payout) {
-      const historyRef = db.ref('users/' + userId + '/dragonTigerHistory').push();
-      
-      historyRef.set({
-        choice: choice,
-        dragon: dragon,
-        tiger: tiger,
-        result: result,
-        amount: amount,
-        win: win,
-        payout: payout,
-        timestamp: Date.now()
-      });
-    }
-  </script>
 </body>
 </html>
