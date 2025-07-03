@@ -401,72 +401,68 @@
       </button>
     </div>
   </div>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+    authDomain: "betting-app-43800.firebaseapp.com",
+    databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+    projectId: "betting-app-43800"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const auth = firebase.auth();
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
-      authDomain: "betting-app-43800.firebaseapp.com",
-      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
-      projectId: "betting-app-43800"
-    };
+  auth.onAuthStateChanged((user) => {
+    if (user) {
+      localStorage.setItem("userId", user.uid);
+      loadUserData(user.uid);
+    } else {
+      const localUID = localStorage.getItem("userId");
+      if (localUID) {
+        loadUserData(localUID);
+      } else {
+        window.location.href = "login.html";
+      }
+    }
+  });
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const auth = firebase.auth();
-
-    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(() => {
-      auth.onAuthStateChanged((user) => {
-        const userId = localStorage.getItem("userId");
-        if (user) {
-          localStorage.setItem("userId", user.uid);
-          loadUserData(user.uid);
-        } else if (userId) {
-          loadUserData(userId);
-        } else {
-          window.location.href = "login.html";
-        }
-      });
-    }).catch(() => {
-      window.location.href = "login.html";
+  function loadUserData(uid) {
+    const userRef = db.ref("users/" + uid);
+    userRef.on("value", snap => {
+      const data = snap.val() || {};
+      document.getElementById("userName").textContent = data.name || "No Name";
+      document.getElementById("userEmail").textContent = data.email || "N/A";
+      document.getElementById("userPhone").textContent = data.phone || "N/A";
+      document.getElementById("accountId").textContent = uid;
+      document.getElementById("verificationStatus").textContent = data.verified ? "Verified" : "Not Verified";
     });
 
-    function loadUserData(userId) {
-      const userRef = db.ref("users/" + userId);
-      userRef.on("value", (snapshot) => {
-        const data = snapshot.val() || {};
-        document.getElementById("userName").textContent = data.name || "No Name";
-        document.getElementById("userEmail").textContent = data.email || "N/A";
-        document.getElementById("userPhone").textContent = data.phone || "N/A";
-        document.getElementById("accountId").textContent = userId;
-        document.getElementById("verificationStatus").textContent = data.verified ? "Verified" : "Not Verified";
-      });
+    db.ref("users/" + uid + "/wallet").on("value", snap => {
+      const w = snap.val() || {};
+      const recharge = w.recharge || 0;
+      const bonus = w.bonus || 0;
+      const winning = w.winning || 0;
+      const total = recharge + bonus + winning;
 
-      const walletRef = db.ref("users/" + userId + "/wallet");
-      walletRef.on("value", (snap) => {
-        const w = snap.val() || {};
-        const recharge = w.recharge || 0;
-        const bonus = w.bonus || 0;
-        const winning = w.winning || 0;
-        const total = recharge + bonus + winning;
+      document.getElementById("rechargeBalance").textContent = recharge.toFixed(2);
+      document.getElementById("bonusBalance").textContent = bonus.toFixed(2);
+      document.getElementById("winningBalance").textContent = winning.toFixed(2);
+      document.getElementById("totalBalance").textContent = total.toFixed(2);
+    });
+  }
 
-        document.getElementById("rechargeBalance").textContent = recharge.toFixed(2);
-        document.getElementById("bonusBalance").textContent = bonus.toFixed(2);
-        document.getElementById("winningBalance").textContent = winning.toFixed(2);
-        document.getElementById("totalBalance").textContent = total.toFixed(2);
-      });
-    }
+  function logout() {
+    auth.signOut().then(() => {
+      localStorage.clear();
+      window.location.href = "login.html";
+    });
+  }
+</script>
 
-    function logout() {
-      auth.signOut().then(() => {
-        localStorage.clear();
-        window.location.href = "login.html";
-      });
-    }
-  </script>
 </body>
 </html>
