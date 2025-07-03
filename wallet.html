@@ -423,149 +423,129 @@
     </div>
   </div>
 
-  <script>
-    // Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
-      authDomain: "betting-app-43800.firebaseapp.com",
-      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
-      projectId: "betting-app-43800"
-    };
-    
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    
-    // DOM Elements
-    const rechargeEl = document.getElementById('recharge');
-    const bonusEl = document.getElementById('bonus');
-    const winningEl = document.getElementById('winning');
-    const totalEl = document.getElementById('total');
-    const transactionList = document.getElementById('transactionList');
-    
-    // Buttons
-    const btnRecharge = document.getElementById('btnRecharge');
-    const btnWithdraw = document.getElementById('btnWithdraw');
-    
-    // Check if user is logged in
-    const userId = localStorage.getItem("userId");
-    if (!userId) {
-      alert("Please login to access your wallet");
-      window.location.href = "login.html";
-    }
-    
-    // Format currency with commas
-    function formatCurrency(amount) {
-      return '₹' + amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
-    }
-    
-    // Add pulse animation to element
-    function pulseElement(element) {
-      element.classList.add('pulse');
-      setTimeout(() => {
-        element.classList.remove('pulse');
-      }, 500);
-    }
-    
-    // Update wallet balances
-    function updateWalletBalances(wallet) {
-      const recharge = wallet.recharge || 0;
-      const bonus = wallet.bonus || 0;
-      const winning = wallet.winning || 0;
-      const total = recharge + bonus + winning;
-      
-      rechargeEl.textContent = formatCurrency(recharge);
-      bonusEl.textContent = formatCurrency(bonus);
-      winningEl.textContent = formatCurrency(winning);
-      totalEl.textContent = formatCurrency(total);
-      
-      // Add animation when values change
-      pulseElement(rechargeEl.parentElement);
-      pulseElement(bonusEl.parentElement);
-      pulseElement(winningEl.parentElement);
-      pulseElement(totalEl);
-    }
-    
-    // Create transaction item
-    function createTransactionItem(transaction) {
-      const item = document.createElement('div');
-      item.className = 'transaction-item';
-      
-      // Determine icon and color based on type
-      let iconClass = 'fas fa-question-circle';
-      let iconBg = 'recharge-icon';
-      let amountClass = 'credit';
-      
-      if (transaction.type === 'recharge') {
-        iconClass = 'fas fa-arrow-down';
-        iconBg = 'recharge-icon';
-        amountClass = 'credit';
-      } else if (transaction.type === 'withdraw') {
-        iconClass = 'fas fa-arrow-up';
-        iconBg = 'withdraw-icon';
-        amountClass = 'debit';
-      } else if (transaction.type === 'winning') {
-        iconClass = 'fas fa-trophy';
-        iconBg = 'winning-icon';
-        amountClass = 'credit';
-      }
-      
-      // Format date
-      const date = new Date(transaction.timestamp);
-      const dateStr = date.toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
+ <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+    authDomain: "betting-app-43800.firebaseapp.com",
+    databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+    projectId: "betting-app-43800"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const auth = firebase.auth();
+
+  const rechargeEl = document.getElementById('recharge');
+  const bonusEl = document.getElementById('bonus');
+  const winningEl = document.getElementById('winning');
+  const totalEl = document.getElementById('total');
+  const transactionList = document.getElementById('transactionList');
+
+  const btnRecharge = document.getElementById('btnRecharge');
+  const btnWithdraw = document.getElementById('btnWithdraw');
+
+  auth.signInAnonymously().catch(console.error);
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      const userId = user.uid;
+
+      // If no wallet, initialize
+      const walletRef = db.ref("users/" + userId + "/wallet");
+      walletRef.once("value").then(snap => {
+        if (!snap.exists()) {
+          walletRef.set({ recharge: 1000, bonus: 50, winning: 0 });
+        }
       });
-      
-      // Create HTML
-      item.innerHTML = `
-        <div class="transaction-icon ${iconBg}">
-          <i class="${iconClass}"></i>
-        </div>
-        <div class="transaction-details">
-          <div class="transaction-title">${transaction.description || 'Transaction'}</div>
-          <div class="transaction-date">${dateStr}</div>
-        </div>
-        <div class="transaction-amount ${amountClass}">
-          ${transaction.type === 'withdraw' ? '-' : '+'}₹${transaction.amount.toFixed(2)}
-        </div>
-      `;
-      
-      return item;
-    }
-    
-    // Listen for wallet balance changes
-    db.ref("users/" + userId + "/wallet").on("value", (snap) => {
-      const wallet = snap.val() || {};
-      updateWalletBalances(wallet);
-    });
-    
-    // Load recent transactions
-    db.ref("users/" + userId + "/transactions").limitToLast(3).on("value", (snap) => {
-      const transactions = snap.val() || {};
-      transactionList.innerHTML = '';
-      
-      if (Object.keys(transactions).length === 0) {
-        transactionList.innerHTML = '<div class="no-transactions">No recent transactions</div>';
-        return;
-      }
-      
-      // Convert to array and reverse to show latest first
-      const transactionArray = Object.entries(transactions).map(([id, txn]) => ({
-        id,
-        ...txn
-      })).reverse();
-      
-      transactionArray.forEach(txn => {
-        transactionList.appendChild(createTransactionItem(txn));
+
+      // Listen wallet
+      walletRef.on("value", snap => {
+        const wallet = snap.val() || {};
+        const recharge = wallet.recharge || 0;
+        const bonus = wallet.bonus || 0;
+        const winning = wallet.winning || 0;
+        const total = recharge + bonus + winning;
+
+        rechargeEl.textContent = formatCurrency(recharge);
+        bonusEl.textContent = formatCurrency(bonus);
+        winningEl.textContent = formatCurrency(winning);
+        totalEl.textContent = formatCurrency(total);
+
+        pulseElement(rechargeEl.parentElement);
+        pulseElement(bonusEl.parentElement);
+        pulseElement(winningEl.parentElement);
+        pulseElement(totalEl);
       });
-    });
-    
-    // Button event handlers
-    btnRecharge.onclick = () => window.location.href = "recharge.html";
-    btnWithdraw.onclick = () => window.location.href = "withdraw.html";
-  </script>
+
+      // Load transactions
+      db.ref("users/" + userId + "/transactions").limitToLast(3).on("value", snap => {
+        const txns = snap.val() || {};
+        transactionList.innerHTML = '';
+        const keys = Object.keys(txns);
+        if (keys.length === 0) {
+          transactionList.innerHTML = '<div class="no-transactions">No recent transactions</div>';
+          return;
+        }
+        const txnArray = Object.entries(txns).map(([id, t]) => ({ id, ...t })).reverse();
+        txnArray.forEach(txn => {
+          transactionList.appendChild(createTransactionItem(txn));
+        });
+      });
+    }
+  });
+
+  function formatCurrency(amount) {
+    return '₹' + amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+  }
+
+  function pulseElement(el) {
+    el.classList.add('pulse');
+    setTimeout(() => el.classList.remove('pulse'), 500);
+  }
+
+  function createTransactionItem(transaction) {
+    const item = document.createElement('div');
+    item.className = 'transaction-item';
+
+    let iconClass = 'fas fa-question-circle';
+    let iconBg = 'recharge-icon';
+    let amountClass = 'credit';
+
+    if (transaction.type === 'recharge') {
+      iconClass = 'fas fa-arrow-down';
+      iconBg = 'recharge-icon';
+      amountClass = 'credit';
+    } else if (transaction.type === 'withdraw') {
+      iconClass = 'fas fa-arrow-up';
+      iconBg = 'withdraw-icon';
+      amountClass = 'debit';
+    } else if (transaction.type === 'winning') {
+      iconClass = 'fas fa-trophy';
+      iconBg = 'winning-icon';
+      amountClass = 'credit';
+    }
+
+    const date = new Date(transaction.timestamp);
+    const dateStr = date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
+    item.innerHTML = `
+      <div class="transaction-icon ${iconBg}"><i class="${iconClass}"></i></div>
+      <div class="transaction-details">
+        <div class="transaction-title">${transaction.description || 'Transaction'}</div>
+        <div class="transaction-date">${dateStr}</div>
+      </div>
+      <div class="transaction-amount ${amountClass}">
+        ${transaction.type === 'withdraw' ? '-' : '+'}${formatCurrency(transaction.amount)}
+      </div>
+    `;
+    return item;
+  }
+
+  btnRecharge.onclick = () => location.href = "recharge.html";
+  btnWithdraw.onclick = () => location.href = "withdraw.html";
+</script>
+
 
 </body>
 </html>
