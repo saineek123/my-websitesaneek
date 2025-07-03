@@ -476,7 +476,7 @@
       </div>
     </div>
   </div>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+ <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 
@@ -491,12 +491,35 @@
   const db = firebase.database();
   const auth = firebase.auth();
 
-  auth.signInAnonymously().catch(console.error);
+  let userId = localStorage.getItem("userId");
 
+  if (!userId) {
+    auth.signInAnonymously().then(() => {
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          userId = user.uid;
+          localStorage.setItem("userId", userId);
+        }
+      });
+    });
+  }
+
+  // ✅ Amount Form Submit
+  document.getElementById('amountForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const amount = parseFloat(document.getElementById("amount").value);
+    if (isNaN(amount) || amount < 100) {
+      alert("Minimum amount is ₹100");
+      return;
+    }
+    document.getElementById("displayAmount").innerText = amount.toFixed(2);
+    document.getElementById("paymentSection").style.display = "block";
+  });
+
+  // ✅ Recharge Request Submit
   document.getElementById('rechargeForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const userId = localStorage.getItem("userId");
     const amount = parseFloat(document.getElementById("amount").value);
     const utr = document.getElementById("utr").value.trim();
 
@@ -511,38 +534,45 @@
     }
 
     if (!utr) {
-      alert("Please enter UTR.");
+      alert("Please enter valid UTR / Transaction ID");
       return;
     }
 
     const rechargeRequest = {
-      userId: userId,
       amount: amount,
       utr: utr,
       status: "pending",
       timestamp: Date.now(),
       type: "recharge",
-      description: "Wallet recharge request"
+      description: "User recharge request"
     };
 
     try {
-      // ✅ Pushing to ROOT /recharges — not under users/
-      await db.ref("recharges").push(rechargeRequest);
+      // ✅ User writes to their own node — rules allow this
+      await db.ref(`users/${userId}/rechargeRequests`).push(rechargeRequest);
+
       document.getElementById("successMsg").style.display = "block";
       document.getElementById("rechargeForm").reset();
     } catch (err) {
       console.error(err);
-      alert("Error: " + err.message);
+      alert("Something went wrong: " + err.message);
     }
   });
 
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      localStorage.setItem("userId", user.uid);
-    }
+  // ✅ Show file name when screenshot selected
+  document.getElementById("screenshot").addEventListener("change", function () {
+    const fileName = this.files[0] ? this.files[0].name : "No file selected";
+    document.getElementById("fileName").innerText = fileName;
   });
+
+  // ✅ Copy UPI ID
+  function copyUpi() {
+    const upi = document.getElementById("fixedUpi").innerText;
+    navigator.clipboard.writeText(upi).then(() => {
+      alert("UPI ID copied: " + upi);
+    });
+  }
 </script>
-
 
 </body>
 </html>
