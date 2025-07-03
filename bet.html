@@ -480,46 +480,52 @@
     databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
     projectId: "betting-app-43800"
   };
-
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
+  const auth = firebase.auth();
 
-  // ✅ Get UID from LocalStorage
-  const userId = localStorage.getItem("userId");
+  const totalEl = document.getElementById("totalBalance");
+  const rechargeEl = document.getElementById("rechargeBalance");
+  const bonusEl = document.getElementById("bonusBalance");
+  const winningEl = document.getElementById("winningBalance");
 
-  if (!userId) {
-    window.location.href = "login.html";
-  } else {
-    const totalEl = document.getElementById("totalBalance");
-    const rechargeEl = document.getElementById("rechargeBalance");
-    const bonusEl = document.getElementById("bonusBalance");
-    const winningEl = document.getElementById("winningBalance");
+  auth.signInAnonymously().catch(console.error);
 
-    db.ref("users/" + userId + "/wallet").on("value", (snap) => {
-      const wallet = snap.val() || {};
-      const recharge = wallet.recharge || 0;
-      const bonus = wallet.bonus || 0;
-      const winning = wallet.winning || 0;
-      const total = recharge + bonus + winning;
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      const userId = user.uid;
+      localStorage.setItem("userId", userId);
 
-      totalEl.innerText = total.toFixed(2);
-      rechargeEl.innerText = recharge.toFixed(2);
-      bonusEl.innerText = bonus.toFixed(2);
-      winningEl.innerText = winning.toFixed(2);
-    });
+      const walletRef = db.ref("users/" + userId + "/wallet");
+      walletRef.once("value").then(snap => {
+        if (!snap.exists()) {
+          walletRef.set({ recharge: 1000, bonus: 100, winning: 0 });
+        }
+      });
 
-    loadMatches();
-  }
+      walletRef.on("value", (snap) => {
+        const wallet = snap.val() || {};
+        const recharge = wallet.recharge || 0;
+        const bonus = wallet.bonus || 0;
+        const winning = wallet.winning || 0;
+        const total = recharge + bonus + winning;
 
-  function logout() {
-    localStorage.removeItem("userId");
-    window.location.href = "login.html";
-  }
+        totalEl.innerText = total.toFixed(2);
+        rechargeEl.innerText = recharge.toFixed(2);
+        bonusEl.innerText = bonus.toFixed(2);
+        winningEl.innerText = winning.toFixed(2);
+      });
+
+      loadMatches(userId);
+    } else {
+      window.location.href = "login.html";
+    }
+  });
 
   const selectedBets = {};
   const matches = [];
 
-  function loadMatches() {
+  function loadMatches(userId) {
     db.ref("matches").on("value", (snapshot) => {
       matches.length = 0;
       snapshot.forEach((child) => {
@@ -529,11 +535,11 @@
           matches.push(data);
         }
       });
-      renderMatches();
+      renderMatches(userId);
     });
   }
 
-  function renderMatches() {
+  function renderMatches(userId) {
     const container = document.getElementById("matchesContainer");
     container.innerHTML = "";
 
@@ -559,7 +565,7 @@
           <i class="fas fa-coins"></i>
           <input type="number" id="amount-${match.id}" placeholder="Enter amount">
         </div>
-        <button class="bet-btn" onclick="placeBet('${match.id}')">
+        <button class="bet-btn" onclick="placeBet('${match.id}', '${userId}')">
           <i class="fas fa-check-circle"></i> Place Bet
         </button>
         <div class="selected-team" id="selected-${match.id}">
@@ -570,7 +576,7 @@
     });
   }
 
-  function selectTeam(matchId, teamName, rate) {
+  window.selectTeam = (matchId, teamName, rate) => {
     document.getElementById(`btn-${matchId}-1`).classList.remove('selected');
     document.getElementById(`btn-${matchId}-2`).classList.remove('selected');
 
@@ -581,30 +587,20 @@
     document.getElementById(`selected-${matchId}`).innerHTML = `
       <i class="fas fa-check-circle"></i> Selected: ${teamName} @${rate}
     `;
-  }
+  };
 
-  function placeBet(matchId) {
+  window.placeBet = (matchId, userId) => {
     const amount = parseFloat(document.getElementById(`amount-${matchId}`).value);
     const selected = selectedBets[matchId];
 
-    if (!selected) {
-      showNotification("Please select a team first!", true);
-      return;
-    }
-
-    if (isNaN(amount) || amount <= 0) {
-      showNotification("Please enter a valid amount!", true);
-      return;
-    }
+    if (!selected) return showNotification("Please select a team first!", true);
+    if (isNaN(amount) || amount <= 0) return showNotification("Please enter a valid amount!", true);
 
     db.ref("users/" + userId + "/wallet").once("value").then((snap) => {
       const wallet = snap.val() || {};
-      const totalBalance = (wallet.recharge || 0) + (wallet.bonus || 0) + (wallet.winning || 0);
+      let totalBalance = (wallet.recharge || 0) + (wallet.bonus || 0) + (wallet.winning || 0);
 
-      if (totalBalance < amount) {
-        showNotification("Insufficient balance!", true);
-        return;
-      }
+      if (totalBalance < amount) return showNotification("Insufficient balance!", true);
 
       const match = matches.find(m => m.id === matchId);
       const returnAmount = (amount * selected.rate).toFixed(2);
@@ -615,44 +611,25 @@
         rate: selected.rate,
         amount: amount,
         return: returnAmount,
-        time: new Date().toLocaleString(),
+        time: new Date().toISOString(),
         result: "pending"
       };
 
       db.ref("users/" + userId + "/bets").push(betData);
 
-      let amountLeft = amount;
-      let winningLeft = wallet.winning || 0;
-      let bonusLeft = wallet.bonus || 0;
-      let rechargeLeft = wallet.recharge || 0;
+      let amt = amount;
 
-      if (winningLeft >= amountLeft) {
-        winningLeft -= amountLeft;
-        amountLeft = 0;
-      } else {
-        amountLeft -= winningLeft;
-        winningLeft = 0;
-      }
+      let winning = wallet.winning || 0;
+      let bonus = wallet.bonus || 0;
+      let recharge = wallet.recharge || 0;
 
-      if (amountLeft > 0) {
-        if (bonusLeft >= amountLeft) {
-          bonusLeft -= amountLeft;
-          amountLeft = 0;
-        } else {
-          amountLeft -= bonusLeft;
-          bonusLeft = 0;
-        }
-      }
+      if (winning >= amt) { winning -= amt; amt = 0; }
+      else { amt -= winning; winning = 0; }
 
-      if (amountLeft > 0) {
-        rechargeLeft -= amountLeft;
-      }
+      if (amt > 0) { if (bonus >= amt) { bonus -= amt; amt = 0; } else { amt -= bonus; bonus = 0; } }
+      if (amt > 0) recharge -= amt;
 
-      db.ref("users/" + userId + "/wallet").set({
-        recharge: rechargeLeft,
-        bonus: bonusLeft,
-        winning: winningLeft
-      });
+      db.ref("users/" + userId + "/wallet").set({ recharge, bonus, winning });
 
       showNotification(`✅ Bet placed on ${selected.team} for ₹${amount}. Return: ₹${returnAmount}`);
 
@@ -666,7 +643,7 @@
         delete selectedBets[matchId];
       }, 2000);
     });
-  }
+  };
 
   function showNotification(msg, isError = false) {
     const n = document.getElementById("notification");
