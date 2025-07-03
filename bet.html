@@ -492,18 +492,25 @@
 
   let currentWallet = { recharge: 0, bonus: 0, winning: 0 };
 
-  auth.signInAnonymously().then(() => {
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        userId = user.uid;
-        localStorage.setItem("userId", userId);
-        listenWallet();
-        loadMatches();
-      } else {
-        window.location.href = "login.html";
-      }
+  if (userId) {
+    // Agar localStorage mein ID hai to wahi use karo
+    listenWallet();
+    loadMatches();
+  } else {
+    // Agar nahi hai to anonymous sign in karo
+    auth.signInAnonymously().then(() => {
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          userId = user.uid;
+          localStorage.setItem("userId", userId);
+          listenWallet();
+          loadMatches();
+        } else {
+          window.location.href = "login.html";
+        }
+      });
     });
-  });
+  }
 
   function listenWallet() {
     db.ref("users/" + userId + "/wallet").on("value", snap => {
@@ -619,6 +626,7 @@
     window.location.href = "login.html";
   }
 </script>
+
 
 </body>
 </html>
