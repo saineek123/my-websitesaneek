@@ -523,10 +523,10 @@
       <a href="index.html"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
     </div>
   </div>
-<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
@@ -544,7 +544,6 @@
     if (user) {
       const userId = user.uid;
 
-      // ✅ यही UID हर जगह यूज करो
       db.ref(`users/${userId}/wallet`).on("value", snap => {
         const wallet = snap.val() || {};
         winningBalance = wallet.winning || 0;
@@ -559,10 +558,17 @@
         const ifsc = document.getElementById("ifsc").value.trim();
         const holder = document.getElementById("accountHolderName").value.trim();
 
+        if (amount < 100) {
+          alert("Minimum ₹100 withdrawal required");
+          return;
+        }
+
         if (amount > winningBalance) {
           alert("Not enough balance");
           return;
         }
+
+        document.getElementById("processingOverlay").classList.add("show");
 
         db.ref(`users/${userId}/wallet`).transaction(wallet => {
           if (wallet && wallet.winning >= amount) {
@@ -571,7 +577,8 @@
           }
           return;
         }).then(() => {
-          return db.ref(`withdraws/${userId}`).push({
+          // ✅ Save inside user's node — allowed by rules
+          return db.ref(`users/${userId}/withdrawRequests`).push({
             amount,
             account: accountNumber,
             ifsc,
@@ -580,18 +587,38 @@
             status: "pending"
           });
         }).then(() => {
-          alert("Withdrawal request submitted!");
+          showNotification("Success", "Withdrawal request submitted!", true);
           document.getElementById("withdrawForm").reset();
         }).catch(err => {
-          alert(err.message);
+          showNotification("Error", err.message, false);
+        }).finally(() => {
+          document.getElementById("processingOverlay").classList.remove("show");
         });
+
       });
 
     } else {
-      // ✅ If not logged in, send to login
       window.location.href = "login.html";
     }
   });
+
+  function showNotification(title, message, success = true) {
+    const notification = document.getElementById("notification");
+    const icon = notification.querySelector(".notification-icon i");
+    const titleEl = document.getElementById("notification-title");
+    const msgEl = document.getElementById("notification-message");
+
+    notification.classList.remove("success", "error");
+    notification.classList.add(success ? "success" : "error");
+    icon.className = success ? "fas fa-check-circle" : "fas fa-exclamation-circle";
+    titleEl.textContent = title;
+    msgEl.textContent = message;
+
+    notification.classList.add("show");
+    setTimeout(() => {
+      notification.classList.remove("show");
+    }, 3000);
+  }
 </script>
 
 
