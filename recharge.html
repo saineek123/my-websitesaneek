@@ -476,91 +476,113 @@
       </div>
     </div>
   </div>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
-  <script>
-    // File name update
-    document.getElementById('screenshot').addEventListener('change', function(e) {
-      const fileName = e.target.files.length ? e.target.files[0].name : "No file selected";
-      document.getElementById('fileName').textContent = fileName;
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+    authDomain: "betting-app-43800.firebaseapp.com",
+    databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+    projectId: "betting-app-43800"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // File name update
+  document.getElementById('screenshot').addEventListener('change', function(e) {
+    const fileName = e.target.files.length ? e.target.files[0].name : "No file selected";
+    document.getElementById('fileName').textContent = fileName;
+  });
+
+  // Copy UPI
+  function copyUpi() {
+    const upiText = document.getElementById("fixedUpi").innerText;
+    navigator.clipboard.writeText(upiText).then(() => {
+      const copyBtn = document.querySelector('.copy-btn');
+      copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+      copyBtn.style.background = 'rgba(76, 175, 80, 0.2)';
+      copyBtn.style.color = '#4caf50';
+
+      setTimeout(() => {
+        copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+        copyBtn.style.background = 'rgba(0, 188, 212, 0.2)';
+        copyBtn.style.color = '#00bcd4';
+      }, 2000);
     });
+  }
 
-    // Copy UPI
-    function copyUpi() {
-      const upiText = document.getElementById("fixedUpi").innerText;
-      navigator.clipboard.writeText(upiText).then(() => {
-        const copyBtn = document.querySelector('.copy-btn');
-        copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-        copyBtn.style.background = 'rgba(76, 175, 80, 0.2)';
-        copyBtn.style.color = '#4caf50';
+  // Show payment section
+  document.getElementById("amountForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    const amount = parseFloat(document.getElementById("amount").value);
+    if (amount >= 100) {
+      document.getElementById("displayAmount").textContent = amount.toFixed(2);
+      const qr = document.getElementById("qrCode");
+      const upiId = "amit.894@ptyes";
+      const upiString = `upi://pay?pa=${upiId}&am=${amount}&cu=INR`;
+      const encodedUPIString = encodeURIComponent(upiString);
+      qr.src = `png.jpg?data=${encodedUPIString}`;
 
-        setTimeout(() => {
-          copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy';
-          copyBtn.style.background = 'rgba(0, 188, 212, 0.2)';
-          copyBtn.style.color = '#00bcd4';
-        }, 2000);
-      });
+      document.getElementById("paymentSection").style.display = "block";
+      document.getElementById("paymentSection").scrollIntoView({ behavior: 'smooth' });
+    } else {
+      alert("Minimum amount is ₹100");
+    }
+  });
+
+  // Handle recharge
+  document.getElementById("rechargeForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const userId = localStorage.getItem("userId");
+    if (!userId) {
+      alert("Please login first.");
+      window.location.href = "login.html";
+      return;
     }
 
-    // Show payment section
-    document.getElementById("amountForm").addEventListener("submit", function(e) {
-      e.preventDefault();
-      const amount = parseFloat(document.getElementById("amount").value);
-      if (amount >= 100) {
-        // Update amount display
-        document.getElementById("displayAmount").textContent = amount.toFixed(2);
-        
-        // Update dynamic QR code
-        const qr = document.getElementById("qrCode");
-        // Generate QR code using Google Charts API
-        const upiId = "amit.894@ptyes";
-        const upiString = `upi://pay?pa=${upiId}&am=${amount}&cu=INR`;
-        const encodedUPIString = encodeURIComponent(upiString);
-        qr.src = `png.jpg?data=${encodedUPIString}`;
+    const amount = parseFloat(document.getElementById("amount").value);
+    const utr = document.getElementById("utr").value.trim();
+    const screenshot = document.getElementById("screenshot").files[0];
 
-        document.getElementById("paymentSection").style.display = "block";
-        document.getElementById("paymentSection").scrollIntoView({ behavior: 'smooth' });
-      } else {
-        alert("Minimum amount is ₹100");
-      }
+    if (!amount || !utr || !screenshot) {
+      alert("Please fill all fields correctly.");
+      return;
+    }
+
+    const submitBtn = document.getElementById("submitRechargeBtn");
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    submitBtn.disabled = true;
+
+    // ✅ Create recharge request in DB
+    const rechargeRequest = {
+      amount: amount,
+      utr: utr,
+      status: "pending",
+      timestamp: Date.now(),
+      type: "recharge",
+      description: "Wallet recharge request"
+    };
+
+    db.ref("users/" + userId + "/recharges").push(rechargeRequest).then(() => {
+      db.ref("users/" + userId + "/transactions").push(rechargeRequest);
+
+      document.getElementById("successMsg").style.display = "block";
+      document.getElementById("rechargeForm").reset();
+      document.getElementById("fileName").textContent = "No file selected";
+      submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Recharge Request';
+      submitBtn.disabled = false;
+
+      document.getElementById("successMsg").scrollIntoView({ behavior: 'smooth' });
+    }).catch(err => {
+      alert("Error: " + err.message);
+      submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Recharge Request';
+      submitBtn.disabled = false;
     });
+  });
+</script>
 
-    // Handle recharge
-    document.getElementById("rechargeForm").addEventListener("submit", function (e) {
-      e.preventDefault();
-
-      const userId = localStorage.getItem("userId");
-      if (!userId) {
-        alert("Please login first.");
-        window.location.href = "login.html";
-        return;
-      }
-
-      const amount = parseFloat(document.getElementById("amount").value);
-      const screenshot = document.getElementById("screenshot").files[0];
-      const utr = document.getElementById("utr").value;
-
-      if (!amount || !screenshot || !utr) {
-        alert("Please fill all fields.");
-        return;
-      }
-
-      const submitBtn = document.getElementById("submitRechargeBtn");
-      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-      submitBtn.disabled = true;
-
-      // Simulate form submission
-      setTimeout(() => {
-        document.getElementById("successMsg").style.display = "block";
-        document.getElementById("rechargeForm").reset();
-        document.getElementById("fileName").textContent = "No file selected";
-        submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Recharge Request';
-        submitBtn.disabled = false;
-        
-        // Scroll to success message
-        document.getElementById("successMsg").scrollIntoView({ behavior: 'smooth' });
-      }, 1500);
-    });
-  </script>
 
 </body>
 </html>
