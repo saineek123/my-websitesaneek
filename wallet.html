@@ -425,6 +425,7 @@
   </div>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 
 <script>
   const firebaseConfig = {
@@ -435,6 +436,7 @@
   };
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
+  const auth = firebase.auth();
 
   const rechargeEl = document.getElementById('recharge');
   const bonusEl = document.getElementById('bonus');
@@ -442,72 +444,88 @@
   const totalEl = document.getElementById('total');
   const transactionList = document.getElementById('transactionList');
 
-  // ✅ Get UID from LocalStorage
-  const userId = localStorage.getItem("userId");
+  auth.signInAnonymously().catch(console.error);
 
-  if (!userId) {
-    window.location.href = "login.html";
-  } else {
-    db.ref("users/" + userId).on("value", snapshot => {
-      const userData = snapshot.val() || {};
-      const wallet = userData.wallet || {};
-      const recharge = wallet.recharge || 0;
-      const bonus = wallet.bonus || 0;
-      const winning = wallet.winning || 0;
-      const total = recharge + bonus + winning;
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      const userId = user.uid;
+      localStorage.setItem("userId", userId);
 
-      rechargeEl.textContent = `₹${recharge.toFixed(2)}`;
-      bonusEl.textContent = `₹${bonus.toFixed(2)}`;
-      winningEl.textContent = `₹${winning.toFixed(2)}`;
-      totalEl.textContent = `₹${total.toFixed(2)}`;
+      // Ensure wallet exists if new
+      const walletRef = db.ref("users/" + userId + "/wallet");
+      walletRef.once("value").then(snap => {
+        if (!snap.exists()) {
+          walletRef.set({ recharge: 1000, bonus: 100, winning: 0 });
+        }
+      });
 
-      pulseElement(rechargeEl.parentElement);
-      pulseElement(bonusEl.parentElement);
-      pulseElement(winningEl.parentElement);
-      pulseElement(totalEl);
-    });
+      // Live wallet listener
+      walletRef.on("value", snapshot => {
+        const wallet = snapshot.val() || {};
+        const recharge = wallet.recharge || 0;
+        const bonus = wallet.bonus || 0;
+        const winning = wallet.winning || 0;
+        const total = recharge + bonus + winning;
 
-    db.ref("users/" + userId + "/transactions").limitToLast(3).on("value", snapshot => {
-      const txns = snapshot.val();
-      transactionList.innerHTML = '';
-      if (txns) {
-        Object.entries(txns).reverse().forEach(([id, txn]) => {
-          const el = document.createElement('div');
-          el.className = 'transaction-item';
+        rechargeEl.textContent = `₹${recharge.toFixed(2)}`;
+        bonusEl.textContent = `₹${bonus.toFixed(2)}`;
+        winningEl.textContent = `₹${winning.toFixed(2)}`;
+        totalEl.textContent = `₹${total.toFixed(2)}`;
 
-          const iconClass = txn.type === 'withdraw'
-            ? 'withdraw-icon'
-            : txn.type === 'winning'
-              ? 'winning-icon'
-              : 'recharge-icon';
+        pulseElement(rechargeEl.parentElement);
+        pulseElement(bonusEl.parentElement);
+        pulseElement(winningEl.parentElement);
+        pulseElement(totalEl);
+      });
 
-          const icon = txn.type === 'withdraw'
-            ? '<i class="fas fa-arrow-up"></i>'
-            : txn.type === 'winning'
-              ? '<i class="fas fa-trophy"></i>'
-              : '<i class="fas fa-arrow-down"></i>';
+      // Recent transactions listener
+      db.ref("users/" + userId + "/transactions").limitToLast(3).on("value", snapshot => {
+        const txns = snapshot.val();
+        transactionList.innerHTML = '';
+        if (txns) {
+          Object.entries(txns).reverse().forEach(([id, txn]) => {
+            const el = document.createElement('div');
+            el.className = 'transaction-item';
 
-          const amountClass = txn.type === 'withdraw' ? 'debit' : 'credit';
+            const iconClass = txn.type === 'withdraw'
+              ? 'withdraw-icon'
+              : txn.type === 'winning'
+                ? 'winning-icon'
+                : 'recharge-icon';
 
-          const date = new Date(txn.timestamp).toLocaleDateString();
+            const icon = txn.type === 'withdraw'
+              ? '<i class="fas fa-arrow-up"></i>'
+              : txn.type === 'winning'
+                ? '<i class="fas fa-trophy"></i>'
+                : '<i class="fas fa-arrow-down"></i>';
 
-          el.innerHTML = `
-            <div class="transaction-icon ${iconClass}">${icon}</div>
-            <div class="transaction-details">
-              <div class="transaction-title">${txn.description || txn.type}</div>
-              <div class="transaction-date">${date}</div>
-            </div>
-            <div class="transaction-amount ${amountClass}">
-              ${txn.type === 'withdraw' ? '-' : '+'}₹${txn.amount}
-            </div>
-          `;
-          transactionList.appendChild(el);
-        });
-      } else {
-        transactionList.innerHTML = '<div class="no-transactions">No recent transactions</div>';
-      }
-    });
-  }
+            const amountClass = txn.type === 'withdraw' ? 'debit' : 'credit';
+
+            const date = txn.timestamp
+              ? new Date(txn.timestamp).toLocaleString()
+              : '';
+
+            el.innerHTML = `
+              <div class="transaction-icon ${iconClass}">${icon}</div>
+              <div class="transaction-details">
+                <div class="transaction-title">${txn.description || txn.type}</div>
+                <div class="transaction-date">${date}</div>
+              </div>
+              <div class="transaction-amount ${amountClass}">
+                ${txn.type === 'withdraw' ? '-' : '+'}₹${txn.amount}
+              </div>
+            `;
+            transactionList.appendChild(el);
+          });
+        } else {
+          transactionList.innerHTML = '<div class="no-transactions">No recent transactions</div>';
+        }
+      });
+
+    } else {
+      window.location.href = "login.html";
+    }
+  });
 
   function pulseElement(el) {
     el.classList.add('pulse');
@@ -517,6 +535,7 @@
   document.getElementById('btnRecharge').onclick = () => location.href = "recharge.html";
   document.getElementById('btnWithdraw').onclick = () => location.href = "withdraw.html";
 </script>
+
 
 
 </body>
