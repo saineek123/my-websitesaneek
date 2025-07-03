@@ -705,349 +705,260 @@
   </div>
   
   <div id="notification" class="notification"></div>
-  
-  <script>
-    // Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
-      authDomain: "betting-app-43800.firebaseapp.com",
-      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
-      projectId: "betting-app-43800",
-      storageBucket: "betting-app-43800.appspot.com",
-      messagingSenderId: "752263307747",
-      appId: "1:752263307747:web:183e06d62bc5920fc700d6"
-    };
-    
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    
-    // Game state variables
-    let gameActive = false;
-    let currentBet = 0;
-    let minePositions = [];
-    let revealedCells = Array(25).fill(false);
-    let revealedCount = 0;
-    let multiplier = 1.00;
-    let minesCount = 5;
-    let gemsRevealed = 0;
-    let gamesPlayed = 0;
-    let gamesWon = 0;
-    let totalWon = 0;
-    let cashoutAvailable = false;
-    let userId = null;
-    
-    // Wallet balances
-    let recharge = 0;
-    let bonus = 0;
-    let winning = 0;
-    
-    // DOM elements
-    const grid = document.getElementById('grid');
-    const gemsRevealedElement = document.getElementById('gemsRevealed');
-    const multiplierTextElement = document.getElementById('multiplierText');
-    const mineCountTextElement = document.getElementById('mineCountText');
-    const gamesPlayedElement = document.getElementById('gamesPlayed');
-    const gamesWonElement = document.getElementById('gamesWon');
-    const totalWonElement = document.getElementById('totalWon');
-    const userNameElement = document.getElementById('userName');
-    const userAvatarElement = document.getElementById('userAvatar');
-    
-    // Initialize the game grid
-    function initializeGrid() {
-      grid.innerHTML = '';
-      for (let i = 0; i < 25; i++) {
-        const cell = document.createElement('div');
-        cell.className = 'cell';
-        cell.innerHTML = '?';
-        cell.addEventListener('click', () => revealCell(i));
-        
-        grid.appendChild(cell);
-      }
+ <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+
+<script>
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+    authDomain: "betting-app-43800.firebaseapp.com",
+    databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+    projectId: "betting-app-43800"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const auth = firebase.auth();
+
+  // Game variables
+  let userId = null;
+  let recharge = 0;
+  let bonus = 0;
+  let winning = 0;
+
+  let gameActive = false;
+  let currentBet = 0;
+  let minePositions = [];
+  let revealedCells = Array(25).fill(false);
+  let revealedCount = 0;
+  let multiplier = 1.00;
+  let minesCount = 5;
+  let gemsRevealed = 0;
+  let gamesPlayed = 0;
+  let gamesWon = 0;
+  let totalWon = 0;
+  let cashoutAvailable = false;
+
+  const grid = document.getElementById('grid');
+  const gemsRevealedElement = document.getElementById('gemsRevealed');
+  const multiplierTextElement = document.getElementById('multiplierText');
+  const mineCountTextElement = document.getElementById('mineCountText');
+  const gamesPlayedElement = document.getElementById('gamesPlayed');
+  const gamesWonElement = document.getElementById('gamesWon');
+  const totalWonElement = document.getElementById('totalWon');
+  const userNameElement = document.getElementById('userName');
+  const userAvatarElement = document.getElementById('userAvatar');
+
+  function initializeGrid() {
+    grid.innerHTML = '';
+    for (let i = 0; i < 25; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.innerHTML = '?';
+      cell.addEventListener('click', () => revealCell(i));
+      grid.appendChild(cell);
     }
-    
-    // Load user balance from Firebase
-    function loadUserBalance() {
-      userId = localStorage.getItem('userId');
-      if (!userId) {
-        alert("Please login first");
-        window.location.href = "login.html";
-        return;
-      }
-      
-      // Load user data
-      db.ref('users/' + userId).once('value').then(snapshot => {
-        const userData = snapshot.val();
-        if (userData) {
-          userNameElement.textContent = userData.name || 'User';
-          userAvatarElement.textContent = userData.name ? userData.name.charAt(0) : 'U';
-          
-          // Load wallet data
-          db.ref('users/' + userId + '/wallet').on('value', walletSnapshot => {
-            const wallet = walletSnapshot.val();
-            if (wallet) {
-              recharge = wallet.recharge || 0;
-              bonus = wallet.bonus || 0;
-              winning = wallet.winning || 0;
-              updateBalanceDisplay();
-            }
-          });
+  }
+
+  function updateBalanceDisplay() {
+    const total = recharge + bonus + winning;
+    document.getElementById('totalBalance').textContent = total.toFixed(2);
+    document.getElementById('totalBalanceDisplay').textContent = total.toFixed(2);
+    document.getElementById('rechargeBalance').textContent = recharge.toFixed(2);
+    document.getElementById('bonusBalance').textContent = bonus.toFixed(2);
+    document.getElementById('winningBalance').textContent = winning.toFixed(2);
+  }
+
+  auth.onAuthStateChanged(user => {
+    if (!user) {
+      window.location.href = "login.html";
+    } else {
+      userId = user.uid;
+      userNameElement.textContent = user.displayName || "User";
+      userAvatarElement.textContent = user.displayName ? user.displayName.charAt(0) : "U";
+
+      db.ref('users/' + userId + '/wallet').on('value', snapshot => {
+        const wallet = snapshot.val();
+        if (wallet) {
+          recharge = wallet.recharge || 0;
+          bonus = wallet.bonus || 0;
+          winning = wallet.winning || 0;
+          updateBalanceDisplay();
         }
       });
     }
-    
-    // Update balance display
-    function updateBalanceDisplay() {
-      const total = recharge + bonus + winning;
-      document.getElementById('totalBalance').textContent = total.toFixed(2);
-      document.getElementById('totalBalanceDisplay').textContent = total.toFixed(2);
-      document.getElementById('rechargeBalance').textContent = recharge.toFixed(2);
-      document.getElementById('bonusBalance').textContent = bonus.toFixed(2);
-      document.getElementById('winningBalance').textContent = winning.toFixed(2);
+  });
+
+  function deductBet(betAmount) {
+    let amountToDeduct = betAmount;
+    if (recharge >= amountToDeduct) {
+      recharge -= amountToDeduct;
+      amountToDeduct = 0;
+    } else {
+      amountToDeduct -= recharge;
+      recharge = 0;
     }
-    
-    // Deduct bet from wallet
-    function deductBet(betAmount) {
-      let amountToDeduct = betAmount;
-      
-      // Deduct from recharge first
-      if (recharge >= amountToDeduct) {
-        recharge -= amountToDeduct;
-        amountToDeduct = 0;
-      } else if (recharge > 0) {
-        amountToDeduct -= recharge;
-        recharge = 0;
-      }
-      
-      // Then deduct from bonus
-      if (bonus >= amountToDeduct && amountToDeduct > 0) {
+    if (amountToDeduct > 0) {
+      if (bonus >= amountToDeduct) {
         bonus -= amountToDeduct;
         amountToDeduct = 0;
-      } else if (bonus > 0 && amountToDeduct > 0) {
+      } else {
         amountToDeduct -= bonus;
         bonus = 0;
       }
-      
-      // Finally deduct from winning
-      if (winning >= amountToDeduct && amountToDeduct > 0) {
+    }
+    if (amountToDeduct > 0) {
+      if (winning >= amountToDeduct) {
         winning -= amountToDeduct;
-      } else if (amountToDeduct > 0) {
-        // Not enough balance
+      } else {
         return false;
       }
-      
-      // Update Firebase
-      db.ref('users/' + userId + '/wallet').update({
-        recharge: recharge,
-        bonus: bonus,
-        winning: winning
-      });
-      
-      return true;
     }
-    
-    // Add winnings to wallet
-    function addWinnings(amount) {
-      winning += amount;
-      
-      // Update Firebase
-      db.ref('users/' + userId + '/wallet').update({
-        winning: winning
-      });
+    db.ref('users/' + userId + '/wallet').update({
+      recharge: recharge,
+      bonus: bonus,
+      winning: winning
+    });
+    return true;
+  }
+
+  function addWinnings(amount) {
+    winning += amount;
+    db.ref('users/' + userId + '/wallet').update({ winning: winning });
+  }
+
+  function startGame() {
+    const betAmount = parseFloat(document.getElementById('betAmount').value);
+    minesCount = parseInt(document.getElementById('mineCount').value);
+
+    if (isNaN(betAmount) || betAmount <= 0) {
+      showNotification('Invalid bet amount', 'error');
+      return;
     }
-    
-    // Start a new game
-    function startGame() {
-      const betAmount = parseFloat(document.getElementById('betAmount').value);
-      minesCount = parseInt(document.getElementById('mineCount').value);
-      
-      if (isNaN(betAmount) || betAmount <= 0) {
-        showNotification('Please enter a valid bet amount', 'error');
-        return;
-      }
-      
-      const totalBalance = recharge + bonus + winning;
-      if (betAmount > totalBalance) {
-        showNotification('Insufficient balance', 'error');
-        return;
-      }
-      
-      // Deduct bet from wallet
-      if (!deductBet(betAmount)) {
-        showNotification('Failed to deduct bet amount', 'error');
-        return;
-      }
-      
-      currentBet = betAmount;
-      gameActive = true;
-      revealedCount = 0;
-      gemsRevealed = 0;
-      multiplier = 1.00;
-      revealedCells = Array(25).fill(false);
-      cashoutAvailable = true;
-      
-      // Generate mine positions
-      minePositions = [];
-      while (minePositions.length < minesCount) {
-        const rand = Math.floor(Math.random() * 25);
-        if (!minePositions.includes(rand)) {
-          minePositions.push(rand);
-        }
-      }
-      
-      // Reset the grid
-      initializeGrid();
-      
-      // Update UI
-      gemsRevealedElement.textContent = gemsRevealed;
-      multiplierTextElement.textContent = `x${multiplier.toFixed(2)}`;
-      mineCountTextElement.textContent = minesCount;
-      
-      showNotification('Game started! Click on cells to reveal gems', 'win');
+
+    if (betAmount > (recharge + bonus + winning)) {
+      showNotification('Insufficient balance', 'error');
+      return;
     }
-    
-    // Reveal a cell
-    function revealCell(index) {
-      if (!gameActive || revealedCells[index]) return;
-      
-      const cells = document.querySelectorAll('.cell');
-      const cell = cells[index];
-      
-      // Mark as revealed
-      revealedCells[index] = true;
-      revealedCount++;
-      
-      if (minePositions.includes(index)) {
-        // Mine revealed - game over
-        cell.innerHTML = '💣';
-        cell.classList.add('revealed', 'mine');
-        gameActive = false;
-        cashoutAvailable = false;
-        
-        // Show game over overlay
-        showNotification(`You hit a mine and lost ₹${currentBet.toFixed(2)}`, 'error');
-        
-        gamesPlayed++;
-        gamesPlayedElement.textContent = gamesPlayed;
-      } else {
-        // Gem revealed
-        cell.innerHTML = '💎';
-        cell.classList.add('revealed', 'safe');
-        
-        // Update game stats
-        gemsRevealed++;
-        multiplier = calculateMultiplier(gemsRevealed, minesCount);
-        
-        // Update UI
-        gemsRevealedElement.textContent = gemsRevealed;
-        multiplierTextElement.textContent = `x${multiplier.toFixed(2)}`;
-        multiplierTextElement.classList.add('pulse');
-        setTimeout(() => {
-          multiplierTextElement.classList.remove('pulse');
-        }, 500);
-        
-        // Check if all gems are revealed
-        if (revealedCount === 25 - minesCount) {
-          cashOut();
-        }
-      }
+
+    if (!deductBet(betAmount)) {
+      showNotification('Bet deduction failed', 'error');
+      return;
     }
-    
-    // Calculate multiplier based on gems revealed and mines count
-    function calculateMultiplier(gems, mines) {
-      // Base multiplier formula
-      const baseMultiplier = 1 + (mines / (25 - mines));
-      return Math.pow(baseMultiplier, gems);
+
+    currentBet = betAmount;
+    gameActive = true;
+    revealedCount = 0;
+    gemsRevealed = 0;
+    multiplier = 1.00;
+    revealedCells = Array(25).fill(false);
+    cashoutAvailable = true;
+
+    minePositions = [];
+    while (minePositions.length < minesCount) {
+      const rand = Math.floor(Math.random() * 25);
+      if (!minePositions.includes(rand)) minePositions.push(rand);
     }
-    
-    // Cash out winnings
-    function cashOut() {
-      if (!gameActive || !cashoutAvailable) {
-        showNotification('Cannot cash out at this time', 'error');
-        return;
-      }
-      
-      const winnings = currentBet * multiplier;
-      totalWon += winnings;
-      
-      // Add winnings to wallet
-      addWinnings(winnings);
-      
-      // Update stats
-      gamesPlayed++;
-      gamesWon++;
-      gamesPlayedElement.textContent = gamesPlayed;
-      gamesWonElement.textContent = gamesWon;
-      totalWonElement.textContent = `₹${totalWon.toFixed(2)}`;
-      
+
+    initializeGrid();
+    gemsRevealedElement.textContent = gemsRevealed;
+    multiplierTextElement.textContent = `x${multiplier.toFixed(2)}`;
+    mineCountTextElement.textContent = minesCount;
+
+    showNotification('Game Started!', 'win');
+  }
+
+  function revealCell(index) {
+    if (!gameActive || revealedCells[index]) return;
+
+    const cells = document.querySelectorAll('.cell');
+    const cell = cells[index];
+
+    revealedCells[index] = true;
+    revealedCount++;
+
+    if (minePositions.includes(index)) {
+      cell.innerHTML = '💣';
+      cell.classList.add('revealed', 'mine');
       gameActive = false;
       cashoutAvailable = false;
-      
-      showNotification(`Cashed out! You won ₹${winnings.toFixed(2)}`, 'win');
+      showNotification(`You hit a mine and lost ₹${currentBet.toFixed(2)}`, 'error');
+      gamesPlayed++;
+      gamesPlayedElement.textContent = gamesPlayed;
+    } else {
+      cell.innerHTML = '💎';
+      cell.classList.add('revealed', 'safe');
+      gemsRevealed++;
+      multiplier = calculateMultiplier(gemsRevealed, minesCount);
+      gemsRevealedElement.textContent = gemsRevealed;
+      multiplierTextElement.textContent = `x${multiplier.toFixed(2)}`;
+      multiplierTextElement.classList.add('pulse');
+      setTimeout(() => multiplierTextElement.classList.remove('pulse'), 500);
+      if (revealedCount === 25 - minesCount) cashOut();
     }
-    
-    // Claim daily bonus
-    function claimDailyBonus() {
-      // Check if the user has already claimed the bonus today  
-      const lastClaimed = localStorage.getItem('lastClaimedBonus');
-      const today = new Date().toISOString().split('T')[0]; 
-      
-      if (lastClaimed === today) {
-        showNotification('You have already claimed your daily bonus today!', 'error');
-        return;
-      }
-      
-      // Add bonus to wallet
-      const bonusAmount = 5;
-      bonus += bonusAmount;
-      
-      // Update Firebase
-      db.ref('users/' + userId + '/wallet').update({
-        bonus: bonus
-      });
-      
-      showNotification(`You have claimed your daily bonus of ₹${bonusAmount}!`, 'win');
-      
-      // Update last claimed date
-      localStorage.setItem('lastClaimedBonus', today);
+  }
+
+  function calculateMultiplier(gems, mines) {
+    const base = 1 + (mines / (25 - mines));
+    return Math.pow(base, gems);
+  }
+
+  function cashOut() {
+    if (!gameActive || !cashoutAvailable) {
+      showNotification('Cannot cash out now', 'error');
+      return;
     }
-    
-    // Logout
-    function logout() {
-      localStorage.removeItem('userId');
-      window.location.href = "login.html";
+    const winnings = currentBet * multiplier;
+    totalWon += winnings;
+    addWinnings(winnings);
+    gamesPlayed++;
+    gamesWon++;
+    gamesPlayedElement.textContent = gamesPlayed;
+    gamesWonElement.textContent = gamesWon;
+    totalWonElement.textContent = `₹${totalWon.toFixed(2)}`;
+    gameActive = false;
+    cashoutAvailable = false;
+    showNotification(`Cashed out! Won ₹${winnings.toFixed(2)}`, 'win');
+  }
+
+  function claimDailyBonus() {
+    const last = localStorage.getItem('lastClaimedBonus');
+    const today = new Date().toISOString().split('T')[0];
+    if (last === today) {
+      showNotification('Bonus already claimed today!', 'error');
+      return;
     }
-    
-    // Show notification function
-    function showNotification(message, type = "info") {
-      const notification = document.getElementById("notification");
-      notification.innerText = message;
-      notification.className = "notification";
-      
-      if (type === "error") {
-        notification.classList.add("error");
-      } else if (type === "win") {
-        notification.classList.add("win");
-      }
-      
-      notification.classList.add("show");
-      
-      setTimeout(() => {
-        notification.classList.remove("show");
-      }, 3000);
-    }
-    
-    // Initialize when page loads
-    document.addEventListener("DOMContentLoaded", function() {
-      initializeGrid();
-      loadUserBalance();
-      
-      // Set up mine count change handler
-      document.getElementById('mineCount').addEventListener('change', function() {
-        minesCount = parseInt(this.value);
-        mineCountTextElement.textContent = minesCount;
-      });
+    bonus += 5;
+    db.ref('users/' + userId + '/wallet').update({ bonus: bonus });
+    localStorage.setItem('lastClaimedBonus', today);
+    showNotification('₹5 Daily Bonus Claimed!', 'win');
+  }
+
+  function logout() {
+    auth.signOut().then(() => window.location.href = "login.html");
+  }
+
+  function showNotification(msg, type) {
+    const n = document.getElementById("notification");
+    n.innerText = msg;
+    n.className = "notification";
+    if (type === "error") n.classList.add("error");
+    if (type === "win") n.classList.add("win");
+    n.classList.add("show");
+    setTimeout(() => n.classList.remove("show"), 3000);
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    initializeGrid();
+    document.getElementById('mineCount').addEventListener('change', function () {
+      minesCount = parseInt(this.value);
+      mineCountTextElement.textContent = minesCount;
     });
-  </script>
+  });
+</script>
+
+  
 </body>
 </html>
