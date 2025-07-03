@@ -527,114 +527,73 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-
 <script>
-  // Notification system
-  function showNotification(title, message, isSuccess) {
-    const notification = document.getElementById('notification');
-    document.getElementById('notification-title').textContent = title;
-    document.getElementById('notification-message').textContent = message;
-
-    notification.className = 'notification';
-    notification.classList.add(isSuccess ? 'success' : 'error');
-
-    const icon = notification.querySelector('.notification-icon i');
-    icon.className = isSuccess ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
-
-    notification.classList.add('show');
-    setTimeout(() => { notification.classList.remove('show'); }, 5000);
-  }
-
-  function showProcessing(show) {
-    const overlay = document.getElementById('processingOverlay');
-    overlay.classList.toggle('show', show);
-  }
-
   const firebaseConfig = {
     apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
     authDomain: "betting-app-43800.firebaseapp.com",
     databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
     projectId: "betting-app-43800"
   };
-
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
   const auth = firebase.auth();
 
   let winningBalance = 0;
 
-  auth.signInAnonymously().catch(console.error);
   auth.onAuthStateChanged(user => {
     if (user) {
       const userId = user.uid;
 
-      // Load winning balance
+      // ✅ यही UID हर जगह यूज करो
       db.ref(`users/${userId}/wallet`).on("value", snap => {
         const wallet = snap.val() || {};
         winningBalance = wallet.winning || 0;
         document.getElementById("balanceAmount").textContent = "₹" + winningBalance.toFixed(2);
       });
 
-      // Submit withdraw
       document.getElementById("withdrawForm").addEventListener("submit", e => {
         e.preventDefault();
-        showProcessing(true);
 
         const amount = parseFloat(document.getElementById("amount").value);
         const accountNumber = document.getElementById("accountNumber").value.trim();
         const ifsc = document.getElementById("ifsc").value.trim();
         const holder = document.getElementById("accountHolderName").value.trim();
 
-        if (!amount || isNaN(amount) || amount < 100) {
-          showProcessing(false);
-          showNotification("Invalid Amount", "Minimum withdrawal is ₹100.", false);
-          return;
-        }
-
         if (amount > winningBalance) {
-          showProcessing(false);
-          showNotification("Insufficient Balance", "You don't have enough winnings.", false);
+          alert("Not enough balance");
           return;
         }
 
-        if (!accountNumber || !ifsc || !holder) {
-          showProcessing(false);
-          showNotification("Missing Details", "Please fill all bank details.", false);
+        db.ref(`users/${userId}/wallet`).transaction(wallet => {
+          if (wallet && wallet.winning >= amount) {
+            wallet.winning -= amount;
+            return wallet;
+          }
           return;
-        }
-
-        setTimeout(() => {
-          const withdrawRequest = {
+        }).then(() => {
+          return db.ref(`withdraws/${userId}`).push({
             amount,
             account: accountNumber,
             ifsc,
             holder,
             timestamp: Date.now(),
             status: "pending"
-          };
-
-          const walletRef = db.ref(`users/${userId}/wallet`);
-          walletRef.transaction(wallet => {
-            if (wallet && wallet.winning >= amount) {
-              wallet.winning -= amount;
-              return wallet;
-            }
-            return; // abort
-          }).then(() => {
-            return db.ref(`withdraws/${userId}`).push(withdrawRequest);
-          }).then(() => {
-            showProcessing(false);
-            showNotification("Request Sent", `✅ Withdrawal ₹${amount.toFixed(2)} submitted.`, true);
-            document.getElementById("withdrawForm").reset();
-          }).catch(err => {
-            showProcessing(false);
-            showNotification("Error", err.message, false);
           });
-        }, 2000);
+        }).then(() => {
+          alert("Withdrawal request submitted!");
+          document.getElementById("withdrawForm").reset();
+        }).catch(err => {
+          alert(err.message);
+        });
       });
+
+    } else {
+      // ✅ If not logged in, send to login
+      window.location.href = "login.html";
     }
   });
 </script>
+
 
 </body>
 </html>
