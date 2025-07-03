@@ -523,150 +523,118 @@
       <a href="index.html"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
     </div>
   </div>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script>
+  // Notification system
+  function showNotification(title, message, isSuccess) {
+    const notification = document.getElementById('notification');
+    document.getElementById('notification-title').textContent = title;
+    document.getElementById('notification-message').textContent = message;
 
-  <script>
-    // Notification system
-    function showNotification(title, message, isSuccess) {
-      const notification = document.getElementById('notification');
-      const titleEl = document.getElementById('notification-title');
-      const messageEl = document.getElementById('notification-message');
-      
-      // Set notification content
-      titleEl.textContent = title;
-      messageEl.textContent = message;
-      
-      // Set styling based on success/error
-      notification.className = 'notification';
-      notification.classList.add(isSuccess ? 'success' : 'error');
-      
-      // Update icon
-      const icon = notification.querySelector('.notification-icon i');
-      icon.className = isSuccess ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
-      
-      // Show notification
-      notification.classList.add('show');
-      
-      // Auto-hide after 5 seconds
-      setTimeout(() => {
-        notification.classList.remove('show');
-      }, 5000);
-    }
-    
-    // Show/hide processing overlay
-    function showProcessing(show) {
-      const overlay = document.getElementById('processingOverlay');
-      if (show) {
-        overlay.classList.add('show');
-      } else {
-        overlay.classList.remove('show');
-      }
-    }
+    notification.className = 'notification';
+    notification.classList.add(isSuccess ? 'success' : 'error');
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
-      authDomain: "betting-app-43800.firebaseapp.com",
-      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
-      projectId: "betting-app-43800",
-      storageBucket: "betting-app-43800.appspot.com",
-      messagingSenderId: "752263307747",
-      appId: "1:752263307747:web:183e06d62bc5920fc700d6"
-    };
+    const icon = notification.querySelector('.notification-icon i');
+    icon.className = isSuccess ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    notification.classList.add('show');
+    setTimeout(() => { notification.classList.remove('show'); }, 5000);
+  }
 
-    const userId = localStorage.getItem("userId");
-    if (!userId) {
-      showNotification("Authentication Error", "User not logged in.", false);
-      setTimeout(() => {
-        window.location.href = "login.html";
-      }, 3000);
-    }
+  function showProcessing(show) {
+    const overlay = document.getElementById('processingOverlay');
+    overlay.classList.toggle('show', show);
+  }
 
-    let winningBalance = 0;
+  const firebaseConfig = {
+    apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+    authDomain: "betting-app-43800.firebaseapp.com",
+    databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+    projectId: "betting-app-43800"
+  };
 
-    // Load only winning balance
-    db.ref("users/" + userId + "/wallet").on("value", (snap) => {
-      const wallet = snap.val() || {};
-      winningBalance = wallet.winning || 0;
-      document.getElementById("balanceAmount").textContent = "₹" + winningBalance.toFixed(2);
-    });
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const auth = firebase.auth();
 
-    document.getElementById("withdrawForm").addEventListener("submit", function (e) {
-      e.preventDefault();
-      showProcessing(true);
+  let winningBalance = 0;
 
-      const amount = parseFloat(document.getElementById("amount").value);
-      const accountNumber = document.getElementById("accountNumber").value.trim();
-      const ifsc = document.getElementById("ifsc").value.trim();
-      const holder = document.getElementById("accountHolderName").value.trim();
+  auth.signInAnonymously().catch(console.error);
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      const userId = user.uid;
 
-      // Validate inputs
-      if (!amount || isNaN(amount)) {
-        showProcessing(false);
-        showNotification("Invalid Amount", "Please enter a valid amount.", false);
-        return;
-      }
+      // Load winning balance
+      db.ref(`users/${userId}/wallet`).on("value", snap => {
+        const wallet = snap.val() || {};
+        winningBalance = wallet.winning || 0;
+        document.getElementById("balanceAmount").textContent = "₹" + winningBalance.toFixed(2);
+      });
 
-      if (amount < 100) {
-        showProcessing(false);
-        showNotification("Minimum Amount", "❌ Minimum withdrawal amount is ₹100.", false);
-        return;
-      }
+      // Submit withdraw
+      document.getElementById("withdrawForm").addEventListener("submit", e => {
+        e.preventDefault();
+        showProcessing(true);
 
-      if (!accountNumber || !ifsc || !holder) {
-        showProcessing(false);
-        showNotification("Missing Information", "Please enter all bank details.", false);
-        return;
-      }
+        const amount = parseFloat(document.getElementById("amount").value);
+        const accountNumber = document.getElementById("accountNumber").value.trim();
+        const ifsc = document.getElementById("ifsc").value.trim();
+        const holder = document.getElementById("accountHolderName").value.trim();
 
-      if (amount > winningBalance) {
-        showProcessing(false);
-        showNotification("Insufficient Balance", "❌ You do not have enough winnings balance to withdraw.", false);
-        return;
-      }
+        if (!amount || isNaN(amount) || amount < 100) {
+          showProcessing(false);
+          showNotification("Invalid Amount", "Minimum withdrawal is ₹100.", false);
+          return;
+        }
 
-      // Simulate processing time
-      setTimeout(() => {
-        const withdrawRequest = {
-          amount,
-          account: accountNumber,
-          ifsc,
-          holder,
-          date: new Date().toLocaleString(),
-          status: "pending"
-        };
+        if (amount > winningBalance) {
+          showProcessing(false);
+          showNotification("Insufficient Balance", "You don't have enough winnings.", false);
+          return;
+        }
 
-        // Deduct winnings balance from Firebase
-        const userWalletRef = db.ref("users/" + userId + "/wallet");
-        userWalletRef.transaction(wallet => {
-          if (wallet && wallet.winning >= amount) {
-            wallet.winning -= amount;
-            return wallet;
-          } else {
+        if (!accountNumber || !ifsc || !holder) {
+          showProcessing(false);
+          showNotification("Missing Details", "Please fill all bank details.", false);
+          return;
+        }
+
+        setTimeout(() => {
+          const withdrawRequest = {
+            amount,
+            account: accountNumber,
+            ifsc,
+            holder,
+            timestamp: Date.now(),
+            status: "pending"
+          };
+
+          const walletRef = db.ref(`users/${userId}/wallet`);
+          walletRef.transaction(wallet => {
+            if (wallet && wallet.winning >= amount) {
+              wallet.winning -= amount;
+              return wallet;
+            }
             return; // abort
-          }
-        }).then(() => {
-          // Store withdraw request
-          return db.ref("withdraws/" + userId).push(withdrawRequest);
-        }).then(() => {
-          showProcessing(false);
-          showNotification(
-            "Withdrawal Requested", 
-            "✅ Your withdrawal request of ₹" + amount.toFixed(2) + " has been submitted successfully!",
-            true
-          );
-          document.getElementById("withdrawForm").reset();
-        }).catch((error) => {
-          showProcessing(false);
-          showNotification("Error", "Error: " + error.message, false);
-        });
-      }, 2000);
-    });
-  </script>
+          }).then(() => {
+            return db.ref(`withdraws/${userId}`).push(withdrawRequest);
+          }).then(() => {
+            showProcessing(false);
+            showNotification("Request Sent", `✅ Withdrawal ₹${amount.toFixed(2)} submitted.`, true);
+            document.getElementById("withdrawForm").reset();
+          }).catch(err => {
+            showProcessing(false);
+            showNotification("Error", err.message, false);
+          });
+        }, 2000);
+      });
+    }
+  });
+</script>
+
 </body>
 </html>
