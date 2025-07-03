@@ -515,198 +515,204 @@
   </div>
   
   <div id="notification" class="notification"></div>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+    authDomain: "betting-app-43800.firebaseapp.com",
+    databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+    projectId: "betting-app-43800"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const auth = firebase.auth();
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
-      authDomain: "betting-app-43800.firebaseapp.com",
-      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
-      projectId: "betting-app-43800"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+  let userId = null;
+  let winning = 0;
 
-    const user = JSON.parse(localStorage.getItem("loggedInUser"));
-    const userId = localStorage.getItem("userId");
+  const userNameEl = document.getElementById("userName");
+  const userBalanceEl = document.getElementById("userBalance");
+  const totalBalanceEl = document.getElementById("totalBalance");
 
-    if (!user || !userId) {
-      alert("Login required!");
+  const rechargeBalEl = document.getElementById("rechargeBal");
+  const bonusBalEl = document.getElementById("bonusBal");
+  const winningBalEl = document.getElementById("winningBal");
+
+  auth.onAuthStateChanged(user => {
+    if (!user) {
       window.location.href = "login.html";
+    } else {
+      userId = user.uid;
+      userNameEl.innerText = user.email.split("@")[0];
+
+      db.ref("users/" + userId + "/wallet").on("value", snapshot => {
+        const wallet = snapshot.val() || {};
+        const recharge = parseFloat(wallet.recharge || 0);
+        const bonus = parseFloat(wallet.bonus || 0);
+        winning = parseFloat(wallet.winning || 0);
+        const total = recharge + bonus + winning;
+
+        rechargeBalEl.innerText = recharge.toFixed(2);
+        bonusBalEl.innerText = bonus.toFixed(2);
+        winningBalEl.innerText = winning.toFixed(2);
+        userBalanceEl.innerText = total.toFixed(2);
+        totalBalanceEl.innerText = total.toFixed(2);
+      });
     }
+  });
 
-    document.getElementById("userName").innerText = user.username || "Guest";
+  function showNotification(message, type = "info") {
+    const notification = document.getElementById("notification");
+    notification.innerText = message;
+    notification.className = "notification";
+    if (type === "error") notification.classList.add("error");
+    if (type === "win") notification.classList.add("win");
+    notification.classList.add("show");
+    setTimeout(() => notification.classList.remove("show"), 3000);
+  }
 
-    const userBalanceEl = document.getElementById("userBalance");
-    const totalBalanceEl = document.getElementById("totalBalance");
-    let winning = 0;
-
-    function showNotification(message, type = "info") {
-      const notification = document.getElementById("notification");
-      notification.innerText = message;
-      notification.className = "notification";
-      notification.classList.add(type);
-      notification.classList.add("show");
-      
-      setTimeout(() => {
-        notification.classList.remove("show");
-      }, 3000);
-    }
-    
-    function claimBonus() {
-      const lastClaim = user.lastBonusClaim || 0;
-      const now = Date.now();
-      if (now - lastClaim >= 24 * 60 * 60 * 1000) {
-        const bonus = (user.bonus || 0) + 5;
-        db.ref('users/' + userId).update({
-          bonus: bonus,
-          lastBonusClaim: now
+  function claimBonus() {
+    const today = new Date().toDateString();
+    const claimKey = `claim_${today}`;
+    db.ref("users/" + userId + "/lastBonusClaim").once("value").then(snapshot => {
+      const last = snapshot.val();
+      if (last === claimKey) {
+        showNotification("You can only claim once every 24 hours!", "error");
+      } else {
+        db.ref("users/" + userId + "/wallet/bonus").once("value").then(bSnap => {
+          const bonus = parseFloat(bSnap.val() || 0) + 5;
+          db.ref("users/" + userId + "/wallet").update({ bonus: bonus });
+          db.ref("users/" + userId).update({ lastBonusClaim: claimKey });
+          showNotification("₹5 Bonus Claimed!", "win");
         });
-        showNotification("₹5 Bonus Claimed!", "win");
-      } else {
-        showNotification("You can only claim bonus once every 24 hours!", "error");
+      }
+    });
+  }
+
+  // Game Logic
+  const suits = ["♠", "♥", "♦", "♣"];
+  const values = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+  let deck = [];
+  let middleCard = null;
+  let playing = false;
+  let userChoice = "";
+
+  const middleCardEl = document.getElementById('middleCard');
+  const andarColumn = document.getElementById('andarColumn');
+  const baharColumn = document.getElementById('baharColumn');
+  const resultEl = document.getElementById('result');
+  const btnAndar = document.getElementById('btnAndar');
+  const btnBahar = document.getElementById('btnBahar');
+  const btnReset = document.getElementById('btnReset');
+  const betInput = document.getElementById('betAmount');
+
+  function generateDeck() {
+    let newDeck = [];
+    for (let suit of suits) {
+      for (let value of values) {
+        newDeck.push({ suit, value });
       }
     }
+    return newDeck.sort(() => Math.random() - 0.5);
+  }
 
-    function loadWalletBreakdown() {
-      db.ref("users/" + userId + "/wallet").on("value", (snapshot) => {
-        const wallet = snapshot.val();
-        if (wallet) {
-          const recharge = parseFloat(wallet.recharge || 0);
-          const bonus = parseFloat(wallet.bonus || 0);
-          winning = parseFloat(wallet.winning || 0);
-          const total = recharge + bonus + winning;
+  function startGame() {
+    deck = generateDeck();
+    middleCard = deck.pop();
+    userChoice = "";
+    playing = false;
 
-          document.getElementById("rechargeBal").innerText = recharge.toFixed(2);
-          document.getElementById("bonusBal").innerText = bonus.toFixed(2);
-          document.getElementById("winningBal").innerText = winning.toFixed(2);
-          userBalanceEl.innerText = total.toFixed(2);
-          totalBalanceEl.innerText = total.toFixed(2);
-        }
-      });
-    }
+    middleCardEl.textContent = `${middleCard.value}${middleCard.suit}`;
+    middleCardEl.classList.toggle('red', ['♥', '♦'].includes(middleCard.suit));
+    andarColumn.innerHTML = '<h3>Andar</h3>';
+    baharColumn.innerHTML = '<h3>Bahar</h3>';
 
-    const suits = ["♠", "♥", "♦", "♣"];
-    const values = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
-    let deck = [];
-    let middleCard = null;
-    let playing = false;
-    let userChoice = "";
+    resultEl.textContent = 'Place your bet and choose Andar or Bahar!';
+    resultEl.className = 'result';
 
-    const middleCardEl = document.getElementById('middleCard');
-    const andarColumn = document.getElementById('andarColumn');
-    const baharColumn = document.getElementById('baharColumn');
-    const resultEl = document.getElementById('result');
-    const btnAndar = document.getElementById('btnAndar');
-    const btnBahar = document.getElementById('btnBahar');
-    const btnReset = document.getElementById('btnReset');
-    const betInput = document.getElementById('betAmount');
+    btnAndar.disabled = false;
+    btnBahar.disabled = false;
+    btnReset.disabled = false;
+    betInput.disabled = false;
+    betInput.value = '';
+  }
 
-    function generateDeck() {
-      let newDeck = [];
-      for (let suit of suits) {
-        for (let value of values) {
-          newDeck.push({ suit, value });
-        }
-      }
-      return newDeck.sort(() => Math.random() - 0.5);
-    }
+  async function makeChoice(choice) {
+    if (playing) return;
+    playing = true;
+    userChoice = choice;
 
-    function startGame() {
-      deck = generateDeck();
-      middleCard = deck.pop();
-      userChoice = "";
+    let bet = parseFloat(betInput.value);
+    if (isNaN(bet) || bet <= 0) {
+      showNotification("Please enter a valid bet amount", "error");
       playing = false;
-
-      middleCardEl.textContent = `${middleCard.value}${middleCard.suit}`;
-      middleCardEl.classList.toggle('red', ['♥', '♦'].includes(middleCard.suit));
-      andarColumn.innerHTML = '<h3>Andar</h3>';
-      baharColumn.innerHTML = '<h3>Bahar</h3>';
-      
-      resultEl.textContent = 'Place your bet and choose Andar or Bahar!';
-      resultEl.className = 'result';
-      
-      btnAndar.disabled = false;
-      btnBahar.disabled = false;
-      btnReset.disabled = false;
-      betInput.disabled = false;
-      betInput.value = '';
+      return;
     }
 
-    async function makeChoice(choice) {
-      if (playing) return;
-      playing = true;
-      userChoice = choice;
+    if (bet > winning) {
+      showNotification("Insufficient winning balance", "error");
+      playing = false;
+      return;
+    }
 
-      let bet = parseFloat(betInput.value);
-      if (isNaN(bet) || bet <= 0) {
-        showNotification("Please enter a valid bet amount", "error");
-        playing = false;
-        return;
-      }
+    betInput.disabled = true;
+    btnAndar.disabled = true;
+    btnBahar.disabled = true;
 
-      if (bet > winning) {
-        showNotification("Insufficient winning balance", "error");
-        playing = false;
-        return;
-      }
+    let i = 0, matchSide = null;
+    while (deck.length) {
+      const card = deck.pop();
+      let el = document.createElement('div');
+      el.className = 'card';
+      el.textContent = `${card.value}${card.suit}`;
+      if (['♥', '♦'].includes(card.suit)) el.classList.add('red');
 
-      betInput.disabled = true;
-      btnAndar.disabled = true;
-      btnBahar.disabled = true;
-
-      let i = 0, matchSide = null;
-      while (deck.length) {
-        const card = deck.pop();
-        let el = document.createElement('div');
-        el.className = 'card';
-        el.textContent = `${card.value}${card.suit}`;
-        if (['♥', '♦'].includes(card.suit)) el.classList.add('red');
-
-        if (i % 2 === 0) {
-          andarColumn.appendChild(el);
-          if (card.value === middleCard.value) {
-            matchSide = 'andar';
-            break;
-          }
-        } else {
-          baharColumn.appendChild(el);
-          if (card.value === middleCard.value) {
-            matchSide = 'bahar';
-            break;
-          }
+      if (i % 2 === 0) {
+        andarColumn.appendChild(el);
+        if (card.value === middleCard.value) {
+          matchSide = 'andar';
+          break;
         }
-
-        await new Promise(res => setTimeout(res, 500));
-        i++;
-      }
-
-      let userWins = matchSide === userChoice;
-      if (userWins) {
-        winning += bet;
-        resultEl.textContent = `✅ You won ₹${bet.toFixed(2)}! ${userChoice.toUpperCase()} was correct!`;
-        resultEl.className = 'result win';
       } else {
-        winning -= bet;
-        resultEl.textContent = `❌ You lost ₹${bet.toFixed(2)}. ${userChoice.toUpperCase()} was incorrect.`;
-        resultEl.className = 'result lose';
+        baharColumn.appendChild(el);
+        if (card.value === middleCard.value) {
+          matchSide = 'bahar';
+          break;
+        }
       }
 
-      db.ref("users/" + userId + "/wallet").update({
-        winning: parseFloat(winning.toFixed(2))
-      });
-
-      btnReset.disabled = false;
+      await new Promise(res => setTimeout(res, 500));
+      i++;
     }
 
-    btnAndar.onclick = () => makeChoice('andar');
-    btnBahar.onclick = () => makeChoice('bahar');
-    btnReset.onclick = startGame;
+    let userWins = matchSide === userChoice;
+    if (userWins) {
+      winning += bet;
+      resultEl.textContent = `✅ You won ₹${bet.toFixed(2)}! ${userChoice.toUpperCase()} was correct!`;
+      resultEl.className = 'result win';
+    } else {
+      winning -= bet;
+      resultEl.textContent = `❌ You lost ₹${bet.toFixed(2)}. ${userChoice.toUpperCase()} was incorrect.`;
+      resultEl.className = 'result lose';
+    }
 
-    loadWalletBreakdown();
-    startGame();
-  </script>
+    db.ref("users/" + userId + "/wallet").update({
+      winning: parseFloat(winning.toFixed(2))
+    });
+
+    btnReset.disabled = false;
+  }
+
+  btnAndar.onclick = () => makeChoice('andar');
+  btnBahar.onclick = () => makeChoice('bahar');
+  btnReset.onclick = startGame;
+
+  startGame();
+</script>
+
 </body>
 </html>
