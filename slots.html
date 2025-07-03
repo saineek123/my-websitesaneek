@@ -540,37 +540,39 @@
   <footer>
     <p>© 2023 Luxury Slots. All rights reserved. Gambling can be addictive. Play responsibly.</p>
   </footer>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+    authDomain: "betting-app-43800.firebaseapp.com",
+    databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+    projectId: "betting-app-43800"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const auth = firebase.auth();
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
-      authDomain: "betting-app-43800.firebaseapp.com",
-      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
-      projectId: "betting-app-43800"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+  let userId = null;
+  let currentWallet = { recharge: 0, bonus: 0, winning: 0 };
+  let isSpinning = false;
 
-    const userId = localStorage.getItem("userId");
-    const spinButton = document.getElementById("spinButton");
-    const resultMessage = document.getElementById("resultMessage");
+  const spinButton = document.getElementById("spinButton");
+  const resultMessage = document.getElementById("resultMessage");
 
-    const totalEl = document.getElementById("totalBalance");
-    const rechargeEl = document.getElementById("rechargeBalance");
-    const bonusEl = document.getElementById("bonusBalance");
-    const winningEl = document.getElementById("winningBalance");
+  const totalEl = document.getElementById("totalBalance");
+  const rechargeEl = document.getElementById("rechargeBalance");
+  const bonusEl = document.getElementById("bonusBalance");
+  const winningEl = document.getElementById("winningBalance");
 
-    let currentWallet = { recharge: 0, bonus: 0, winning: 0 };
-    let isSpinning = false;
-
-    if (!userId) {
-      alert("User not logged in.");
+  auth.onAuthStateChanged(user => {
+    if (!user) {
       window.location.href = "login.html";
     } else {
+      userId = user.uid;
       db.ref("users/" + userId + "/wallet").on("value", snap => {
         const wallet = snap.val() || {};
         currentWallet = {
@@ -586,148 +588,113 @@
         winningEl.innerText = currentWallet.winning.toFixed(2);
       });
     }
+  });
 
-    function showNotification(message, isError = false) {
-      const notification = document.getElementById("notification");
-      notification.innerText = message;
-      notification.className = "notification";
-      
-      if (isError) {
-        notification.classList.add("error");
-      }
-      
-      notification.classList.add("show");
-      
-      setTimeout(() => {
-        notification.classList.remove("show");
-      }, 3000);
+  function showNotification(message, isError = false) {
+    const notification = document.getElementById("notification");
+    notification.innerText = message;
+    notification.className = "notification";
+    if (isError) notification.classList.add("error");
+    notification.classList.add("show");
+    setTimeout(() => notification.classList.remove("show"), 3000);
+  }
+
+  function spinSlot() {
+    if (isSpinning) return;
+
+    const bet = parseInt(document.getElementById("betAmount").value);
+    const totalBalance = currentWallet.recharge + currentWallet.bonus + currentWallet.winning;
+
+    if (isNaN(bet) || bet <= 0) {
+      showNotification("Please enter a valid bet amount.", true);
+      return;
     }
 
-    function spinSlot() {
-      if (isSpinning) return;
-      
-      const bet = parseInt(document.getElementById("betAmount").value);
-      const totalBalance = currentWallet.recharge + currentWallet.bonus + currentWallet.winning;
+    if (totalBalance < bet) {
+      showNotification("Insufficient balance!", true);
+      return;
+    }
 
-      if (isNaN(bet) || bet <= 0) {
-        showNotification("Please enter a valid bet amount.", true);
-        return;
-      }
-      
-      if (totalBalance < bet) {
-        showNotification("Insufficient balance!", true);
-        return;
-      }
+    isSpinning = true;
+    spinButton.disabled = true;
+    resultMessage.className = "result";
+    resultMessage.innerText = "";
 
-      // Disable button during spin
-      isSpinning = true;
-      spinButton.disabled = true;
-      resultMessage.className = "result";
-      resultMessage.innerText = "";
-      
-      // Start spinning animation
-      const slots = [
-        document.getElementById("slot1"),
-        document.getElementById("slot2"),
-        document.getElementById("slot3")
-      ];
-      
-      slots.forEach(slot => {
-        slot.classList.add("spinning");
-      });
+    const slots = [
+      document.getElementById("slot1"),
+      document.getElementById("slot2"),
+      document.getElementById("slot3")
+    ];
 
-      // Deduct bet amount
-      let remaining = bet;
-      let updatedWallet = { ...currentWallet };
+    slots.forEach(slot => slot.classList.add("spinning"));
 
-      if (updatedWallet.winning >= remaining) {
-        updatedWallet.winning -= remaining;
-        remaining = 0;
+    // Deduct bet
+    let remaining = bet;
+    let updatedWallet = { ...currentWallet };
+
+    if (updatedWallet.winning >= remaining) {
+      updatedWallet.winning -= remaining;
+      remaining = 0;
+    } else {
+      remaining -= updatedWallet.winning;
+      updatedWallet.winning = 0;
+    }
+
+    if (remaining > 0 && updatedWallet.bonus >= remaining) {
+      updatedWallet.bonus -= remaining;
+      remaining = 0;
+    } else if (remaining > 0) {
+      remaining -= updatedWallet.bonus;
+      updatedWallet.bonus = 0;
+    }
+
+    if (remaining > 0 && updatedWallet.recharge >= remaining) {
+      updatedWallet.recharge -= remaining;
+      remaining = 0;
+    }
+
+    const symbols = ["🍒", "🍋", "🍇", "🍊", "🍉"];
+    let s1, s2, s3;
+    const isWin = Math.random() < 0.10;
+
+    setTimeout(() => {
+      if (isWin) {
+        const winSymbol = symbols[Math.floor(Math.random() * symbols.length)];
+        s1 = s2 = s3 = winSymbol;
       } else {
-        remaining -= updatedWallet.winning;
-        updatedWallet.winning = 0;
+        do {
+          s1 = symbols[Math.floor(Math.random() * symbols.length)];
+          s2 = symbols[Math.floor(Math.random() * symbols.length)];
+          s3 = symbols[Math.floor(Math.random() * symbols.length)];
+        } while (s1 === s2 && s2 === s3);
       }
 
-      if (remaining > 0 && updatedWallet.bonus >= remaining) {
-        updatedWallet.bonus -= remaining;
-        remaining = 0;
-      } else if (remaining > 0) {
-        remaining -= updatedWallet.bonus;
-        updatedWallet.bonus = 0;
+      slots[0].innerText = s1;
+      slots[1].innerText = s2;
+      slots[2].innerText = s3;
+
+      slots.forEach(slot => slot.classList.remove("spinning"));
+
+      if (s1 === s2 && s2 === s3) {
+        const multiplier = 10;
+        const reward = bet * multiplier;
+        updatedWallet.winning += reward;
+
+        resultMessage.className = "result win";
+        resultMessage.innerHTML = `<i class="fas fa-trophy"></i> JACKPOT! You won ₹${reward} (×${multiplier}) <i class="fas fa-trophy"></i>`;
+        showNotification(`🎉 You won ₹${reward}!`);
+      } else {
+        resultMessage.className = "result lose";
+        resultMessage.innerHTML = `<i class="fas fa-sad-tear"></i> No win this time. Try again!`;
       }
 
-      if (remaining > 0 && updatedWallet.recharge >= remaining) {
-        updatedWallet.recharge -= remaining;
-        remaining = 0;
-      }
+      db.ref("users/" + userId + "/wallet").set(updatedWallet);
 
-      // Generate symbols
-      const symbols = ["🍒", "🍋", "🍇", "🍊", "🍉"];
-      let s1, s2, s3;
+      isSpinning = false;
+      spinButton.disabled = false;
+    }, 2000);
+  }
+</script>
 
-      // Determine if it's a win (10% chance)
-      const isWin = Math.random() < 0.10;
-      
-      setTimeout(() => {
-        if (isWin) {
-          // Win scenario
-          const winSymbol = symbols[Math.floor(Math.random() * symbols.length)];
-          s1 = s2 = s3 = winSymbol;
-        } else {
-          // Lose scenario
-          do {
-            s1 = symbols[Math.floor(Math.random() * symbols.length)];
-            s2 = symbols[Math.floor(Math.random() * symbols.length)];
-            s3 = symbols[Math.floor(Math.random() * symbols.length)];
-          } while (s1 === s2 && s2 === s3);
-        }
-        
-        // Update slot display
-        slots[0].innerText = s1;
-        slots[1].innerText = s2;
-        slots[2].innerText = s3;
-        
-        // Stop spinning animation
-        slots.forEach(slot => {
-          slot.classList.remove("spinning");
-        });
-        
-        // Process result
-        if (s1 === s2 && s2 === s3) {
-          const multiplier = 10;
-          const reward = bet * multiplier;
-          updatedWallet.winning += reward;
-          
-          resultMessage.className = "result win";
-          resultMessage.innerHTML = `
-            <i class="fas fa-trophy"></i> JACKPOT! You won ₹${reward} (×${multiplier}) <i class="fas fa-trophy"></i>
-          `;
-          
-          // Play win sound
-          playWinSound();
-          
-          showNotification(`🎉 You won ₹${reward}!`);
-        } else {
-          resultMessage.className = "result lose";
-          resultMessage.innerHTML = `
-            <i class="fas fa-sad-tear"></i> No win this time. Try again!
-          `;
-        }
-        
-        // Update wallet in Firebase
-        db.ref("users/" + userId + "/wallet").set(updatedWallet);
-        
-        // Re-enable button
-        isSpinning = false;
-        spinButton.disabled = false;
-      }, 2000); // 2 second spinning animation
-    }
-    
-    function playWinSound() {
-      // In a real implementation, we would play an actual sound
-      // For this demo, we'll just simulate it
-      console.log("Win sound played");
-    }
-  </script>
 </body>
 </html>
