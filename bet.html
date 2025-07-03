@@ -482,12 +482,9 @@
   };
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
+  const auth = firebase.auth();
 
-  const userId = localStorage.getItem("userId");
-  if (!userId) {
-    window.location.href = "login.html";
-  }
-
+  let userId = localStorage.getItem("userId");
   const totalEl = document.getElementById("totalBalance");
   const rechargeEl = document.getElementById("rechargeBalance");
   const bonusEl = document.getElementById("bonusBalance");
@@ -495,31 +492,46 @@
 
   let currentWallet = { recharge: 0, bonus: 0, winning: 0 };
 
-  // ✅ Wallet listener — same as index.html
-  db.ref("users/" + userId + "/wallet").on("value", (snap) => {
-    const wallet = snap.val() || {};
-    currentWallet.recharge = wallet.recharge || 0;
-    currentWallet.bonus = wallet.bonus || 0;
-    currentWallet.winning = wallet.winning || 0;
-    const total = currentWallet.recharge + currentWallet.bonus + currentWallet.winning;
-
-    totalEl.innerText = total.toFixed(2);
-    rechargeEl.innerText = currentWallet.recharge.toFixed(2);
-    bonusEl.innerText = currentWallet.bonus.toFixed(2);
-    winningEl.innerText = currentWallet.winning.toFixed(2);
+  auth.signInAnonymously().then(() => {
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        userId = user.uid;
+        localStorage.setItem("userId", userId);
+        listenWallet();
+        loadMatches();
+      } else {
+        window.location.href = "login.html";
+      }
+    });
   });
 
-  const selectedBets = {};
+  function listenWallet() {
+    db.ref("users/" + userId + "/wallet").on("value", snap => {
+      const w = snap.val() || {};
+      currentWallet = {
+        recharge: w.recharge || 0,
+        bonus: w.bonus || 0,
+        winning: w.winning || 0
+      };
+      const total = currentWallet.recharge + currentWallet.bonus + currentWallet.winning;
+      totalEl.innerText = total.toFixed(2);
+      rechargeEl.innerText = currentWallet.recharge.toFixed(2);
+      bonusEl.innerText = currentWallet.bonus.toFixed(2);
+      winningEl.innerText = currentWallet.winning.toFixed(2);
+    });
+  }
+
   let matches = [];
+  const selectedBets = {};
 
   function loadMatches() {
     db.ref("matches").on("value", snap => {
       matches = [];
       snap.forEach(child => {
-        const match = child.val();
-        if (!match.result) {
-          match.id = child.key;
-          matches.push(match);
+        const m = child.val();
+        if (!m.result) {
+          m.id = child.key;
+          matches.push(m);
         }
       });
       renderMatches();
@@ -528,29 +540,20 @@
 
   function renderMatches() {
     const container = document.getElementById("matchesContainer");
-    container.innerHTML = "";
-
-    if (matches.length === 0) {
-      container.innerHTML = "<p style='text-align:center; color:#aaa;'>No live matches now.</p>";
-      return;
-    }
+    container.innerHTML = matches.length === 0 ? "No matches available." : "";
 
     matches.forEach(match => {
       const card = document.createElement("div");
       card.className = "match-card";
       card.innerHTML = `
         <h3>${match.team1} vs ${match.team2}</h3>
-        <div class="team-btn" onclick="selectTeam('${match.id}', '${match.team1}', ${match.rate1})" id="btn-${match.id}-1">
-          <div class="team-name">${match.team1}</div>
-          <div class="rate">@${match.rate1}</div>
+        <div class="team-btn" id="btn-${match.id}-1" onclick="selectTeam('${match.id}', '${match.team1}', ${match.rate1})">
+          ${match.team1} @${match.rate1}
         </div>
-        <div class="team-btn" onclick="selectTeam('${match.id}', '${match.team2}', ${match.rate2})" id="btn-${match.id}-2">
-          <div class="team-name">${match.team2}</div>
-          <div class="rate">@${match.rate2}</div>
+        <div class="team-btn" id="btn-${match.id}-2" onclick="selectTeam('${match.id}', '${match.team2}', ${match.rate2})">
+          ${match.team2} @${match.rate2}
         </div>
-        <div class="bet-input">
-          <input type="number" id="amount-${match.id}" placeholder="Enter amount">
-        </div>
+        <input type="number" id="amount-${match.id}" placeholder="Bet amount"/>
         <button class="bet-btn" onclick="placeBet('${match.id}')">Place Bet</button>
         <div class="selected-team" id="selected-${match.id}">No team selected</div>
       `;
@@ -561,12 +564,9 @@
   function selectTeam(matchId, team, rate) {
     document.getElementById(`btn-${matchId}-1`).classList.remove("selected");
     document.getElementById(`btn-${matchId}-2`).classList.remove("selected");
-
     const m = matches.find(m => m.id === matchId);
     const btnId = team === m.team1 ? '1' : '2';
-
     document.getElementById(`btn-${matchId}-${btnId}`).classList.add("selected");
-
     selectedBets[matchId] = { team, rate };
     document.getElementById(`selected-${matchId}`).innerText = `Selected: ${team} @${rate}`;
   }
@@ -574,85 +574,51 @@
   function placeBet(matchId) {
     const amount = parseFloat(document.getElementById(`amount-${matchId}`).value);
     const bet = selectedBets[matchId];
-
-    if (!bet) {
-      showNotification("❌ Select a team first", true);
-      return;
-    }
-    if (isNaN(amount) || amount <= 0) {
-      showNotification("❌ Enter valid amount", true);
-      return;
-    }
-
+    if (!bet) return showNotification("Select a team first", true);
+    if (isNaN(amount) || amount <= 0) return showNotification("Enter valid amount", true);
     const total = currentWallet.recharge + currentWallet.bonus + currentWallet.winning;
-    if (amount > total) {
-      showNotification("❌ Not enough balance", true);
-      return;
-    }
+    if (amount > total) return showNotification("Insufficient balance", true);
 
-    // ✅ Wallet deduction logic
-    let remaining = amount;
+    let left = amount;
     let { recharge, bonus, winning } = currentWallet;
 
-    if (winning >= remaining) {
-      winning -= remaining;
-      remaining = 0;
-    } else {
-      remaining -= winning;
-      winning = 0;
+    if (winning >= left) { winning -= left; left = 0; }
+    else { left -= winning; winning = 0; }
+    if (left > 0) {
+      if (bonus >= left) { bonus -= left; left = 0; }
+      else { left -= bonus; bonus = 0; }
     }
+    if (left > 0) { recharge -= left; }
 
-    if (remaining > 0) {
-      if (bonus >= remaining) {
-        bonus -= remaining;
-        remaining = 0;
-      } else {
-        remaining -= bonus;
-        bonus = 0;
-      }
-    }
+    db.ref("users/" + userId + "/wallet").set({ recharge, bonus, winning });
 
-    if (remaining > 0) {
-      recharge -= remaining;
-    }
-
-    db.ref("users/" + userId + "/wallet").set({
-      recharge, bonus, winning
-    });
-
-    // ✅ Save bet
     const match = matches.find(m => m.id === matchId);
-    const returnAmt = (amount * bet.rate).toFixed(2);
     db.ref("users/" + userId + "/bets").push({
       match: `${match.team1} vs ${match.team2}`,
       team: bet.team,
       rate: bet.rate,
-      amount: amount,
-      returnAmount: returnAmt,
-      time: new Date().toISOString(),
-      result: "pending"
+      amount,
+      returnAmount: amount * bet.rate,
+      result: "pending",
+      time: Date.now()
     });
 
-    showNotification(`✅ Bet placed: ${bet.team} for ₹${amount} (Return: ₹${returnAmt})`);
-    document.getElementById(`amount-${matchId}`).value = "";
-    document.getElementById(`btn-${matchId}-1`).classList.remove("selected");
-    document.getElementById(`btn-${matchId}-2`).classList.remove("selected");
-    document.getElementById(`selected-${matchId}`).innerText = "No team selected";
-    delete selectedBets[matchId];
+    showNotification(`Bet placed on ${bet.team} for ₹${amount}`);
   }
 
-  function showNotification(msg, error = false) {
+  function showNotification(msg, err = false) {
     const n = document.getElementById("notification");
     n.innerText = msg;
-    n.className = "notification";
-    if (error) n.classList.add("error");
+    n.style.borderLeft = err ? "4px solid red" : "4px solid #0ff";
     n.classList.add("show");
     setTimeout(() => n.classList.remove("show"), 3000);
   }
 
-  loadMatches();
+  function logout() {
+    localStorage.removeItem("userId");
+    window.location.href = "login.html";
+  }
 </script>
-
 
 </body>
 </html>
