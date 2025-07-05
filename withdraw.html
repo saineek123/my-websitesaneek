@@ -528,6 +528,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
@@ -544,23 +545,29 @@ let winningBalance = 0;
 auth.onAuthStateChanged(user => {
   if (user) {
     const userId = user.uid;
+
+    // Load wallet
     db.ref(`users/${userId}/wallet`).on("value", snap => {
       const wallet = snap.val() || {};
       winningBalance = wallet.winning || 0;
       document.getElementById("balanceAmount").textContent = "₹" + winningBalance.toFixed(2);
     });
 
+    // Form submit
     document.getElementById("withdrawForm").addEventListener("submit", e => {
       e.preventDefault();
 
       const amount = parseFloat(document.getElementById("amount").value);
-      const upi = document.getElementById("upi").value.trim();
+      const account = document.getElementById("accountNumber").value.trim();
+      const ifsc = document.getElementById("ifsc").value.trim();
+      const holder = document.getElementById("accountHolderName").value.trim();
 
       if (amount < 100) return alert("Minimum ₹100 withdrawal required");
       if (amount > winningBalance) return alert("Not enough balance");
 
       document.getElementById("processingOverlay").classList.add("show");
 
+      // Deduct from winning
       db.ref(`users/${userId}/wallet/winning`).transaction(current => {
         if (current >= amount) return current - amount;
         return;
@@ -569,7 +576,9 @@ auth.onAuthStateChanged(user => {
 
         return db.ref(`withdraws/${userId}`).push({
           amount,
-          upi,
+          account,
+          ifsc,
+          holder,
           status: "pending",
           timestamp: Date.now()
         });
@@ -581,7 +590,9 @@ auth.onAuthStateChanged(user => {
       }).finally(() => {
         document.getElementById("processingOverlay").classList.remove("show");
       });
+
     });
+
   } else {
     window.location.href = "login.html";
   }
@@ -603,6 +614,7 @@ function showNotification(title, message, success = true) {
   setTimeout(() => notification.classList.remove("show"), 3000);
 }
 </script>
+
 
 
 </body>
