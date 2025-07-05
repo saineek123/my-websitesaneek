@@ -576,19 +576,26 @@ auth.onAuthStateChanged(user => {
       document.getElementById("processingOverlay").classList.add("show");
 
       // Create withdrawal request without deducting balance
-      db.ref(`withdraws/${userId}`).push({
+      // Using update instead of push to satisfy Firebase rules
+      const newWithdrawRef = db.ref(`withdraws/${userId}`).push();
+      const withdrawData = {
         amount,
         account,
         ifsc,
         holder,
         status: "pending", // MUST set status to 'pending' to satisfy Firebase rules
         timestamp: Date.now()
-      }).then(() => {
+      };
+      
+      newWithdrawRef.set(withdrawData)
+      .then(() => {
         showNotification("Success", "Withdrawal request submitted successfully! Admin will process it soon.", true);
         document.getElementById("withdrawForm").reset();
-      }).catch(err => {
+      })
+      .catch(err => {
         showNotification("Error", "Failed to submit request: " + err.message, false);
-      }).finally(() => {
+      })
+      .finally(() => {
         document.getElementById("processingOverlay").classList.remove("show");
       });
     });
