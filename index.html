@@ -477,9 +477,83 @@
         font-size: 1.7rem;
       }
     }
+
+
+      .notification {
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 700px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+      border-radius: 0 0 30px 30px;
+      padding: 10px 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      font-family: Arial, sans-serif;
+      z-index: 9999;
+      animation: slideDown 0.5s ease;
+    }
+
+    @keyframes slideDown {
+      from {
+        transform: translateX(-50%) translateY(-100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .sound-icon {
+      width: 20px;
+      height: 20px;
+      margin-right: 10px;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.3); }
+    }
+
+    .text {
+      font-size: 14px;
+      color: #333;
+      transition: opacity 0.3s;
+      flex: 1;
+      text-align: center;
+    }
+
+    .btn-detail {
+      margin-left: 15px;
+      background: #ff4e50;
+      border: none;
+      color: white;
+      padding: 6px 15px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .btn-detail:hover {
+      background: #ff2e30;
+    }
   </style>
 </head>
 <body>
+  <body style="margin-top: 70px;">
+    <!-- Top Notification -->
+  <div class="notification">
+    <img class="sound-icon" src="https://cdn-icons-png.flaticon.com/512/727/727269.png" alt="Sound" />
+    <div class="text" id="notifText">Loading message...</div>
+    <button class="btn-detail">🔥 Detail</button>
+  </div>
+
   <div class="overlay" id="overlay" onclick="toggleDrawer()"></div>
 
   <div class="drawer" id="drawer">
@@ -733,6 +807,46 @@
       window.location.href = "login.html";
     });
   }
+
+
+
+
+  const messages = [
+     
+      "Get 10% extra bonus on your first recharge!",
+      "Withdrawals are processed within 10 minutes daily.",
+      "Play and win up to ₹10,000 daily!",
+      "Refer friends and earn ₹100 per invite!",
+      "9856276849 recharged ₹500 successfully.",
+      "7073497620 recharged ₹1000 successfully.",
+      "6395789345 recharged ₹200 successfully.",
+      "9845729027 recharged ₹300 successfully.",
+      "9792345678 recharged ₹1500 successfully.",
+      "856789345 recharged ₹2500 successfully.",
+      "935678912 recharged ₹400 successfully.",
+      "7234567890 recharged ₹600 successfully.",
+      "7856789123 recharged ₹800 successfully.",
+      "867891234 withdrew  ₹1200 successfully.",
+    ];
+    
+
+    let index = 0;
+    const textEl = document.getElementById("notifText");
+
+    function showNextMessage() {
+      textEl.style.opacity = 0;
+      setTimeout(() => {
+        textEl.textContent = messages[index];
+        textEl.style.opacity = 1;
+        index = (index + 1) % messages.length;
+      }, 300);
+    }
+
+    // Initial message
+    showNextMessage();
+
+    // Change message every 2 seconds
+    setInterval(showNextMessage, 2000);
 </script>
 
 </body>
