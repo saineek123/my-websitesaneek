@@ -547,6 +547,11 @@ auth.onAuthStateChanged(user => {
   if (user) {
     userId = user.uid;
 
+    // Refresh the authentication token
+    user.getIdToken(true).catch(err => {
+      console.log("Token refresh error:", err);
+    });
+
     // Load wallet
     db.ref(`users/${userId}/wallet`).on("value", snap => {
       const wallet = snap.val() || {};
@@ -555,7 +560,7 @@ auth.onAuthStateChanged(user => {
     });
 
     // Form submit
-    document.getElementById("withdrawForm").addEventListener("submit", e => {
+    document.getElementById("withdrawForm").addEventListener("submit", async e => {
       e.preventDefault();
 
       const amount = parseFloat(document.getElementById("amount").value);
@@ -575,36 +580,35 @@ auth.onAuthStateChanged(user => {
 
       document.getElementById("processingOverlay").classList.add("show");
 
-      // Create a new withdrawal request
-      const newWithdrawKey = db.ref().child('withdraws').push().key;
-      
-      // Create withdrawal data with status pending
-      const withdrawData = {
-        amount,
-        account,
-        ifsc,
-        holder,
-        status: "pending", // MUST set status to 'pending' to satisfy Firebase rules
-        timestamp: Date.now(),
-        userId: userId
-      };
-      
-      // Create updates object
-      const updates = {};
-      updates[`withdraws/${userId}/${newWithdrawKey}`] = withdrawData;
-      
-      // Perform multi-path update
-      db.ref().update(updates)
-      .then(() => {
+      try {
+        // Refresh token before write operation
+        await auth.currentUser.getIdToken(true);
+        
+        // Create a new withdrawal request
+        const newWithdrawRef = db.ref(`withdraws/${userId}`).push();
+        
+        // Create withdrawal data
+        const withdrawData = {
+          amount,
+          account,
+          ifsc,
+          holder,
+          status: "pending", // MUST set status to 'pending' to satisfy Firebase rules
+          timestamp: Date.now(),
+          userId: userId
+        };
+        
+        // Write to database
+        await newWithdrawRef.set(withdrawData);
+        
         showNotification("Success", "Withdrawal request submitted successfully! Admin will process it soon.", true);
         document.getElementById("withdrawForm").reset();
-      })
-      .catch(err => {
+      } catch (err) {
+        console.error("Withdrawal error:", err);
         showNotification("Error", "Failed to submit request: " + err.message, false);
-      })
-      .finally(() => {
+      } finally {
         document.getElementById("processingOverlay").classList.remove("show");
-      });
+      }
     });
 
   } else {
