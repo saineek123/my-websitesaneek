@@ -575,19 +575,26 @@ auth.onAuthStateChanged(user => {
 
       document.getElementById("processingOverlay").classList.add("show");
 
-      // Create withdrawal request without deducting balance
-      // Using update instead of push to satisfy Firebase rules
-      const newWithdrawRef = db.ref(`withdraws/${userId}`).push();
+      // Create a new withdrawal request
+      const newWithdrawKey = db.ref().child('withdraws').push().key;
+      
+      // Create withdrawal data with status pending
       const withdrawData = {
         amount,
         account,
         ifsc,
         holder,
         status: "pending", // MUST set status to 'pending' to satisfy Firebase rules
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        userId: userId
       };
       
-      newWithdrawRef.set(withdrawData)
+      // Create updates object
+      const updates = {};
+      updates[`withdraws/${userId}/${newWithdrawKey}`] = withdrawData;
+      
+      // Perform multi-path update
+      db.ref().update(updates)
       .then(() => {
         showNotification("Success", "Withdrawal request submitted successfully! Admin will process it soon.", true);
         document.getElementById("withdrawForm").reset();
