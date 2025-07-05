@@ -1,135 +1,723 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Bet History</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-Time Bet History</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(to right, #232526, #414345);
-      color: #fff;
+    * {
       margin: 0;
-      padding: 20px;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
     }
-    h1 {
+    
+    body {
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px;
+      position: relative;
+      overflow-x: hidden;
+    }
+    
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 10% 20%, rgba(0, 247, 255, 0.08) 0%, transparent 20%),
+        radial-gradient(circle at 90% 80%, rgba(0, 247, 255, 0.08) 0%, transparent 20%);
+      z-index: -1;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 0;
+      margin-bottom: 30px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .logo i {
+      font-size: 28px;
+      color: #00f7ff;
+      background: rgba(0, 247, 255, 0.1);
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+    }
+    
+    .logo h1 {
+      font-size: 24px;
+      font-weight: 700;
+      background: linear-gradient(to right, #00f7ff, #00b8c9);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .balance-card {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 12px 20px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 247, 255, 0.2);
+      box-shadow: 0 4px 20px rgba(0, 247, 255, 0.1);
+    }
+    
+    .balance-card p {
+      font-size: 14px;
+      color: #aaa;
+    }
+    
+    .balance-card h2 {
+      font-size: 22px;
+      color: #00f7ff;
+      font-weight: 600;
+    }
+    
+    .user-profile {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #00f7ff, #0077ff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .page-title {
       text-align: center;
       margin-bottom: 30px;
-      color: #00f7ff;
+      position: relative;
     }
+    
+    .page-title h2 {
+      font-size: 32px;
+      font-weight: 700;
+      background: linear-gradient(to right, #00f7ff, #00b8c9);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    
+    .page-title p {
+      color: #aaa;
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    
+    .filters {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+    
+    .filter-btn {
+      padding: 10px 25px;
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: #ddd;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 1px solid transparent;
+    }
+    
+    .filter-btn:hover {
+      background: rgba(0, 247, 255, 0.1);
+      border: 1px solid rgba(0, 247, 255, 0.3);
+    }
+    
+    .filter-btn.active {
+      background: rgba(0, 247, 255, 0.2);
+      color: #00f7ff;
+      border: 1px solid rgba(0, 247, 255, 0.5);
+    }
+    
     .history-table {
       width: 100%;
-      max-width: 900px;
-      margin: auto;
       border-collapse: collapse;
       background: rgba(255, 255, 255, 0.05);
       backdrop-filter: blur(10px);
-      border-radius: 10px;
+      border-radius: 15px;
       overflow: hidden;
-      box-shadow: 0 4px 20px rgba(0, 255, 255, 0.1);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      margin-bottom: 40px;
     }
-    th, td {
-      padding: 14px 18px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
+    
+    th {
+      background: linear-gradient(to right, #00a8cc, #0077ff);
+      text-align: left;
+      padding: 18px 25px;
+      font-weight: 600;
+      color: white;
+    }
+    
+    th:first-child {
+      border-top-left-radius: 15px;
+    }
+    
+    th:last-child {
+      border-top-right-radius: 15px;
+    }
+    
+    td {
+      padding: 16px 25px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      color: #ddd;
+    }
+    
+    tr:last-child td {
+      border-bottom: none;
+    }
+    
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.03);
+    }
+    
+    .status {
+      display: inline-block;
+      padding: 8px 15px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      min-width: 90px;
       text-align: center;
     }
-    th {
-      background: #00f7ff;
-      color: #000;
+    
+    .status.pending {
+      background: rgba(255, 165, 0, 0.2);
+      color: #ffa500;
+      border: 1px solid rgba(255, 165, 0, 0.4);
+    }
+    
+    .status.win {
+      background: rgba(50, 205, 50, 0.15);
+      color: #32CD32;
+      border: 1px solid rgba(50, 205, 50, 0.3);
+    }
+    
+    .status.lose {
+      background: rgba(255, 69, 0, 0.15);
+      color: #FF4500;
+      border: 1px solid rgba(255, 69, 0, 0.3);
+    }
+    
+    .match-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .team-logo {
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      background: rgba(0, 247, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
       font-weight: 600;
     }
-    tr:hover {
-      background: rgba(255,255,255,0.08);
+    
+    .vs {
+      color: #aaa;
+      font-size: 12px;
+      margin: 0 5px;
     }
-    .status {
-      font-weight: bold;
-      padding: 5px 10px;
-      border-radius: 8px;
+    
+    .return-amount {
+      color: #00f7ff;
+      font-weight: 600;
     }
-    .pending {
-      background-color: orange;
-      color: #000;
+    
+    .amount {
+      font-weight: 500;
     }
-    .win {
-      background-color: limegreen;
-      color: #000;
+    
+    .time {
+      color: #aaa;
+      font-size: 14px;
+      white-space: nowrap;
     }
-    .lose {
-      background-color: red;
-      color: #fff;
+    
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    .page-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: #ddd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .page-btn:hover {
+      background: rgba(0, 247, 255, 0.2);
+      color: #00f7ff;
+    }
+    
+    .page-btn.active {
+      background: rgba(0, 247, 255, 0.3);
+      color: #00f7ff;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 50px 20px;
+    }
+    
+    .empty-state i {
+      font-size: 60px;
+      color: rgba(0, 247, 255, 0.3);
+      margin-bottom: 20px;
+    }
+    
+    .empty-state h3 {
+      font-size: 24px;
+      margin-bottom: 10px;
+      color: #ddd;
+    }
+    
+    .empty-state p {
+      color: #aaa;
+      max-width: 500px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    
+    footer {
+      text-align: center;
+      padding: 30px 0;
+      color: #777;
+      font-size: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.07);
+      margin-top: 30px;
+    }
+    
+    @media (max-width: 768px) {
+      .history-table {
+        display: block;
+        overflow-x: auto;
+      }
+      
+      th, td {
+        padding: 14px 16px;
+        font-size: 14px;
+      }
+      
+      header {
+        flex-direction: column;
+        gap: 20px;
+      }
+      
+      .user-info {
+        width: 100%;
+        justify-content: space-between;
+      }
+      
+      .filters {
+        gap: 10px;
+      }
+      
+      .filter-btn {
+        padding: 8px 15px;
+        font-size: 14px;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>📜 Your Bet History</h1>
-  <table class="history-table">
-    <thead>
-      <tr>
-        <th>Match</th>
-        <th>Team</th>
-        <th>Rate</th>
-        <th>Amount</th>
-        <th>Return</th>
-        <th>Time</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody id="historyBody">
-      <tr><td colspan="7">Loading...</td></tr>
-    </tbody>
-  </table>
+  <div class="container">
+    <header>
+      <div class="logo">
+        <i class="fas fa-coins"></i>
+        <h1>BetTrack Pro</h1>
+      </div>
+      <div class="user-info">
+        <div class="balance-card">
+          <p>Your Balance</p>
+          <h2 id="userBalance">₹0.00</h2>
+        </div>
+        <div class="user-profile" id="userInitials">U</div>
+      </div>
+    </header>
+    
+    <div class="page-title">
+      <h2><i class="fas fa-history"></i> Your Bet History</h2>
+      <p>Real-time tracking of all your betting activity with live updates</p>
+    </div>
+    
+    <div class="filters">
+      <button class="filter-btn active" data-filter="all">All Bets</button>
+      <button class="filter-btn" data-filter="pending">Pending</button>
+      <button class="filter-btn" data-filter="win">Wins</button>
+      <button class="filter-btn" data-filter="lose">Losses</button>
+    </div>
+    
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th>Match</th>
+          <th>Team</th>
+          <th>Rate</th>
+          <th>Amount</th>
+          <th>Return</th>
+          <th>Time</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="historyBody">
+        <tr><td colspan="7" class="empty-state"><i class="fas fa-spinner fa-spin"></i> Loading your bets...</td></tr>
+      </tbody>
+    </table>
+    
+    <div class="pagination" id="pagination" style="display: none;">
+      <button class="page-btn" id="prevPage"><i class="fas fa-chevron-left"></i></button>
+      <button class="page-btn active">1</button>
+      <button class="page-btn">2</button>
+      <button class="page-btn">3</button>
+      <button class="page-btn"><i class="fas fa-ellipsis-h"></i></button>
+      <button class="page-btn">8</button>
+      <button class="page-btn" id="nextPage"><i class="fas fa-chevron-right"></i></button>
+    </div>
+    
+    <footer>
+      <p>© 2023 BetTrack Pro. All rights reserved. Gambling involves risk. Please gamble responsibly.</p>
+    </footer>
+  </div>
 
   <script>
+    // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
       authDomain: "betting-app-43800.firebaseapp.com",
       databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
-      projectId: "betting-app-43800"
+      projectId: "betting-app-43800",
+      storageBucket: "betting-app-43800.appspot.com",
+      messagingSenderId: "1097111498871",
+      appId: "1:1097111498871:web:7b95f5d6b6e4c1c6a1f6e5",
+      measurementId: "G-8E5Y7XZQY0"
     };
+    
+    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    const userId = localStorage.getItem("userId");
-    const historyBody = document.getElementById("historyBody");
-
-    if (!userId) {
-      alert("Please login to view your history.");
-      window.location.href = "login.html";
+    const database = firebase.database();
+    const auth = firebase.auth();
+    
+    // DOM elements
+    const historyBody = document.getElementById('historyBody');
+    const userBalance = document.getElementById('userBalance');
+    const userInitials = document.getElementById('userInitials');
+    
+    // Current user state
+    let currentUser = null;
+    let userBets = [];
+    
+    // Initialize the app
+    function initApp() {
+      // Check authentication state
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          currentUser = user;
+          // Set user initials
+          const name = user.displayName || user.email;
+          if (name) {
+            const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+            userInitials.textContent = initials;
+          }
+          
+          // Load user data
+          loadUserData();
+          
+          // Load bet history
+          loadBetHistory();
+        } else {
+          // User is not logged in
+          alert("Please login to view your bet history");
+          window.location.href = "login.html";
+        }
+      });
     }
-
-    db.ref("users/" + userId + "/bets").on("value", (snap) => {
-      historyBody.innerHTML = "";
-      if (!snap.exists()) {
-        historyBody.innerHTML = `<tr><td colspan="7">No bet history found.</td></tr>`;
+    
+    // Load user data (balance, etc)
+    function loadUserData() {
+      if (!currentUser) return;
+      
+      const userRef = database.ref('users/' + currentUser.uid);
+      userRef.on('value', (snapshot) => {
+        const userData = snapshot.val();
+        if (userData && userData.balance) {
+          userBalance.textContent = `₹${parseFloat(userData.balance).toFixed(2)}`;
+        }
+      });
+    }
+    
+    // Load bet history from Firebase
+    function loadBetHistory() {
+      if (!currentUser) return;
+      
+      const betsRef = database.ref('users/' + currentUser.uid + '/bets');
+      betsRef.orderByChild('timestamp').on('value', (snapshot) => {
+        historyBody.innerHTML = '';
+        userBets = [];
+        
+        if (!snapshot.exists()) {
+          historyBody.innerHTML = `
+            <tr>
+              <td colspan="7" class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <h3>No Bets Found</h3>
+                <p>You haven't placed any bets yet. Place your first bet to see it here!</p>
+              </td>
+            </tr>
+          `;
+          return;
+        }
+        
+        snapshot.forEach((childSnapshot) => {
+          const bet = childSnapshot.val();
+          bet.id = childSnapshot.key;
+          userBets.push(bet);
+        });
+        
+        // Sort bets by timestamp (newest first)
+        userBets.sort((a, b) => b.timestamp - a.timestamp);
+        
+        // Display bets
+        displayBets(userBets);
+      });
+    }
+    
+    // Display bets in the table
+    function displayBets(bets) {
+      historyBody.innerHTML = '';
+      
+      if (bets.length === 0) {
+        historyBody.innerHTML = `
+          <tr>
+            <td colspan="7" class="empty-state">
+              <i class="fas fa-inbox"></i>
+              <h3>No Bets Found</h3>
+              <p>No bets match your selected filter.</p>
+            </td>
+          </tr>
+        `;
         return;
       }
-
-      const bets = [];
-      snap.forEach((child) => {
-        bets.push(child.val());
-      });
-
-      bets.reverse().forEach((bet) => {
-        const row = document.createElement("tr");
-
-        let statusClass = "pending";
-        if (bet.result === "win") statusClass = "win";
-        else if (bet.result === "lose") statusClass = "lose";
-
+      
+      bets.forEach(bet => {
+        const row = document.createElement('tr');
+        
+        // Format match name
+        const matchParts = bet.match.split(' vs ');
+        const team1 = matchParts[0] || 'Team A';
+        const team2 = matchParts[1] || 'Team B';
+        
+        // Determine status class
+        let statusClass = 'pending';
+        let statusText = 'PENDING';
+        if (bet.result === 'win') {
+          statusClass = 'win';
+          statusText = 'WIN';
+        } else if (bet.result === 'lose') {
+          statusClass = 'lose';
+          statusText = 'LOSE';
+        }
+        
+        // Format date and time
+        const betDate = new Date(bet.timestamp);
+        const timeString = betDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        const dateString = betDate.toLocaleDateString([], {day: 'numeric', month: 'short'});
+        
         row.innerHTML = `
-          <td>${bet.match}</td>
+          <td>
+            <div class="match-info">
+              <div class="team-logo">${team1.substring(0, 3)}</div>
+              <div>${team1}</div>
+              <div class="vs">vs</div>
+              <div class="team-logo">${team2.substring(0, 3)}</div>
+              <div>${team2}</div>
+            </div>
+          </td>
           <td>${bet.team}</td>
-          <td>@${bet.rate}</td>
-          <td>₹${parseFloat(bet.amount).toFixed(2)}</td>
-          <td>₹${parseFloat(bet.return).toFixed(2)}</td>
-          <td>${bet.time}</td>
-          <td><span class="status ${statusClass}">${bet.result}</span></td>
+          <td>@${parseFloat(bet.rate).toFixed(2)}</td>
+          <td class="amount">₹${parseFloat(bet.amount).toFixed(2)}</td>
+          <td class="return-amount">₹${parseFloat(bet.return).toFixed(2)}</td>
+          <td class="time">${dateString}, ${timeString}</td>
+          <td><span class="status ${statusClass}">${statusText}</span></td>
         `;
+        
         historyBody.appendChild(row);
       });
+    }
+    
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize Firebase app
+      initApp();
+      
+      // Filter buttons functionality
+      const filterBtns = document.querySelectorAll('.filter-btn');
+      filterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+          filterBtns.forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          
+          const filter = this.getAttribute('data-filter');
+          filterBets(filter);
+        });
+      });
+      
+      // Pagination buttons functionality
+      document.getElementById('prevPage')?.addEventListener('click', function() {
+        // Pagination logic would go here
+      });
+      
+      document.getElementById('nextPage')?.addEventListener('click', function() {
+        // Pagination logic would go here
+      });
     });
+    
+    // Filter bets based on status
+    function filterBets(status) {
+      if (status === 'all') {
+        displayBets(userBets);
+        return;
+      }
+      
+      const filteredBets = userBets.filter(bet => {
+        if (status === 'pending') return bet.result === 'pending';
+        if (status === 'win') return bet.result === 'win';
+        if (status === 'lose') return bet.result === 'lose';
+        return true;
+      });
+      
+      displayBets(filteredBets);
+    }
+    
+    // Simulate authentication for demo purposes
+    // In a real app, this would be handled by your login system
+    function simulateLogin() {
+      auth.signInAnonymously()
+        .then(() => {
+          console.log("Signed in anonymously");
+        })
+        .catch(error => {
+          console.error("Authentication error:", error);
+          alert("Could not authenticate. Using demo data.");
+          loadDemoData();
+        });
+    }
+    
+    // Load demo data if Firebase fails
+    function loadDemoData() {
+      // This would be called if Firebase fails
+      console.log("Loading demo data");
+      
+      // Set demo user info
+      userBalance.textContent = "₹12,450.75";
+      userInitials.textContent = "DK";
+      
+      // Display demo bets
+      const demoBets = [
+        {
+          match: "RCB vs CSK",
+          team: "RCB",
+          rate: 1.85,
+          amount: 2000,
+          return: 3700,
+          timestamp: Date.now() - 3600000, // 1 hour ago
+          result: "win"
+        },
+        {
+          match: "MI vs GT",
+          team: "GT",
+          rate: 2.10,
+          amount: 1500,
+          return: 0,
+          timestamp: Date.now() - 86400000, // 1 day ago
+          result: "lose"
+        },
+        {
+          match: "RR vs KKR",
+          team: "RR",
+          rate: 1.65,
+          amount: 3000,
+          return: 4950,
+          timestamp: Date.now() - 172800000, // 2 days ago
+          result: "win"
+        },
+        {
+          match: "IND vs PAK",
+          team: "IND",
+          rate: 1.50,
+          amount: 10000,
+          return: 15000,
+          timestamp: Date.now() + 86400000, // Tomorrow
+          result: "pending"
+        }
+      ];
+      
+      userBets = demoBets;
+      displayBets(userBets);
+    }
+    
+    // Start the authentication process
+    window.onload = simulateLogin;
   </script>
 </body>
 </html>
