@@ -541,10 +541,11 @@ const db = firebase.database();
 const auth = firebase.auth();
 
 let winningBalance = 0;
+let userId = null;
 
 auth.onAuthStateChanged(user => {
   if (user) {
-    const userId = user.uid;
+    userId = user.uid;
 
     // Load wallet
     db.ref(`users/${userId}/wallet`).on("value", snap => {
@@ -562,35 +563,34 @@ auth.onAuthStateChanged(user => {
       const ifsc = document.getElementById("ifsc").value.trim();
       const holder = document.getElementById("accountHolderName").value.trim();
 
-      if (amount < 100) return alert("Minimum ₹100 withdrawal required");
-      if (amount > winningBalance) return alert("Not enough balance");
+      if (amount < 100) {
+        showNotification("Error", "Minimum ₹100 withdrawal required", false);
+        return;
+      }
+      
+      if (amount > winningBalance) {
+        showNotification("Error", "Not enough winning balance", false);
+        return;
+      }
 
       document.getElementById("processingOverlay").classList.add("show");
 
-      // Deduct from winning
-      db.ref(`users/${userId}/wallet/winning`).transaction(current => {
-        if (current >= amount) return current - amount;
-        return;
-      }).then(result => {
-        if (!result.committed) throw new Error("Failed to deduct wallet amount");
-
-        return db.ref(`withdraws/${userId}`).push({
-          amount,
-          account,
-          ifsc,
-          holder,
-          status: "pending",
-          timestamp: Date.now()
-        });
+      // Create withdrawal request without deducting balance
+      db.ref(`withdraws/${userId}`).push({
+        amount,
+        account,
+        ifsc,
+        holder,
+        status: "pending", // MUST set status to 'pending' to satisfy Firebase rules
+        timestamp: Date.now()
       }).then(() => {
-        showNotification("Success", "Withdrawal request submitted!", true);
+        showNotification("Success", "Withdrawal request submitted successfully! Admin will process it soon.", true);
         document.getElementById("withdrawForm").reset();
       }).catch(err => {
-        showNotification("Error", err.message, false);
+        showNotification("Error", "Failed to submit request: " + err.message, false);
       }).finally(() => {
         document.getElementById("processingOverlay").classList.remove("show");
       });
-
     });
 
   } else {
@@ -614,8 +614,3 @@ function showNotification(title, message, success = true) {
   setTimeout(() => notification.classList.remove("show"), 3000);
 }
 </script>
-
-
-
-</body>
-</html>
