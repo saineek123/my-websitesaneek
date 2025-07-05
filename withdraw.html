@@ -473,7 +473,7 @@
           <label for="amount"><i class="fas fa-rupee-sign"></i> Amount</label>
           <div class="input-container">
             <i class="fas fa-money-bill-wave input-icon"></i>
-            <input type="number" id="amount" placeholder="Minimum ₹100" required class="amount-input">
+            <input type="number" id="amount" placeholder="Minimum ₹100" required class="amount-input" min="100" step="1">
           </div>
         </div>
         
@@ -614,3 +614,6 @@ function showNotification(title, message, success = true) {
   setTimeout(() => notification.classList.remove("show"), 3000);
 }
 </script>
+
+</body>
+</html>
