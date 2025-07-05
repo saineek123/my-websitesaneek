@@ -523,102 +523,85 @@
       <a href="index.html"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
     </div>
   </div>
+
+
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-
 <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
-    authDomain: "betting-app-43800.firebaseapp.com",
-    databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
-    projectId: "betting-app-43800"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-  const auth = firebase.auth();
+const firebaseConfig = {
+  apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+  authDomain: "betting-app-43800.firebaseapp.com",
+  databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+  projectId: "betting-app-43800"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const auth = firebase.auth();
 
-  let winningBalance = 0;
+let winningBalance = 0;
 
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      const userId = user.uid;
+auth.onAuthStateChanged(user => {
+  if (user) {
+    const userId = user.uid;
+    db.ref(`users/${userId}/wallet`).on("value", snap => {
+      const wallet = snap.val() || {};
+      winningBalance = wallet.winning || 0;
+      document.getElementById("balanceAmount").textContent = "₹" + winningBalance.toFixed(2);
+    });
 
-      db.ref(`users/${userId}/wallet`).on("value", snap => {
-        const wallet = snap.val() || {};
-        winningBalance = wallet.winning || 0;
-        document.getElementById("balanceAmount").textContent = "₹" + winningBalance.toFixed(2);
-      });
+    document.getElementById("withdrawForm").addEventListener("submit", e => {
+      e.preventDefault();
 
-      document.getElementById("withdrawForm").addEventListener("submit", e => {
-        e.preventDefault();
+      const amount = parseFloat(document.getElementById("amount").value);
+      const upi = document.getElementById("upi").value.trim();
 
-        const amount = parseFloat(document.getElementById("amount").value);
-        const accountNumber = document.getElementById("accountNumber").value.trim();
-        const ifsc = document.getElementById("ifsc").value.trim();
-        const holder = document.getElementById("accountHolderName").value.trim();
+      if (amount < 100) return alert("Minimum ₹100 withdrawal required");
+      if (amount > winningBalance) return alert("Not enough balance");
 
-        if (amount < 100) {
-          alert("Minimum ₹100 withdrawal required");
-          return;
-        }
+      document.getElementById("processingOverlay").classList.add("show");
 
-        if (amount > winningBalance) {
-          alert("Not enough balance");
-          return;
-        }
+      db.ref(`users/${userId}/wallet/winning`).transaction(current => {
+        if (current >= amount) return current - amount;
+        return;
+      }).then(result => {
+        if (!result.committed) throw new Error("Failed to deduct wallet amount");
 
-        document.getElementById("processingOverlay").classList.add("show");
-
-        db.ref(`users/${userId}/wallet`).transaction(wallet => {
-          if (wallet && wallet.winning >= amount) {
-            wallet.winning -= amount;
-            return wallet;
-          }
-          return;
-        }).then(() => {
-          // ✅ Save inside user's node — allowed by rules
-          return db.ref(`users/${userId}/withdrawRequests`).push({
-            amount,
-            account: accountNumber,
-            ifsc,
-            holder,
-            timestamp: Date.now(),
-            status: "pending"
-          });
-        }).then(() => {
-          showNotification("Success", "Withdrawal request submitted!", true);
-          document.getElementById("withdrawForm").reset();
-        }).catch(err => {
-          showNotification("Error", err.message, false);
-        }).finally(() => {
-          document.getElementById("processingOverlay").classList.remove("show");
+        return db.ref(`withdraws/${userId}`).push({
+          amount,
+          upi,
+          status: "pending",
+          timestamp: Date.now()
         });
-
+      }).then(() => {
+        showNotification("Success", "Withdrawal request submitted!", true);
+        document.getElementById("withdrawForm").reset();
+      }).catch(err => {
+        showNotification("Error", err.message, false);
+      }).finally(() => {
+        document.getElementById("processingOverlay").classList.remove("show");
       });
-
-    } else {
-      window.location.href = "login.html";
-    }
-  });
-
-  function showNotification(title, message, success = true) {
-    const notification = document.getElementById("notification");
-    const icon = notification.querySelector(".notification-icon i");
-    const titleEl = document.getElementById("notification-title");
-    const msgEl = document.getElementById("notification-message");
-
-    notification.classList.remove("success", "error");
-    notification.classList.add(success ? "success" : "error");
-    icon.className = success ? "fas fa-check-circle" : "fas fa-exclamation-circle";
-    titleEl.textContent = title;
-    msgEl.textContent = message;
-
-    notification.classList.add("show");
-    setTimeout(() => {
-      notification.classList.remove("show");
-    }, 3000);
+    });
+  } else {
+    window.location.href = "login.html";
   }
+});
+
+function showNotification(title, message, success = true) {
+  const notification = document.getElementById("notification");
+  const icon = notification.querySelector(".notification-icon i");
+  const titleEl = document.getElementById("notification-title");
+  const msgEl = document.getElementById("notification-message");
+
+  notification.classList.remove("success", "error");
+  notification.classList.add(success ? "success" : "error");
+  icon.className = success ? "fas fa-check-circle" : "fas fa-exclamation-circle";
+  titleEl.textContent = title;
+  msgEl.textContent = message;
+
+  notification.classList.add("show");
+  setTimeout(() => notification.classList.remove("show"), 3000);
+}
 </script>
 
 
