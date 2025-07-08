@@ -804,8 +804,9 @@
       return;
     }
 
+    // Fixed: Total payout = (amount * rate) includes original bet
     const payout = amount * bet.rate;
-    payoutEl.innerHTML = `<i class="fas fa-calculator"></i> संभावित जीत: ₹${payout.toFixed(2)}`;
+    payoutEl.innerHTML = `<i class="fas fa-calculator"></i> संभावित जीत: ₹${payout.toFixed(2)} (₹${amount} बेट + ₹${(payout - amount).toFixed(2)} जीत)`;
   }
 
   function placeBet(matchId) {
@@ -821,24 +822,57 @@
     if (amount > userBalance.total) return showNotification("पैसे कम हैं", true);
     if (amount < 10) return showNotification("न्यूनतम बेट ₹10", true);
 
+    // Deduction logic
+    let newRecharge = userBalance.recharge;
+    let newBonus = userBalance.bonus;
+    let newWinning = userBalance.winning;
+    let amountLeft = amount;
+
+    if (newRecharge > 0) {
+      const deductRecharge = Math.min(amountLeft, newRecharge);
+      newRecharge -= deductRecharge;
+      amountLeft -= deductRecharge;
+    }
+    
+    if (amountLeft > 0 && newBonus > 0) {
+      const deductBonus = Math.min(amountLeft, newBonus);
+      newBonus -= deductBonus;
+      amountLeft -= deductBonus;
+    }
+    
+    if (amountLeft > 0 && newWinning > 0) {
+      const deductWinning = Math.min(amountLeft, newWinning);
+      newWinning -= deductWinning;
+      amountLeft -= deductWinning;
+    }
+
+    if (amountLeft > 0) {
+      showNotification("पैसे कम हैं", true);
+      return;
+    }
+
     const betData = {
       matchId,
       team: bet.team,
       rate: bet.rate,
       amount,
-      potentialWin: amount * bet.rate,
+      potentialWin: amount * bet.rate, // Fixed: This includes original bet
       timestamp: Date.now(),
       status: "pending"
     };
 
     const updates = {};
-    updates[`users/${user.uid}/balance/total`] = userBalance.total - amount;
+    updates[`users/${user.uid}/wallet/recharge`] = newRecharge;
+    updates[`users/${user.uid}/wallet/bonus`] = newBonus;
+    updates[`users/${user.uid}/wallet/winning`] = newWinning;
     updates[`users/${user.uid}/bets/${matchId}`] = betData;
-    updates[`matches/${matchId}/bets/${user.uid}`] = betData;
 
     db.ref().update(updates).then(() => {
       showNotification(`${bet.team} पर ₹${amount} का बेट लगा!`, false);
-      userBalance.total -= amount;
+      userBalance.recharge = newRecharge;
+      userBalance.bonus = newBonus;
+      userBalance.winning = newWinning;
+      userBalance.total = newRecharge + newBonus + newWinning;
       userBets[matchId] = betData;
       delete selectedBets[matchId];
       updateBalanceDisplay();
