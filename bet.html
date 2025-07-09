@@ -851,15 +851,20 @@
       return;
     }
 
-    const betData = {
-      matchId,
-      team: bet.team,
-      rate: bet.rate,
-      amount,
-      potentialWin: amount * bet.rate, // Fixed: This includes original bet
-      timestamp: Date.now(),
-      status: "pending"
-    };
+   const match = allMatches[matchId];
+const matchTitle = `${match.team1} vs ${match.team2}`;
+const returnAmount = 0; // Because match result is pending
+
+const betData = {
+  matchId,
+  match: matchTitle,
+  team: bet.team,
+  rate: bet.rate,
+  amount,
+  return: returnAmount,
+  timestamp: Date.now(),
+  result: "pending"
+};
 
     const updates = {};
     updates[`users/${user.uid}/wallet/recharge`] = newRecharge;
