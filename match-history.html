@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+   <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -440,8 +440,9 @@
     </footer>
   </div>
 
-  <script>
-    // Firebase configuration
+
+
+<script>
     const firebaseConfig = {
       apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
       authDomain: "betting-app-43800.firebaseapp.com",
@@ -449,275 +450,91 @@
       projectId: "betting-app-43800",
       storageBucket: "betting-app-43800.appspot.com",
       messagingSenderId: "1097111498871",
-      appId: "1:1097111498871:web:7b95f5d6b6e4c1c6a1f6e5",
-      measurementId: "G-8E5Y7XZQY0"
+      appId: "1:1097111498871:web:7b95f5d6b6e4c1c6a1f6e5"
     };
-    
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
+    const db = firebase.database();
     const auth = firebase.auth();
-    
-    // DOM elements
+
     const historyBody = document.getElementById('historyBody');
     const userBalance = document.getElementById('userBalance');
     const userInitials = document.getElementById('userInitials');
-    
-    // Current user state
+
     let currentUser = null;
     let userBets = [];
-    
-    // Initialize the app
+
     function initApp() {
-      // Check authentication state
       auth.onAuthStateChanged(user => {
         if (user) {
           currentUser = user;
-          // Set user initials
           const name = user.displayName || user.email;
           if (name) {
             const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
             userInitials.textContent = initials;
           }
-          
-          // Load user data
           loadUserData();
-          
-          // Load bet history
           loadBetHistory();
         } else {
-          // User is not logged in
           alert("Please login to view your bet history");
           window.location.href = "login.html";
         }
       });
     }
-    
-    // Load user data (balance, etc)
+
     function loadUserData() {
       if (!currentUser) return;
-      
-      const userRef = database.ref('users/' + currentUser.uid);
-      userRef.on('value', (snapshot) => {
-        const userData = snapshot.val();
-        if (userData && userData.balance) {
-          userBalance.textContent = `₹${parseFloat(userData.balance).toFixed(2)}`;
-        }
+      db.ref('users/' + currentUser.uid + '/wallet').on('value', (snap) => {
+        const wallet = snap.val() || {};
+        const total = (wallet.recharge || 0) + (wallet.bonus || 0) + (wallet.winning || 0);
+        userBalance.textContent = `₹${total.toFixed(2)}`;
       });
     }
-    
-    // Load bet history from Firebase
+
     function loadBetHistory() {
       if (!currentUser) return;
-      
-      const betsRef = database.ref('users/' + currentUser.uid + '/bets');
-      betsRef.orderByChild('timestamp').on('value', (snapshot) => {
+      db.ref('users/' + currentUser.uid + '/bets').orderByChild('timestamp').on('value', (snapshot) => {
         historyBody.innerHTML = '';
         userBets = [];
-        
+
         if (!snapshot.exists()) {
-          historyBody.innerHTML = `
-            <tr>
-              <td colspan="7" class="empty-state">
-                <i class="fas fa-inbox"></i>
-                <h3>No Bets Found</h3>
-                <p>You haven't placed any bets yet. Place your first bet to see it here!</p>
-              </td>
-            </tr>
-          `;
+          historyBody.innerHTML = `<tr><td colspan="7" class="empty-state"><i class="fas fa-inbox"></i><h3>No Bets Found</h3><p>You haven't placed any bets yet.</p></td></tr>`;
           return;
         }
-        
-        snapshot.forEach((childSnapshot) => {
-          const bet = childSnapshot.val();
-          bet.id = childSnapshot.key;
+
+        snapshot.forEach((child) => {
+          const bet = child.val();
           userBets.push(bet);
         });
-        
-        // Sort bets by timestamp (newest first)
+
         userBets.sort((a, b) => b.timestamp - a.timestamp);
-        
-        // Display bets
         displayBets(userBets);
       });
     }
-    
-    // Display bets in the table
+
     function displayBets(bets) {
       historyBody.innerHTML = '';
-      
-      if (bets.length === 0) {
-        historyBody.innerHTML = `
-          <tr>
-            <td colspan="7" class="empty-state">
-              <i class="fas fa-inbox"></i>
-              <h3>No Bets Found</h3>
-              <p>No bets match your selected filter.</p>
-            </td>
-          </tr>
-        `;
-        return;
-      }
-      
       bets.forEach(bet => {
+        const [team1 = "Team A", team2 = "Team B"] = (bet.match || "").split(" vs ");
+        const time = new Date(bet.timestamp);
+        const dateStr = time.toLocaleDateString([], { day: 'numeric', month: 'short' });
+        const timeStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        const statusClass = bet.result === 'win' ? 'win' : bet.result === 'lose' ? 'lose' : 'pending';
+        const statusText = statusClass.toUpperCase();
+
         const row = document.createElement('tr');
-        
-        // Format match name
-        const matchParts = bet.match.split(' vs ');
-        const team1 = matchParts[0] || 'Team A';
-        const team2 = matchParts[1] || 'Team B';
-        
-        // Determine status class
-        let statusClass = 'pending';
-        let statusText = 'PENDING';
-        if (bet.result === 'win') {
-          statusClass = 'win';
-          statusText = 'WIN';
-        } else if (bet.result === 'lose') {
-          statusClass = 'lose';
-          statusText = 'LOSE';
-        }
-        
-        // Format date and time
-        const betDate = new Date(bet.timestamp);
-        const timeString = betDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        const dateString = betDate.toLocaleDateString([], {day: 'numeric', month: 'short'});
-        
         row.innerHTML = `
-          <td>
-            <div class="match-info">
-              <div class="team-logo">${team1.substring(0, 3)}</div>
-              <div>${team1}</div>
-              <div class="vs">vs</div>
-              <div class="team-logo">${team2.substring(0, 3)}</div>
-              <div>${team2}</div>
-            </div>
-          </td>
+          <td><div class="match-info"><div class="team-logo">${team1.slice(0,3)}</div><div>${team1}</div><div class="vs">vs</div><div class="team-logo">${team2.slice(0,3)}</div><div>${team2}</div></div></td>
           <td>${bet.team}</td>
           <td>@${parseFloat(bet.rate).toFixed(2)}</td>
           <td class="amount">₹${parseFloat(bet.amount).toFixed(2)}</td>
-          <td class="return-amount">₹${parseFloat(bet.return).toFixed(2)}</td>
-          <td class="time">${dateString}, ${timeString}</td>
+          <td class="return-amount">₹${parseFloat(bet.return || 0).toFixed(2)}</td>
+          <td class="time">${dateStr}, ${timeStr}</td>
           <td><span class="status ${statusClass}">${statusText}</span></td>
         `;
-        
         historyBody.appendChild(row);
       });
     }
-    
-    // Initialize when DOM is loaded
-    document.addEventListener('DOMContentLoaded', function() {
-      // Initialize Firebase app
-      initApp();
-      
-      // Filter buttons functionality
-      const filterBtns = document.querySelectorAll('.filter-btn');
-      filterBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-          filterBtns.forEach(b => b.classList.remove('active'));
-          this.classList.add('active');
-          
-          const filter = this.getAttribute('data-filter');
-          filterBets(filter);
-        });
-      });
-      
-      // Pagination buttons functionality
-      document.getElementById('prevPage')?.addEventListener('click', function() {
-        // Pagination logic would go here
-      });
-      
-      document.getElementById('nextPage')?.addEventListener('click', function() {
-        // Pagination logic would go here
-      });
-    });
-    
-    // Filter bets based on status
-    function filterBets(status) {
-      if (status === 'all') {
-        displayBets(userBets);
-        return;
-      }
-      
-      const filteredBets = userBets.filter(bet => {
-        if (status === 'pending') return bet.result === 'pending';
-        if (status === 'win') return bet.result === 'win';
-        if (status === 'lose') return bet.result === 'lose';
-        return true;
-      });
-      
-      displayBets(filteredBets);
-    }
-    
-    // Simulate authentication for demo purposes
-    // In a real app, this would be handled by your login system
-    function simulateLogin() {
-      auth.signInAnonymously()
-        .then(() => {
-          console.log("Signed in anonymously");
-        })
-        .catch(error => {
-          console.error("Authentication error:", error);
-          alert("Could not authenticate. Using demo data.");
-          loadDemoData();
-        });
-    }
-    
-    // Load demo data if Firebase fails
-    function loadDemoData() {
-      // This would be called if Firebase fails
-      console.log("Loading demo data");
-      
-      // Set demo user info
-      userBalance.textContent = "₹12,450.75";
-      userInitials.textContent = "DK";
-      
-      // Display demo bets
-      const demoBets = [
-        {
-          match: "RCB vs CSK",
-          team: "RCB",
-          rate: 1.85,
-          amount: 2000,
-          return: 3700,
-          timestamp: Date.now() - 3600000, // 1 hour ago
-          result: "win"
-        },
-        {
-          match: "MI vs GT",
-          team: "GT",
-          rate: 2.10,
-          amount: 1500,
-          return: 0,
-          timestamp: Date.now() - 86400000, // 1 day ago
-          result: "lose"
-        },
-        {
-          match: "RR vs KKR",
-          team: "RR",
-          rate: 1.65,
-          amount: 3000,
-          return: 4950,
-          timestamp: Date.now() - 172800000, // 2 days ago
-          result: "win"
-        },
-        {
-          match: "IND vs PAK",
-          team: "IND",
-          rate: 1.50,
-          amount: 10000,
-          return: 15000,
-          timestamp: Date.now() + 86400000, // Tomorrow
-          result: "pending"
-        }
-      ];
-      
-      userBets = demoBets;
-      displayBets(userBets);
-    }
-    
-    // Start the authentication process
-    window.onload = simulateLogin;
+
+    document.addEventListener('DOMContentLoaded', initApp);
   </script>
-</body>
-</html>
