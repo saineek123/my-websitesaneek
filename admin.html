@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -563,305 +563,209 @@
     </main>
   </div>
 
-  <!-- Firebase Scripts -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 
-  <!-- App Script -->
-  <script>
-    // Tab navigation functionality
-    document.addEventListener('DOMContentLoaded', function() {
-      // Get all menu items
-      const menuItems = document.querySelectorAll('.sidebar-menu li');
-      
-      // Add click event to each menu item
-      menuItems.forEach(item => {
-        item.addEventListener('click', function() {
-          // Remove active class from all items
-          menuItems.forEach(i => i.classList.remove('active'));
-          
-          // Add active class to clicked item
-          this.classList.add('active');
-          
-          // Get the tab to show
-          const tabId = this.getAttribute('data-tab') + '-tab';
-          
-          // Hide all tabs
-          document.querySelectorAll('.tab-content').forEach(tab => {
-            tab.classList.remove('active');
-          });
-          
-          // Show the selected tab
-          document.getElementById(tabId).classList.add('active');
-        });
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+    authDomain: "betting-app-43800.firebaseapp.com",
+    databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+    projectId: "betting-app-43800"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const auth = firebase.auth();
+
+  auth.onAuthStateChanged((user) => {
+    if (user) {
+      db.ref("admins/" + user.uid).once("value").then((snap) => {
+        if (snap.exists() && snap.val() === true) {
+          loadSummary();
+          loadRecharges();
+          loadWithdraws();
+          loadUsers();
+        } else {
+          alert("❌ You are not admin");
+          auth.signOut().then(() => window.location.href = "admin-login.html");
+        }
       });
+    } else {
+      window.location.href = "admin-login.html";
+    }
+  });
+
+  function logout() {
+    auth.signOut().then(() => {
+      window.location.href = "admin-login.html";
+    });
+  }
+
+  function loadSummary() {
+    db.ref("users").once("value").then((snap) => {
+      let userCount = snap.exists() ? Object.keys(snap.val()).length : 0;
+      document.getElementById("totalUsers").innerText = userCount;
     });
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
-      authDomain: "betting-app-43800.firebaseapp.com",
-      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
-      projectId: "betting-app-43800"
-    };
+    db.ref("withdraws").once("value").then((snap) => {
+      let total = 0;
+      snap.forEach(user => { total += user.numChildren(); });
+      document.getElementById("totalWithdraws").innerText = total;
+    });
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const auth = firebase.auth();
+    // Count all recharge requests across all users
+    db.ref("users").once("value").then((snap) => {
+      let total = 0;
+      snap.forEach(user => {
+        if (user.val().rechargeRequests) {
+          total += Object.keys(user.val().rechargeRequests).length;
+        }
+      });
+      document.getElementById("totalRecharges").innerText = total;
+    });
+  }
 
-    // Admin status check - FIXED
-    auth.onAuthStateChanged((user) => {
-      if (user) {
-        // Check admin status from Firebase Realtime Database
-        db.ref("admins/" + user.uid).once("value").then((snap) => {
-          if (snap.exists() && snap.val() === true) {
-            // User is admin - load data
-            loadSummary();
-            loadRecharges();
-            loadWithdraws();
-            loadUsers();
-          } else {
-            // User is not admin
-            alert("❌ You are not authorized as an admin");
-            auth.signOut().then(() => window.location.href = "admin-login.html");
-          }
-        }).catch((error) => {
-          console.error("Error checking admin status:", error);
-          alert("❌ Failed to verify admin status. Please check Firebase rules.");
-        });
-      } else {
-        // User is not signed in
-        window.location.href = "admin-login.html";
+  function loadRecharges() {
+    db.ref("users").once("value").then((snap) => {
+      const container = document.getElementById("rechargeList");
+      const container2 = document.getElementById("rechargeList2");
+      container.innerHTML = '';
+      container2.innerHTML = '';
+
+      let found = false;
+
+      snap.forEach((userSnap) => {
+        const userId = userSnap.key;
+        const user = userSnap.val();
+
+        if (user.rechargeRequests) {
+          found = true;
+          Object.entries(user.rechargeRequests).forEach(([reqId, reqData]) => {
+            const div = document.createElement("div");
+            div.className = "list-item";
+            div.innerHTML = `
+              <div class="item-info">
+                <p><b>User ID:</b> ${userId}</p>
+                <p><b>Amount:</b> ₹${reqData.amount}</p>
+                <p><b>Status:</b> <span class="${reqData.status}">${reqData.status}</span></p>
+                <p><b>UTR:</b> ${reqData.utr || 'N/A'}</p>
+              </div>
+              <div class="item-actions">
+                ${reqData.status === "pending" ? `
+                  <button class="btn btn-approve" onclick="approveRecharge('${userId}', '${reqId}', ${reqData.amount})">
+                    <i class="fas fa-check"></i> Approve
+                  </button>
+                  <button class="btn btn-reject" onclick="rejectRecharge('${userId}', '${reqId}')">
+                    <i class="fas fa-times"></i> Reject
+                  </button>
+                ` : `
+                  <span class="status-badge">${reqData.status}</span>
+                `}
+              </div>
+            `;
+            container.appendChild(div);
+            container2.appendChild(div.cloneNode(true));
+          });
+        }
+      });
+
+      if (!found) {
+        container.innerHTML = '<div class="list-item"><p>No recharge requests found</p></div>';
+        container2.innerHTML = '<div class="list-item"><p>No recharge requests found</p></div>';
       }
     });
+  }
 
-    function logout() {
-      auth.signOut().then(() => {
-        window.location.href = "admin-login.html";
-      });
-    }
+  function approveRecharge(uid, reqId, amount) {
+    db.ref(`users/${uid}/rechargeRequests/${reqId}`).update({ status: "approved" }).then(() => {
+      // Update wallet recharge balance
+      const walletRef = db.ref(`users/${uid}/wallet/recharge`);
+      walletRef.transaction(old => (old || 0) + amount);
+      loadRecharges();
+    });
+  }
 
-    function loadSummary() {
-      // Total Users - FIXED APPROACH
-      db.ref("users").once("value").then((snap) => {
-        let userCount = 0;
-        if (snap.exists()) {
-          userCount = Object.keys(snap.val()).length;
-        }
-        document.getElementById("totalUsers").innerText = userCount;
-      }).catch((error) => {
-        console.error("Error loading users:", error);
-        document.getElementById("totalUsers").innerText = "Error";
-      });
-      
-      // Withdraw Requests
-      db.ref("withdraws").once("value").then((snap) => {
-        let total = 0;
-        if (snap.exists()) {
-          snap.forEach(user => {
-            if (user.exists()) {
-              total += user.numChildren();
-            }
-          });
-        }
-        document.getElementById("totalWithdraws").innerText = total;
-      }).catch((error) => {
-        console.error("Error loading withdraws:", error);
-        document.getElementById("totalWithdraws").innerText = "Error";
-      });
-      
-      // Recharge Requests
-      db.ref("recharges").once("value").then((snap) => {
-        let total = 0;
-        if (snap.exists()) {
-          snap.forEach(user => {
-            if (user.exists()) {
-              total += user.numChildren();
-            }
-          });
-        }
-        document.getElementById("totalRecharges").innerText = total;
-      }).catch((error) => {
-        console.error("Error loading recharges:", error);
-        document.getElementById("totalRecharges").innerText = "Error";
-      });
-    }
+  function rejectRecharge(uid, reqId) {
+    db.ref(`users/${uid}/rechargeRequests/${reqId}`).update({ status: "rejected" }).then(loadRecharges);
+  }
 
-    function loadRecharges() {
-      db.ref("recharges").once("value").then((snap) => {
-        const container = document.getElementById("rechargeList");
-        const container2 = document.getElementById("rechargeList2");
-        container.innerHTML = '';
-        container2.innerHTML = '';
-        
-        if (!snap.exists() || snap.numChildren() === 0) {
-          container.innerHTML = '<div class="list-item"><p>No recharge requests found</p></div>';
-          container2.innerHTML = '<div class="list-item"><p>No recharge requests found</p></div>';
-          return;
-        }
-        
-        snap.forEach((userNode) => {
-          const userId = userNode.key;
-          userNode.forEach((rechargeNode) => {
-            const data = rechargeNode.val();
-            const rechargeId = rechargeNode.key;
-            const div = document.createElement("div");
-            div.className = "list-item";
-            div.innerHTML = `
-              <div class="item-info">
-                <p><b>User ID:</b> ${userId}</p>
-                <p><b>Amount:</b> ₹${data.amount}</p>
-                <p><b>Status:</b> <span class="${data.status === 'pending' ? 'pending' : data.status}">${data.status}</span></p>
-              </div>
-              <div class="item-actions">
-                ${data.status === "pending" ? `
-                  <button class="btn btn-approve" onclick="updateRechargeStatus('${userId}', '${rechargeId}', ${data.amount}, 'approved')">
-                    <i class="fas fa-check"></i> Approve
-                  </button>
-                  <button class="btn btn-reject" onclick="updateRechargeStatus('${userId}', '${rechargeId}', ${data.amount}, 'rejected')">
-                    <i class="fas fa-times"></i> Reject
-                  </button>
-                ` : `
-                  <span class="status-badge">${data.status}</span>
-                `}
-              </div>
-            `;
-            container.appendChild(div);
-            container2.appendChild(div.cloneNode(true));
-          });
-        });
-      }).catch((error) => {
-        console.error("Error loading recharges:", error);
-        const container = document.getElementById("rechargeList");
-        const container2 = document.getElementById("rechargeList2");
-        container.innerHTML = '<div class="list-item"><p>❌ Failed to load recharge requests</p></div>';
-        container2.innerHTML = '<div class="list-item"><p>❌ Failed to load recharge requests</p></div>';
-      });
-    }
+  function loadWithdraws() {
+    db.ref("withdraws").once("value").then((snap) => {
+      const container = document.getElementById("withdrawList");
+      const container2 = document.getElementById("withdrawList2");
+      container.innerHTML = '';
+      container2.innerHTML = '';
 
-    function updateRechargeStatus(userId, rechargeId, amount, status) {
-      const rechargeRef = db.ref("recharges/" + userId + "/" + rechargeId);
-      rechargeRef.update({ status }).then(() => {
-        if (status === "approved") {
-          const walletRef = db.ref("users/" + userId + "/wallet");
-          walletRef.transaction(current => (current || 0) + amount);
-        }
-        loadRecharges();
-      }).catch((error) => {
-        console.error("Error updating recharge status:", error);
-        alert("❌ Failed to update recharge status");
-      });
-    }
+      snap.forEach((userSnap) => {
+        const userId = userSnap.key;
+        userSnap.forEach((reqSnap) => {
+          const data = reqSnap.val();
+          const withdrawId = reqSnap.key;
 
-    function loadWithdraws() {
-      db.ref("withdraws").once("value").then((snap) => {
-        const container = document.getElementById("withdrawList");
-        const container2 = document.getElementById("withdrawList2");
-        container.innerHTML = '';
-        container2.innerHTML = '';
-        
-        if (!snap.exists() || snap.numChildren() === 0) {
-          container.innerHTML = '<div class="list-item"><p>No withdrawal requests found</p></div>';
-          container2.innerHTML = '<div class="list-item"><p>No withdrawal requests found</p></div>';
-          return;
-        }
-        
-        snap.forEach((userSnap) => {
-          const userId = userSnap.key;
-          userSnap.forEach((reqSnap) => {
-            const data = reqSnap.val();
-            const withdrawId = reqSnap.key;
-            const div = document.createElement("div");
-            div.className = "list-item";
-            div.innerHTML = `
-              <div class="item-info">
-                <p><b>User ID:</b> ${userId}</p>
-                <p><b>Amount:</b> ₹${data.amount}</p>
-                <p><b>UPI ID:</b> ${data.upi || 'N/A'}</p>
-                <p><b>Account No:</b> ${data.account || 'N/A'}</p>
-                <p><b>Status:</b> <span class="${data.status === 'pending' ? 'pending' : data.status}">${data.status}</span></p>
-              </div>
-              <div class="item-actions">
-                ${data.status === "pending" ? `
-                  <button class="btn btn-approve" onclick="updateWithdrawStatus('${userId}', '${withdrawId}', '${data.amount}', 'approved')">
-                    <i class="fas fa-check"></i> Approve
-                  </button>
-                  <button class="btn btn-reject" onclick="updateWithdrawStatus('${userId}', '${withdrawId}', '${data.amount}', 'rejected')">
-                    <i class="fas fa-times"></i> Reject
-                  </button>
-                ` : `
-                  <span class="status-badge">${data.status}</span>
-                `}
-              </div>
-            `;
-            container.appendChild(div);
-            container2.appendChild(div.cloneNode(true));
-          });
-        });
-      }).catch((error) => {
-        console.error("Error loading withdraws:", error);
-        const container = document.getElementById("withdrawList");
-        const container2 = document.getElementById("withdrawList2");
-        container.innerHTML = '<div class="list-item"><p>❌ Failed to load withdrawal requests</p></div>';
-        container2.innerHTML = '<div class="list-item"><p>❌ Failed to load withdrawal requests</p></div>';
-      });
-    }
-
-    function updateWithdrawStatus(userId, withdrawId, amount, status) {
-      const withdrawRef = db.ref("withdraws/" + userId + "/" + withdrawId);
-      withdrawRef.update({ status }).then(() => {
-        if (status === "approved") {
-          const walletRef = db.ref("users/" + userId + "/wallet");
-          walletRef.transaction(current => (current || 0) - parseFloat(amount));
-        }
-        loadWithdraws();
-      }).catch((error) => {
-        console.error("Error updating withdraw status:", error);
-        alert("❌ Failed to update withdrawal status");
-      });
-    }
-
-    function loadUsers() {
-      db.ref("users").once("value").then((snap) => {
-        const container = document.getElementById("users");
-        container.innerHTML = '';
-        
-        if (!snap.exists() || snap.numChildren() === 0) {
-          container.innerHTML = '<div class="list-item"><p>No users found</p></div>';
-          return;
-        }
-        
-        snap.forEach((child) => {
-          const user = child.val();
           const div = document.createElement("div");
           div.className = "list-item";
           div.innerHTML = `
             <div class="item-info">
-              <p><b>User ID:</b> ${child.key}</p>
-              <p><b>Wallet:</b> ₹${user.wallet || 0}</p>
-              <p><b>Status:</b> ${user.isBanned ? '<span class="banned">BANNED</span>' : '<span class="active">Active</span>'}</p>
+              <p><b>User ID:</b> ${userId}</p>
+              <p><b>Amount:</b> ₹${data.amount}</p>
+              <p><b>UPI ID:</b> ${data.upi || 'N/A'}</p>
+              <p><b>Status:</b> <span class="${data.status}">${data.status}</span></p>
             </div>
             <div class="item-actions">
-              <button class="btn ${user.isBanned ? 'btn-approve' : 'btn-ban'}" onclick="updateBan('${child.key}', ${!user.isBanned})">
-                <i class="fas ${user.isBanned ? 'fa-unlock' : 'fa-ban'}"></i> ${user.isBanned ? 'Unban' : 'Ban'}
-              </button>
+              ${data.status === "pending" ? `
+                <button class="btn btn-approve" onclick="updateWithdrawStatus('${userId}', '${withdrawId}', ${data.amount}, 'approved')">
+                  <i class="fas fa-check"></i> Approve
+                </button>
+                <button class="btn btn-reject" onclick="updateWithdrawStatus('${userId}', '${withdrawId}', ${data.amount}, 'rejected')">
+                  <i class="fas fa-times"></i> Reject
+                </button>
+              ` : `
+                <span class="status-badge">${data.status}</span>
+              `}
             </div>
           `;
           container.appendChild(div);
+          container2.appendChild(div.cloneNode(true));
         });
-      }).catch((error) => {
-        console.error("Error loading users:", error);
-        const container = document.getElementById("users");
-        container.innerHTML = '<div class="list-item"><p>❌ Failed to load users</p></div>';
       });
+    });
+  }
+function updateWithdrawStatus(userId, withdrawId, amount, status) {
+  const withdrawRef = db.ref(`withdraws/${userId}/${withdrawId}`);
+  withdrawRef.update({ status }).then(() => {
+    if (status === "approved") {
+      // Do nothing, already deducted
+    } else if (status === "rejected") {
+      // Refund to winning balance
+      db.ref(`users/${userId}/wallet/winning`).transaction(old => (old || 0) + amount);
     }
+    loadWithdraws();
+  });
+}
 
-    function updateBan(uid, state) {
-      db.ref("users/" + uid).update({ isBanned: state }).then(() => loadUsers()).catch((error) => {
-        console.error("Error updating user ban status:", error);
-        alert("❌ Failed to update user status");
+
+  function loadUsers() {
+    db.ref("users").once("value").then((snap) => {
+      const container = document.getElementById("users");
+      container.innerHTML = '';
+
+      snap.forEach((child) => {
+        const user = child.val();
+        const uid = child.key;
+        const div = document.createElement("div");
+        div.className = "list-item";
+        div.innerHTML = `
+          <div class="item-info">
+            <p><b>User ID:</b> ${uid}</p>
+            <p><b>Wallet:</b> Recharge: ₹${(user.wallet?.recharge || 0).toFixed(2)}, Bonus: ₹${(user.wallet?.bonus || 0).toFixed(2)}, Winning: ₹${(user.wallet?.winning || 0).toFixed(2)}</p>
+          </div>
+        `;
+        container.appendChild(div);
       });
-    }
-  </script>
+    });
+  }
+</script>
+
 </body>
 </html>
