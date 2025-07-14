@@ -599,8 +599,13 @@ auth.onAuthStateChanged(user => {
         };
         
         // Write to database
-        await newWithdrawRef.set(withdrawData);
-        
+await newWithdrawRef.set(withdrawData);
+
+// Deduct from winning balance immediately
+const winningRef = db.ref(`users/${userId}/wallet/winning`);
+await winningRef.transaction(old => (old || 0) - amount);
+
+
         showNotification("Success", "Withdrawal request submitted successfully! Admin will process it soon.", true);
         document.getElementById("withdrawForm").reset();
       } catch (err) {
