@@ -523,11 +523,10 @@
       <a href="index.html"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
     </div>
   </div>
-
-
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
 <script>
 const firebaseConfig = {
@@ -538,6 +537,7 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+const firestore = firebase.firestore();
 const auth = firebase.auth();
 
 let winningBalance = 0;
@@ -547,19 +547,16 @@ auth.onAuthStateChanged(user => {
   if (user) {
     userId = user.uid;
 
-    // Refresh the authentication token
     user.getIdToken(true).catch(err => {
       console.log("Token refresh error:", err);
     });
 
-    // Load wallet
     db.ref(`users/${userId}/wallet`).on("value", snap => {
       const wallet = snap.val() || {};
       winningBalance = wallet.winning || 0;
       document.getElementById("balanceAmount").textContent = "₹" + winningBalance.toFixed(2);
     });
 
-    // Form submit
     document.getElementById("withdrawForm").addEventListener("submit", async e => {
       e.preventDefault();
 
@@ -572,7 +569,7 @@ auth.onAuthStateChanged(user => {
         showNotification("Error", "Minimum ₹100 withdrawal required", false);
         return;
       }
-      
+
       if (amount > winningBalance) {
         showNotification("Error", "Not enough winning balance", false);
         return;
@@ -581,30 +578,35 @@ auth.onAuthStateChanged(user => {
       document.getElementById("processingOverlay").classList.add("show");
 
       try {
-        // Refresh token before write operation
         await auth.currentUser.getIdToken(true);
-        
-        // Create a new withdrawal request
         const newWithdrawRef = db.ref(`withdraws/${userId}`).push();
-        
-        // Create withdrawal data
+
         const withdrawData = {
           amount,
           account,
           ifsc,
           holder,
-          status: "pending", // MUST set status to 'pending' to satisfy Firebase rules
+          status: "pending",
           timestamp: Date.now(),
           userId: userId
         };
-        
-        // Write to database
-await newWithdrawRef.set(withdrawData);
 
-// Deduct from winning balance immediately
-const winningRef = db.ref(`users/${userId}/wallet/winning`);
-await winningRef.transaction(old => (old || 0) - amount);
+        await newWithdrawRef.set(withdrawData);
 
+        // 👇 Firestore transaction history entry
+        await firestore.collection("transactions").add({
+          userId: userId,
+          type: "withdraw",
+          amount: amount,
+          status: "pending",
+          date: new Date(),
+          title: "Withdraw Request",
+          id: newWithdrawRef.key
+        });
+
+        // Deduct from winning balance immediately
+        const winningRef = db.ref(`users/${userId}/wallet/winning`);
+        await winningRef.transaction(old => (old || 0) - amount);
 
         showNotification("Success", "Withdrawal request submitted successfully! Admin will process it soon.", true);
         document.getElementById("withdrawForm").reset();
@@ -621,22 +623,23 @@ await winningRef.transaction(old => (old || 0) - amount);
   }
 });
 
-function showNotification(title, message, success = true) {
+// ✅ Notification function
+function showNotification(title, message, success) {
   const notification = document.getElementById("notification");
-  const icon = notification.querySelector(".notification-icon i");
   const titleEl = document.getElementById("notification-title");
   const msgEl = document.getElementById("notification-message");
 
-  notification.classList.remove("success", "error");
-  notification.classList.add(success ? "success" : "error");
-  icon.className = success ? "fas fa-check-circle" : "fas fa-exclamation-circle";
   titleEl.textContent = title;
   msgEl.textContent = message;
 
-  notification.classList.add("show");
-  setTimeout(() => notification.classList.remove("show"), 3000);
+  notification.className = "notification show " + (success ? "success" : "error");
+
+  setTimeout(() => {
+    notification.classList.remove("show");
+  }, 3000);
 }
 </script>
+
 
 </body>
 </html>
