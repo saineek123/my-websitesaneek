@@ -479,7 +479,6 @@
  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
 <script>
   const firebaseConfig = {
@@ -491,7 +490,6 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
   const auth = firebase.auth();
-  const firestore = firebase.firestore();
 
   let userId = localStorage.getItem("userId");
 
@@ -506,6 +504,7 @@
     });
   }
 
+  // ✅ Amount Form Submit
   document.getElementById('amountForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const amount = parseFloat(document.getElementById("amount").value);
@@ -517,8 +516,10 @@
     document.getElementById("paymentSection").style.display = "block";
   });
 
+  // ✅ Recharge Request Submit
   document.getElementById('rechargeForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+
     const amount = parseFloat(document.getElementById("amount").value);
     const utr = document.getElementById("utr").value.trim();
 
@@ -547,17 +548,8 @@
     };
 
     try {
+      // ✅ User writes to their own node — rules allow this
       await db.ref(`users/${userId}/rechargeRequests`).push(rechargeRequest);
-
-      await firestore.collection("transactions").add({
-        userId: userId,
-        type: "recharge",
-        amount: amount,
-        status: "pending",
-        date: new Date(),
-        title: "Recharge Request",
-        id: utr
-      });
 
       document.getElementById("successMsg").style.display = "block";
       document.getElementById("rechargeForm").reset();
@@ -567,16 +559,20 @@
     }
   });
 
+  // ✅ Show file name when screenshot selected
   document.getElementById("screenshot").addEventListener("change", function () {
     const fileName = this.files[0] ? this.files[0].name : "No file selected";
-    document.getElementById("fileName").textContent = fileName;
+    document.getElementById("fileName").innerText = fileName;
   });
 
+  // ✅ Copy UPI ID
   function copyUpi() {
-    const upiId = document.getElementById("fixedUpi").textContent;
-    navigator.clipboard.writeText(upiId);
-    alert("UPI ID copied: " + upiId);
+    const upi = document.getElementById("fixedUpi").innerText;
+    navigator.clipboard.writeText(upi).then(() => {
+      alert("UPI ID copied: " + upi);
+    });
   }
 </script>
+
 </body>
 </html>
