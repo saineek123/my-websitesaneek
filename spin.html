@@ -458,8 +458,9 @@
       </div>
     </div>
     
+    <!-- Commission changed from 40% to 5% -->
     <div class="commission-note">
-      <strong>COMMISSION NOTE:</strong> 40% commission is applied on all wins. Example: ₹100 win = ₹60 payout
+      <strong>COMMISSION NOTE:</strong> 5% commission is applied on all wins. Example: ₹100 win = ₹95 payout
     </div>
   </div>
 
@@ -510,7 +511,8 @@
       winning: 0
     };
     
-    const COMMISSION_RATE = 0.4; // 40% commission
+    // Commission changed from 40% to 5%
+    const COMMISSION_RATE = 0.05; // 5% commission
 
     // Initialize game
     document.addEventListener('DOMContentLoaded', () => {
@@ -670,7 +672,7 @@
         resultText.textContent = "NO WIN. TRY AGAIN!";
       }
       
-      // Apply commission (40%)
+      // Apply commission (5%)
       if (winAmount > 0) {
         const commission = winAmount * COMMISSION_RATE;
         const netWin = winAmount - commission;
