@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Lucky Card Clash</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .wallet-card {
+      max-width: 400px;
+      margin: 0 auto 20px;
+      padding: 15px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+    }
+    .wallet-card .title {
+      color: #ccc;
+      font-size: 14px;
+    }
+    .wallet-card .total {
+      font-size: 28px;
+      font-weight: bold;
+      background: linear-gradient(90deg, #ffffff, #00e5ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
+    .wallet-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+    .wallet-col {
+      text-align: center;
+      flex: 1;
+    }
+    .wallet-col i { font-size: 18px; }
+    .wallet-label {
+      font-size: 12px;
+      color: #aaa;
+    }
+    .wallet-value {
+      font-weight: bold;
+    }
+
+    .cards {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .card-btn {
+      padding: 20px;
+      border: none;
+      font-size: 18px;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      width: 100px;
+    }
+    .Red { background: crimson; }
+    .Green { background: seagreen; }
+    .Blue { background: royalblue; }
+
+    #timer {
+      font-size: 22px;
+      margin-top: 20px;
+    }
+
+    .bet-form {
+      margin-top: 20px;
+    }
+    input[type="number"] {
+      padding: 8px;
+      width: 80px;
+    }
+    button.place-bet {
+      margin-left: 10px;
+      padding: 8px 16px;
+      font-weight: bold;
+      border-radius: 5px;
+    }
+
+    .result {
+      font-size: 22px;
+      margin-top: 20px;
+      min-height: 30px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>🎮 Lucky Card Clash</h2>
+
+  <!-- 🔁 Wallet Section -->
+  <div class="wallet-card">
+    <div class="title">Total Balance</div>
+    <div class="total" id="total">₹0.00</div>
+    <div class="wallet-row">
+      <div class="wallet-col">
+        <i class="fas fa-rupee-sign" style="color:#00bcd4;"></i>
+        <div class="wallet-label">Recharge</div>
+        <div class="wallet-value" id="recharge">₹0.00</div>
+      </div>
+      <div class="wallet-col">
+        <i class="fas fa-gift" style="color:#ff9800;"></i>
+        <div class="wallet-label">Bonus</div>
+        <div class="wallet-value" id="bonus">₹0.00</div>
+      </div>
+      <div class="wallet-col">
+        <i class="fas fa-trophy" style="color:#4caf50;"></i>
+        <div class="wallet-label">Winning</div>
+        <div class="wallet-value" id="winning">₹0.00</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="timer">⏳ Loading timer...</div>
+
+  <div class="cards">
+    <button class="card-btn Red" onclick="selectCard('Red')">Red</button>
+    <button class="card-btn Green" onclick="selectCard('Green')">Green</button>
+    <button class="card-btn Blue" onclick="selectCard('Blue')">Blue</button>
+  </div>
+
+  <div class="bet-form">
+    <input type="number" id="betAmount" placeholder="₹" />
+    <button class="place-bet" onclick="placeBet()">Place Bet</button>
+  </div>
+
+  <div class="result" id="resultMsg"></div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+      authDomain: "betting-app-43800.firebaseapp.com",
+      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+      projectId: "betting-app-43800"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();
+
+    let userId = localStorage.getItem("userId");
+    let selectedCard = null;
+    let currentRound = "";
+
+    if (!userId) {
+      auth.signInAnonymously().then(() => {
+        userId = auth.currentUser.uid;
+        localStorage.setItem("userId", userId);
+        initGame();
+      });
+    } else {
+      initGame();
+    }
+
+    function initGame() {
+      loadWallet();
+      listenToTimer();
+      listenToResult();
+    }
+
+    function selectCard(card) {
+      selectedCard = card;
+      document.getElementById("resultMsg").textContent = `✅ Selected: ${card}`;
+    }
+
+    function placeBet() {
+      const amount = parseInt(document.getElementById("betAmount").value);
+      if (!selectedCard || isNaN(amount) || amount <= 0) {
+        alert("❌ Select a card and enter a valid amount");
+        return;
+      }
+
+      db.ref(`users/${userId}/wallet`).once("value").then((snap) => {
+        const wallet = snap.val();
+        if (!wallet || wallet.total < amount) {
+          alert("❌ Insufficient balance");
+          return;
+        }
+
+        const updatedWallet = {
+          ...wallet,
+          total: wallet.total - amount
+        };
+        db.ref(`users/${userId}/wallet`).set(updatedWallet);
+        db.ref(`luckycard/bets/${currentRound}/${userId}`).set({
+          color: selectedCard,
+          amount: amount
+        });
+
+        document.getElementById("resultMsg").textContent = `🎲 Bet placed on ${selectedCard} for ₹${amount}`;
+      });
+    }
+
+    function updateWalletDisplay(wallet) {
+      const recharge = wallet.recharge || 0;
+      const bonus = wallet.bonus || 0;
+      const winning = wallet.winning || 0;
+      const total = recharge + bonus + winning;
+
+      document.getElementById("recharge").textContent = `₹${recharge.toFixed(2)}`;
+      document.getElementById("bonus").textContent = `₹${bonus.toFixed(2)}`;
+      document.getElementById("winning").textContent = `₹${winning.toFixed(2)}`;
+      document.getElementById("total").textContent = `₹${total.toFixed(2)}`;
+    }
+
+    function loadWallet() {
+      db.ref(`users/${userId}/wallet`).on("value", (snap) => {
+        const wallet = snap.val() || { recharge: 0, bonus: 0, winning: 0 };
+        updateWalletDisplay(wallet);
+      });
+    }
+
+    function listenToTimer() {
+      db.ref("luckycard/timer/startTime").on("value", (snap) => {
+        const startTime = snap.val();
+        if (!startTime) return;
+
+        const roundDuration = 30000;
+        currentRound = "R" + Math.floor(startTime / 1000);
+
+        const interval = setInterval(() => {
+          const now = Date.now();
+          const diff = roundDuration - (now - startTime);
+          if (diff > 0) {
+            document.getElementById("timer").textContent = `⏳ Time left: ${Math.floor(diff / 1000)}s`;
+          } else {
+            document.getElementById("timer").textContent = `⌛ Round ending...`;
+            clearInterval(interval);
+          }
+        }, 1000);
+      });
+    }
+
+    function listenToResult() {
+      db.ref("luckycard/result").on("value", (snap) => {
+        const results = snap.val();
+        if (!results) return;
+
+        const result = results[currentRound];
+        if (result && result.winner) {
+          db.ref(`luckycard/bets/${currentRound}/${userId}`).once("value").then((snap) => {
+            const bet = snap.val();
+            if (bet && bet.color === result.winner) {
+              const winAmount = bet.amount * 2;
+              document.getElementById("resultMsg").textContent = `🎉 You Won! ₹${winAmount}`;
+              db.ref(`users/${userId}/wallet`).once("value").then((walletSnap) => {
+                const wallet = walletSnap.val();
+                wallet.winning += winAmount;
+                wallet.total += winAmount;
+                db.ref(`users/${userId}/wallet`).set(wallet);
+              });
+            } else if (bet) {
+              document.getElementById("resultMsg").textContent = `❌ You Lost! Winner: ${result.winner}`;
+            }
+          });
+        }
+      });
+    }
+  </script>
+</body>
+</html>
