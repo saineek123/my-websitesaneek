@@ -598,11 +598,11 @@
 
         <div class="balance-container">
             <div class="balance">
-               
-               <p>Total: ₹<span id="total">0.00</span></p>
-  <p>Recharge: ₹<span id="recharge">0.00</span></p>
-  <p>Bonus: ₹<span id="bonus">0.00</span></p>
-  <p>Winning: ₹<span id="winning">0.00</span></p>
+
+                <p>Total: ₹<span id="total">0.00</span></p>
+                <p>Recharge: ₹<span id="recharge">0.00</span></p>
+                <p>Bonus: ₹<span id="bonus">0.00</span></p>
+                <p>Winning: ₹<span id="winning">0.00</span></p>
             </div>
         </div>
 
@@ -749,60 +749,60 @@
     <audio id="jackpotSound" src="https://www.soundjay.com/misc/sounds/slot-machine-jackpot-2.mp3"
         preload="auto"></audio>
     <audio id="tickSound" src="https://www.soundjay.com/button/sounds/button-09.mp3" preload="auto"></audio>
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
-    authDomain: "betting-app-43800.firebaseapp.com",
-    databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
-    projectId: "betting-app-43800"
-  };
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+            authDomain: "betting-app-43800.firebaseapp.com",
+            databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+            projectId: "betting-app-43800"
+        };
 
-  if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-  }
-
-  const db = firebase.database();
-  const auth = firebase.auth();
-
-  const rechargeEl = document.getElementById('recharge');
-  const bonusEl = document.getElementById('bonus');
-  const winningEl = document.getElementById('winning');
-  const totalEl = document.getElementById('total');
-
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      const userId = user.uid;
-      localStorage.setItem("userId", userId);
-
-      const walletRef = db.ref(`users/${userId}/wallet`);
-      walletRef.once("value").then(snap => {
-        if (!snap.exists()) {
-          walletRef.set({ recharge: 1000, bonus: 100, winning: 0 });
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
         }
-      });
 
-      walletRef.on("value", snap => {
-        const w = snap.val() || {};
-        const recharge = w.recharge || 0;
-        const bonus = w.bonus || 0;
-        const winning = w.winning || 0;
-        const total = recharge + bonus + winning;
+        const db = firebase.database();
+        const auth = firebase.auth();
 
-        rechargeEl.textContent = recharge.toFixed(2);
-        bonusEl.textContent = bonus.toFixed(2);
-        winningEl.textContent = winning.toFixed(2);
-        totalEl.textContent = total.toFixed(2);
-      });
+        const rechargeEl = document.getElementById('recharge');
+        const bonusEl = document.getElementById('bonus');
+        const winningEl = document.getElementById('winning');
+        const totalEl = document.getElementById('total');
 
-    } else {
-      auth.signInAnonymously().catch(console.error);
-    }
-  });
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                const userId = user.uid;
+                localStorage.setItem("userId", userId);
+
+                const walletRef = db.ref(`users/${userId}/wallet`);
+                walletRef.once("value").then(snap => {
+                    if (!snap.exists()) {
+                        walletRef.set({ recharge: 1000, bonus: 100, winning: 0 });
+                    }
+                });
+
+                walletRef.on("value", snap => {
+                    const w = snap.val() || {};
+                    const recharge = w.recharge || 0;
+                    const bonus = w.bonus || 0;
+                    const winning = w.winning || 0;
+                    const total = recharge + bonus + winning;
+
+                    rechargeEl.textContent = recharge.toFixed(2);
+                    bonusEl.textContent = bonus.toFixed(2);
+                    winningEl.textContent = winning.toFixed(2);
+                    totalEl.textContent = total.toFixed(2);
+                });
+
+            } else {
+                auth.signInAnonymously().catch(console.error);
+            }
+        });
 
 
 
@@ -930,22 +930,53 @@
                 }
             });
 
-            dealBtn.addEventListener('click', () => {
+            dealBtn.addEventListener('click', async () => {
                 if (!selectedHandType) {
                     resultElement.textContent = "कृपया पहले एक हाथ का प्रकार चुनें!";
                     resultElement.className = 'result lose';
                     return;
                 }
 
-                if (betAmount > balance) {
-                    resultElement.textContent = "पैसे कम हैं! कम दांव लगाएं";
+                const userId = localStorage.getItem("userId");
+                const walletRef = db.ref(`users/${userId}/wallet`);
+                const snap = await walletRef.get();
+                if (!snap.exists()) return;
+
+                const wallet = snap.val();
+                let recharge = wallet.recharge || 0;
+                let bonus = wallet.bonus || 0;
+                let winning = wallet.winning || 0;
+
+                let remaining = betAmount;
+
+                if (recharge >= remaining) {
+                    recharge -= remaining;
+                    remaining = 0;
+                } else {
+                    remaining -= recharge;
+                    recharge = 0;
+                }
+
+                if (remaining > 0 && bonus >= remaining) {
+                    bonus -= remaining;
+                    remaining = 0;
+                } else if (remaining > 0) {
+                    remaining -= bonus;
+                    bonus = 0;
+                }
+
+                if (remaining > 0 && winning >= remaining) {
+                    winning -= remaining;
+                    remaining = 0;
+                }
+
+                if (remaining > 0) {
+                    resultElement.textContent = "पैसे कम हैं! Recharge कीजिए।";
                     resultElement.className = 'result lose';
                     return;
                 }
 
-                // Save bet only (actual result will be shown after 30 sec)
-                balance -= betAmount;
-                updateBalance();
+                await walletRef.update({ recharge, bonus, winning });
 
                 resultElement.textContent = `बाजी: ${selectedHandType.toUpperCase()} पर ₹${betAmount} लगाई गई है। परिणाम 30 सेकंड बाद दिखेगा।`;
                 resultElement.className = 'result';
@@ -1241,9 +1272,17 @@
                         resultElement.className = 'result win';
                     }
 
-                    // Update balance
-                    balance += winAmount;
-                    updateBalance();
+                    const userId = localStorage.getItem("userId");
+                    const walletRef = db.ref(`users/${userId}/wallet`);
+                    walletRef.get().then(snap => {
+                        if (!snap.exists()) return;
+                        const w = snap.val();
+                        const newWinning = (w.winning || 0) + winAmount;
+                        const newTotal = (w.recharge || 0) + (w.bonus || 0) + newWinning;
+
+                        // Update only winning, UI auto updates total from existing code
+                        walletRef.update({ winning: newWinning });
+                    });
 
                     isWin = true;
                 } else {
