@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="hi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>तीन पत्ती - Teen Patti Card Game</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a1f5a, #1a5a2c, #5a0a2f);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: rgba(10, 15, 35, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.7);
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            border: 3px solid #ffcc00;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: linear-gradient(45deg, #ff0000, #ffcc00, #00cc00, #0066ff, #cc00ff);
+            z-index: -1;
+            animation: animateBorder 8s linear infinite;
+            background-size: 400%;
+            border-radius: 25px;
+        }
+
+        @keyframes animateBorder {
+            0% {
+                background-position: 0 0;
+            }
+
+            50% {
+                background-position: 400% 0;
+            }
+
+            100% {
+                background-position: 0 0;
+            }
+        }
+
+        h1 {
+            font-size: 42px;
+            margin-bottom: 10px;
+            color: #ffcc00;
+            text-shadow: 0 0 10px rgba(255, 204, 0, 0.7);
+            letter-spacing: 1.5px;
+        }
+
+        .jackpot {
+            background: linear-gradient(45deg, #ff0000, #ffcc00, #ff0000);
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
+            border: 2px solid gold;
+        }
+
+        .timer {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px auto;
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ffcc;
+            border: 2px solid #00ccff;
+            max-width: 300px;
+        }
+
+        .balance-container {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 12px;
+            margin: 20px auto;
+            width: 90%;
+            border: 2px solid #ffcc00;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .balance {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ffcc00;
+            text-align: left;
+        }
+
+        .player-id {
+            font-size: 18px;
+            color: #00ccff;
+            text-align: right;
+        }
+
+        .bet-section {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border: 2px solid #00cc00;
+        }
+
+        h2 {
+            margin-bottom: 15px;
+            color: #00ccff;
+        }
+
+        .bet-amount {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        input {
+            width: 200px;
+            padding: 12px 15px;
+            font-size: 18px;
+            border-radius: 10px;
+            border: 2px solid #ffcc00;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            text-align: center;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #00ccff;
+            box-shadow: 0 0 10px rgba(0, 204, 255, 0.5);
+        }
+
+        .bet-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+
+        .bet-btn {
+            background: linear-gradient(to bottom, #ffcc00, #ff9900);
+            color: #1a1a1a;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid #ffcc00;
+            width: 100px;
+        }
+
+        .bet-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(255, 204, 0, 0.4);
+        }
+
+        .bet-btn.highlight {
+            background: linear-gradient(to bottom, #00cc00, #009900);
+            color: white;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.7);
+        }
+
+        .hand-selection {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .hand-btn {
+            background: linear-gradient(to bottom, #0066cc, #004499);
+            color: white;
+            border: none;
+            padding: 12px 15px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid #00ccff;
+            min-width: 120px;
+        }
+
+        .hand-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 204, 255, 0.4);
+        }
+
+        .hand-btn.selected {
+            background: linear-gradient(to bottom, #00cc00, #009900);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.7);
+        }
+
+        .multiplier-badge {
+            font-size: 12px;
+            background: #ffcc00;
+            color: #000;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 5px;
+        }
+
+        /* Card Styling */
+        .cards-container {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .hand {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+        }
+
+        .hand-title {
+            font-size: 22px;
+            color: #ffcc00;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .cards {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .card {
+            width: 120px;
+            height: 160px;
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 10px;
+            font-size: 24px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.5s;
+            border: 4px solid #ffcc00;
+        }
+
+        .card.red {
+            color: #ff3333;
+        }
+
+        .card.black {
+            color: #000;
+        }
+
+        .card-top,
+        .card-bottom {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            font-weight: bold;
+        }
+
+        .card-bottom {
+            align-items: flex-end;
+            transform: rotate(180deg);
+        }
+
+        .card-center {
+            font-size: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1;
+            font-weight: bold;
+        }
+
+        .hand-result {
+            font-size: 24px;
+            min-height: 30px;
+            font-weight: bold;
+            color: #ffcc00;
+            text-transform: uppercase;
+            margin-top: 10px;
+            text-shadow: 0 0 5px rgba(255, 204, 0, 0.5);
+        }
+
+        .multiplier-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin: 25px 0;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px;
+            border-radius: 15px;
+            border: 2px solid #cc00ff;
+        }
+
+        .multiplier-header {
+            font-weight: bold;
+            color: #ffcc00;
+            padding: 8px;
+            border-bottom: 2px solid #ffcc00;
+            text-transform: uppercase;
+        }
+
+        .multiplier-value {
+            font-weight: bold;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        .multiplier-win {
+            color: #00ff00;
+            background: rgba(0, 255, 0, 0.1);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .controls {
+            margin: 25px 0;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .deal-btn {
+            background: linear-gradient(to bottom, #ff3333, #cc0000);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 22px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: all 0.3s;
+            border: 2px solid #ffcc00;
+            box-shadow: 0 5px 15px rgba(255, 0, 0, 0.4);
+        }
+
+        .deal-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(255, 0, 0, 0.6);
+        }
+
+        .deal-btn:disabled {
+            background: linear-gradient(to bottom, #666, #444);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .result {
+            margin-top: 25px;
+            font-size: 32px;
+            min-height: 40px;
+            font-weight: bold;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
+            color: #ffcc00;
+            padding: 15px;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .win {
+            color: #00ff00;
+            animation: winAnimation 1s ease-in-out infinite alternate;
+        }
+
+        .lose {
+            color: #ff3333;
+        }
+
+        @keyframes winAnimation {
+            from {
+                text-shadow: 0 0 5px #00ff00;
+            }
+
+            to {
+                text-shadow: 0 0 20px #00ff00, 0 0 30px #00ff00;
+            }
+        }
+
+        .history {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 15px;
+            margin-top: 20px;
+            border: 2px solid #cc00ff;
+        }
+
+        .history h2 {
+            margin-bottom: 10px;
+        }
+
+        .history-items {
+            max-height: 120px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 10px;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        .history-win {
+            color: #00ff00;
+        }
+
+        .history-lose {
+            color: #ff3333;
+        }
+
+        .rules {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 15px;
+            margin-top: 20px;
+            text-align: left;
+            border: 2px solid #0066ff;
+        }
+
+        .rules h2 {
+            text-align: center;
+        }
+
+        .rules ul {
+            padding-left: 20px;
+            margin-top: 10px;
+        }
+
+        .rules li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .footer {
+            margin-top: 20px;
+            color: #aaa;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 32px;
+            }
+
+            .cards {
+                gap: 10px;
+            }
+
+            .card {
+                width: 90px;
+                height: 130px;
+                font-size: 18px;
+            }
+
+            .card-center {
+                font-size: 32px;
+            }
+
+            .deal-btn {
+                padding: 12px 20px;
+                font-size: 18px;
+            }
+
+            .multiplier-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .hand-result {
+                font-size: 18px;
+            }
+
+            .hand-btn {
+                min-width: 100px;
+                padding: 10px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .cards {
+                gap: 5px;
+            }
+
+            .card {
+                width: 70px;
+                height: 100px;
+                font-size: 14px;
+                padding: 5px;
+            }
+
+            .card-center {
+                font-size: 24px;
+            }
+
+            .hand-title {
+                font-size: 18px;
+            }
+
+            .controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .multiplier-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .hand-selection {
+                gap: 5px;
+            }
+
+            .hand-btn {
+                min-width: 80px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1><i class="fas fa-cards"></i> तीन पत्ती <i class="fas fa-cards"></i></h1>
+
+        <div class="jackpot">JACKPOT ₹5000000</div>
+
+        <div class="timer">
+            अगला राउंड: <span id="countdown">30</span> सेकंड में
+        </div>
+
+        <div class="balance-container">
+            <div class="balance">
+               
+               <p>Total: ₹<span id="total">0.00</span></p>
+  <p>Recharge: ₹<span id="recharge">0.00</span></p>
+  <p>Bonus: ₹<span id="bonus">0.00</span></p>
+  <p>Winning: ₹<span id="winning">0.00</span></p>
+            </div>
+        </div>
+
+        <div class="bet-section">
+            <h2>अपनी बाजी लगाएं</h2>
+
+            <div class="hand-selection">
+                <button class="hand-btn" data-type="set">
+                    SET <span class="multiplier-badge">20x</span>
+                </button>
+                <button class="hand-btn" data-type="pure_seq">
+                    PURE SEQ <span class="multiplier-badge">10x</span>
+                </button>
+                <button class="hand-btn" data-type="seq">
+                    SEQ <span class="multiplier-badge">6x</span>
+                </button>
+                <button class="hand-btn" data-type="color">
+                    COLOR <span class="multiplier-badge">5x</span>
+                </button>
+                <button class="hand-btn" data-type="pair">
+                    PAIR <span class="multiplier-badge">4x</span>
+                </button>
+                <button class="hand-btn" data-type="high_card">
+                    HIGH CARD <span class="multiplier-badge">3x</span>
+                </button>
+            </div>
+
+            <div class="bet-amount">
+                <label for="bet">राशि:</label>
+                <input type="number" id="bet" min="10" max="5000" value="500">
+            </div>
+
+            <div class="bet-buttons">
+                <button class="bet-btn" data-amount="10">₹ 10</button>
+                <button class="bet-btn" data-amount="50">₹ 50</button>
+                <button class="bet-btn" data-amount="100">₹ 100</button>
+                <button class="bet-btn" data-amount="1000">₹ 1000</button>
+                <button class="bet-btn highlight" id="max-bet">₹ 5000</button>
+            </div>
+        </div>
+
+        <div class="hand">
+            <h3 class="hand-title">आपके पत्ते</h3>
+            <div class="cards" id="player-cards">
+                <div class="card red">
+                    <div class="card-top">
+                        <div>A</div>
+                        <div>♥</div>
+                    </div>
+                    <div class="card-center">A</div>
+                    <div class="card-bottom">
+                        <div>♥</div>
+                        <div>A</div>
+                    </div>
+                </div>
+                <div class="card red">
+                    <div class="card-top">
+                        <div>K</div>
+                        <div>♦</div>
+                    </div>
+                    <div class="card-center">K</div>
+                    <div class="card-bottom">
+                        <div>♦</div>
+                        <div>K</div>
+                    </div>
+                </div>
+                <div class="card black">
+                    <div class="card-top">
+                        <div>Q</div>
+                        <div>♠</div>
+                    </div>
+                    <div class="card-center">Q</div>
+                    <div class="card-bottom">
+                        <div>♠</div>
+                        <div>Q</div>
+                    </div>
+                </div>
+            </div>
+            <div class="hand-result" id="player-hand-type">HIGH CARD</div>
+        </div>
+
+        <div class="multiplier-grid">
+            <div class="multiplier-header">SET</div>
+            <div class="multiplier-header">PURE SEQ</div>
+            <div class="multiplier-header">SEQ</div>
+            <div class="multiplier-header">COLOR</div>
+            <div class="multiplier-header">PAIR</div>
+            <div class="multiplier-header">HIGH CARD</div>
+
+            <div class="multiplier-value">20X</div>
+            <div class="multiplier-value">10X</div>
+            <div class="multiplier-value">6X</div>
+            <div class="multiplier-value">5X</div>
+            <div class="multiplier-value">4X</div>
+            <div class="multiplier-value">3X</div>
+        </div>
+
+        <div class="result" id="result">कृपया अपनी बाजी चुनें!</div>
+
+        <div class="controls">
+            <button class="deal-btn" id="deal-btn">डील करें</button>
+        </div>
+
+        <div class="history">
+            <h2>पिछला रिकॉर्ड</h2>
+            <div class="history-items" id="history">
+                <div class="history-item history-win">
+                    <span>SET (20x)</span>
+                    <span>जीत ₹100000</span>
+                </div>
+                <div class="history-item history-lose">
+                    <span>PAIR (4x) - COLOR (5x)</span>
+                    <span>हार ₹500</span>
+                </div>
+                <div class="history-item history-win">
+                    <span>PURE SEQ (10x)</span>
+                    <span>जीत ₹50000</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="rules">
+            <h2>खेल के नियम</h2>
+            <ul>
+                <li>खेलने के लिए पहले हाथ का प्रकार चुनें (SET, PURE SEQ, SEQ, COLOR, PAIR, HIGH CARD)</li>
+                <li>₹10 से ₹5000 के बीच दांव लगाएं</li>
+                <li>तीन पत्ती में हाथों की रैंकिंग: SET (तीन समान) > PURE SEQ (एक ही रंग के क्रमागत) > SEQ (क्रमागत) >
+                    COLOR (एक ही रंग) > PAIR (दो समान) > HIGH CARD</li>
+                <li>पेआउट: SET (20x), PURE SEQ (10x), SEQ (6x), COLOR (5x), PAIR (4x), HIGH CARD (3x)</li>
+                <li>यदि आपका चुना हुआ हाथ मिलता है, तो आप जीत जाते हैं</li>
+                <li>जैकपॉट: 20% का अतिरिक्त बोनस</li>
+                <li>हर 30 सेकंड में एक नया राउंड शुरू होता है</li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            <p>जुआ आपके लिए हानिकारक हो सकता है। मनोरंजन के लिए खेलें।</p>
+        </div>
+    </div>
+
+    <audio id="cardSound" src="https://www.soundjay.com/misc/sounds/card-flip-4.mp3" preload="auto"></audio>
+    <audio id="winSound" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" preload="auto"></audio>
+    <audio id="loseSound" src="https://www.soundjay.com/misc/sounds/fail-trombone-03.mp3" preload="auto"></audio>
+    <audio id="jackpotSound" src="https://www.soundjay.com/misc/sounds/slot-machine-jackpot-2.mp3"
+        preload="auto"></audio>
+    <audio id="tickSound" src="https://www.soundjay.com/button/sounds/button-09.mp3" preload="auto"></audio>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+    authDomain: "betting-app-43800.firebaseapp.com",
+    databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+    projectId: "betting-app-43800"
+  };
+
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+
+  const db = firebase.database();
+  const auth = firebase.auth();
+
+  const rechargeEl = document.getElementById('recharge');
+  const bonusEl = document.getElementById('bonus');
+  const winningEl = document.getElementById('winning');
+  const totalEl = document.getElementById('total');
+
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      const userId = user.uid;
+      localStorage.setItem("userId", userId);
+
+      const walletRef = db.ref(`users/${userId}/wallet`);
+      walletRef.once("value").then(snap => {
+        if (!snap.exists()) {
+          walletRef.set({ recharge: 1000, bonus: 100, winning: 0 });
+        }
+      });
+
+      walletRef.on("value", snap => {
+        const w = snap.val() || {};
+        const recharge = w.recharge || 0;
+        const bonus = w.bonus || 0;
+        const winning = w.winning || 0;
+        const total = recharge + bonus + winning;
+
+        rechargeEl.textContent = recharge.toFixed(2);
+        bonusEl.textContent = bonus.toFixed(2);
+        winningEl.textContent = winning.toFixed(2);
+        totalEl.textContent = total.toFixed(2);
+      });
+
+    } else {
+      auth.signInAnonymously().catch(console.error);
+    }
+  });
+
+
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Game elements
+            const balanceElement = document.getElementById('balance');
+            const betInput = document.getElementById('bet');
+            const playerCardsElement = document.getElementById('player-cards');
+            const dealBtn = document.getElementById('deal-btn');
+            const resultElement = document.getElementById('result');
+            const historyElement = document.getElementById('history');
+            const playerHandTypeElement = document.getElementById('player-hand-type');
+            const handButtons = document.querySelectorAll('.hand-btn');
+            const countdownElement = document.getElementById('countdown');
+
+            // Audio elements
+            const cardSound = document.getElementById('cardSound');
+            const winSound = document.getElementById('winSound');
+            const loseSound = document.getElementById('loseSound');
+            const jackpotSound = document.getElementById('jackpotSound');
+            const tickSound = document.getElementById('tickSound');
+
+            // Game state
+            let balance = 140815;
+            let betAmount = 500;
+            let selectedHandType = null;
+            let gameHistory = [];
+            let countdown = 30;
+            let countdownInterval;
+
+            // Card suits and ranks
+            const suits = ['♥', '♦', '♣', '♠'];
+            const ranks = ['A', 'K', 'Q', 'J', '10', '9', '8', '7', '6'];
+
+            // Card values for comparison
+            const rankValues = {
+                'A': 14, 'K': 13, 'Q': 12, 'J': 11,
+                '10': 10, '9': 9, '8': 8, '7': 7, '6': 6
+            };
+
+            // Multiplier mapping
+            const multipliers = {
+                'set': 20,
+                'pure_seq': 10,
+                'seq': 6,
+                'color': 5,
+                'pair': 4,
+                'high_card': 3
+            };
+
+            // Hand type probabilities (lower for better hands)
+            const handTypeProbabilities = {
+                'high_card': 0.50,
+                'pair': 0.25,
+                'color': 0.15,
+                'seq': 0.06,
+                'pure_seq': 0.03,
+                'set': 0.01
+            };
+
+            // Start the countdown timer
+            startCountdown();
+
+            // Set up hand selection buttons
+            handButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Remove selection from all buttons
+                    handButtons.forEach(btn => {
+                        btn.classList.remove('selected');
+                    });
+
+                    // Select clicked button
+                    button.classList.add('selected');
+                    selectedHandType = button.dataset.type;
+
+                    resultElement.textContent = `बाजी: ${button.textContent} पर ₹${betAmount}`;
+                    resultElement.className = 'result';
+                });
+            });
+
+            // Set up bet buttons
+            document.querySelectorAll('.bet-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    // Remove highlight from all buttons
+                    document.querySelectorAll('.bet-btn').forEach(btn => {
+                        btn.classList.remove('highlight');
+                    });
+
+                    // Highlight the clicked button
+                    button.classList.add('highlight');
+
+                    if (button.id === 'max-bet') {
+                        betInput.value = 5000;
+                    } else {
+                        const amount = parseInt(button.dataset.amount);
+                        betInput.value = amount;
+                    }
+                    betInput.dispatchEvent(new Event('input'));
+                });
+            });
+
+            // Update bet amount
+            betInput.addEventListener('input', () => {
+                betAmount = parseInt(betInput.value) || 0;
+
+                if (betAmount < 10) {
+                    betAmount = 10;
+                    betInput.value = 10;
+                }
+
+                if (betAmount > balance) {
+                    betAmount = balance;
+                    betInput.value = balance;
+                }
+
+                if (betAmount > 5000) {
+                    betAmount = 5000;
+                    betInput.value = 5000;
+                }
+
+                if (selectedHandType) {
+                    const selectedBtn = document.querySelector('.hand-btn.selected');
+                    resultElement.textContent = `बाजी: ${selectedBtn.textContent} पर ₹${betAmount}`;
+                }
+            });
+
+            dealBtn.addEventListener('click', () => {
+                if (!selectedHandType) {
+                    resultElement.textContent = "कृपया पहले एक हाथ का प्रकार चुनें!";
+                    resultElement.className = 'result lose';
+                    return;
+                }
+
+                if (betAmount > balance) {
+                    resultElement.textContent = "पैसे कम हैं! कम दांव लगाएं";
+                    resultElement.className = 'result lose';
+                    return;
+                }
+
+                // Save bet only (actual result will be shown after 30 sec)
+                balance -= betAmount;
+                updateBalance();
+
+                resultElement.textContent = `बाजी: ${selectedHandType.toUpperCase()} पर ₹${betAmount} लगाई गई है। परिणाम 30 सेकंड बाद दिखेगा।`;
+                resultElement.className = 'result';
+
+                dealBtn.disabled = true;
+            });
+
+
+            // Play a game round
+            function playRound() {
+                // Check if hand type is selected
+                if (!selectedHandType) {
+                    resultElement.textContent = "कृपया पहले एक हाथ का प्रकार चुनें!";
+                    resultElement.className = 'result lose';
+                    return;
+                }
+
+                // Check if player has sufficient balance
+                if (betAmount > balance) {
+                    resultElement.textContent = "पैसे कम हैं! कम दांव लगाएं";
+                    resultElement.className = 'result lose';
+                    return;
+                }
+
+                // Deduct bet amount
+                balance -= betAmount;
+                updateBalance();
+
+                // Disable button during dealing
+                dealBtn.disabled = true;
+                resultElement.textContent = "कार्ड डील हो रहे हैं...";
+                resultElement.className = 'result';
+                playerHandTypeElement.textContent = "";
+
+                // Play card sound
+                cardSound.currentTime = 0;
+                cardSound.play();
+
+                // Deal cards
+                const playerHand = generateHand();
+
+                // Display cards with animation
+                displayCards(playerHand, playerCardsElement);
+
+                // Evaluate hand after a delay
+                setTimeout(() => {
+                    const playerHandType = evaluateHand(playerHand);
+
+                    playerHandTypeElement.textContent = playerHandType.name;
+
+                    // Determine result
+                    determineResult(selectedHandType, playerHandType);
+                    dealBtn.disabled = false;
+
+                    // Reset selection
+                    handButtons.forEach(btn => btn.classList.remove('selected'));
+                    selectedHandType = null;
+                }, 1500);
+            }
+
+            // Generate a hand based on probabilities
+            function generateHand() {
+                // Create a deck
+                const deck = createDeck();
+                shuffleDeck(deck);
+
+                // Deal initial hand
+                const hand = deck.slice(0, 3);
+
+                // Determine actual hand type
+                const handType = evaluateHand(hand).type;
+
+                // Get random number to see if we should adjust probability
+                const rand = Math.random();
+                let cumulative = 0;
+                let chosenType = 'high_card';
+
+                // Choose hand type based on probabilities
+                for (const [type, prob] of Object.entries(handTypeProbabilities)) {
+                    cumulative += prob;
+                    if (rand < cumulative) {
+                        chosenType = type;
+                        break;
+                    }
+                }
+
+                // If we got a better hand than probability allows, downgrade it
+                if (handTypeRank(handType) > handTypeRank(chosenType)) {
+                    return downgradeHand(hand, chosenType);
+                }
+
+                return hand;
+            }
+
+            // Hand type ranking
+            function handTypeRank(type) {
+                const ranks = {
+                    'high_card': 1,
+                    'pair': 2,
+                    'color': 3,
+                    'seq': 4,
+                    'pure_seq': 5,
+                    'set': 6
+                };
+                return ranks[type] || 0;
+            }
+
+            // Downgrade a hand to a specific type
+            function downgradeHand(hand, targetType) {
+                // Create a copy of the hand
+                const newHand = [...hand];
+
+                switch (targetType) {
+                    case 'high_card':
+                        // Ensure no pairs or sets
+                        if (newHand[0].rank === newHand[1].rank) {
+                            newHand[1].rank = getRandomRankExcluding([newHand[0].rank, newHand[2].rank]);
+                        }
+                        if (newHand[0].rank === newHand[2].rank) {
+                            newHand[2].rank = getRandomRankExcluding([newHand[0].rank, newHand[1].rank]);
+                        }
+                        if (newHand[1].rank === newHand[2].rank) {
+                            newHand[2].rank = getRandomRankExcluding([newHand[0].rank, newHand[1].rank]);
+                        }
+                        break;
+
+                    case 'pair':
+                        // Ensure exactly one pair
+                        if (newHand[0].rank === newHand[1].rank && newHand[1].rank === newHand[2].rank) {
+                            // If set, break one card
+                            newHand[2].rank = getRandomRankExcluding([newHand[0].rank]);
+                        } else if (newHand[0].rank !== newHand[1].rank &&
+                            newHand[0].rank !== newHand[2].rank &&
+                            newHand[1].rank !== newHand[2].rank) {
+                            // If no pairs, create one
+                            newHand[2].rank = newHand[1].rank;
+                        }
+                        break;
+                }
+
+                return newHand;
+            }
+
+            // Get random rank excluding some
+            function getRandomRankExcluding(exclude) {
+                const available = ranks.filter(r => !exclude.includes(r));
+                return available[Math.floor(Math.random() * available.length)];
+            }
+
+            // Create a deck of cards
+            function createDeck() {
+                const deck = [];
+                for (const suit of suits) {
+                    for (const rank of ranks) {
+                        deck.push({
+                            suit,
+                            rank,
+                            value: rankValues[rank],
+                            color: (suit === '♥' || suit === '♦') ? 'red' : 'black'
+                        });
+                    }
+                }
+                return deck;
+            }
+
+            // Shuffle the deck
+            function shuffleDeck(deck) {
+                for (let i = deck.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [deck[i], deck[j]] = [deck[j], deck[i]];
+                }
+            }
+
+            // Display cards with animation
+            function displayCards(hand, container) {
+                container.innerHTML = '';
+
+                hand.forEach((card, index) => {
+                    setTimeout(() => {
+                        const cardElement = document.createElement('div');
+                        cardElement.className = `card ${card.color}`;
+                        cardElement.innerHTML = `
+                            <div class="card-top">
+                                <div>${card.rank}</div>
+                                <div>${card.suit}</div>
+                            </div>
+                            <div class="card-center">${card.rank}</div>
+                            <div class="card-bottom">
+                                <div>${card.suit}</div>
+                                <div>${card.rank}</div>
+                            </div>
+                        `;
+                        container.appendChild(cardElement);
+
+                        // Play sound for each card
+                        cardSound.currentTime = 0;
+                        cardSound.play();
+                    }, index * 300);
+                });
+            }
+
+            // Evaluate a hand
+            function evaluateHand(hand) {
+                // Sort cards by value
+                hand.sort((a, b) => b.value - a.value);
+
+                // Check for trail (three of a kind)
+                if (hand[0].value === hand[1].value && hand[1].value === hand[2].value) {
+                    return {
+                        type: 'set',
+                        name: 'SET',
+                        multiplier: 20
+                    };
+                }
+
+                // Check for pure sequence (straight flush)
+                const isSameSuit = hand[0].suit === hand[1].suit && hand[1].suit === hand[2].suit;
+                const isSequence = hand[0].value === hand[1].value + 1 && hand[1].value === hand[2].value + 1;
+
+                if (isSameSuit && isSequence) {
+                    return {
+                        type: 'pure_seq',
+                        name: 'PURE SEQ',
+                        multiplier: 10
+                    };
+                }
+
+                // Check for sequence (straight)
+                if (isSequence) {
+                    return {
+                        type: 'seq',
+                        name: 'SEQ',
+                        multiplier: 6
+                    };
+                }
+
+                // Check for color (flush)
+                if (isSameSuit) {
+                    return {
+                        type: 'color',
+                        name: 'COLOR',
+                        multiplier: 5
+                    };
+                }
+
+                // Check for pair
+                if (hand[0].value === hand[1].value ||
+                    hand[1].value === hand[2].value ||
+                    hand[0].value === hand[2].value) {
+                    return {
+                        type: 'pair',
+                        name: 'PAIR',
+                        multiplier: 4
+                    };
+                }
+
+                // High card
+                return {
+                    type: 'high_card',
+                    name: 'HIGH CARD',
+                    multiplier: 3
+                };
+            }
+
+            // Determine the result
+            function determineResult(selectedType, actualType) {
+                let winAmount = 0;
+                let resultText = "";
+                let isWin = false;
+
+                if (selectedType === actualType.type) {
+                    winAmount = betAmount * multipliers[selectedType];
+
+                    // Add jackpot chance (20% probability)
+                    const jackpot = Math.random() < 0.2;
+
+                    if (jackpot) {
+                        winAmount += Math.floor(winAmount * 0.2); // Add 20% jackpot bonus
+                        resultText = `जैकपॉट! ₹${winAmount.toLocaleString('en-IN')} प्राप्त हुए!`;
+
+                        // Play jackpot sound
+                        jackpotSound.currentTime = 0;
+                        jackpotSound.play();
+
+                        resultElement.className = 'result win';
+                    } else {
+                        resultText = `जीत! ₹${winAmount.toLocaleString('en-IN')} प्राप्त हुए!`;
+
+                        // Play win sound
+                        winSound.currentTime = 0;
+                        winSound.play();
+
+                        resultElement.className = 'result win';
+                    }
+
+                    // Update balance
+                    balance += winAmount;
+                    updateBalance();
+
+                    isWin = true;
+                } else {
+                    resultText = `हार! आपने ${selectedType} पर बाजी लगाई थी, लेकिन ${actualType.name} आया।`;
+
+                    // Play lose sound
+                    loseSound.currentTime = 0;
+                    loseSound.play();
+
+                    resultElement.className = 'result lose';
+                }
+
+                resultElement.textContent = resultText;
+
+                // Add to history
+                addToHistory(selectedType, actualType, winAmount, isWin);
+
+                // Highlight winning multiplier
+                highlightMultiplier(actualType.name);
+            }
+
+            // Highlight winning multiplier
+            function highlightMultiplier(handType) {
+                // Remove any existing highlights
+                document.querySelectorAll('.multiplier-value').forEach(el => {
+                    el.classList.remove('multiplier-win');
+                });
+
+                // Find and highlight the correct multiplier
+                const headers = document.querySelectorAll('.multiplier-header');
+                headers.forEach((header, index) => {
+                    if (header.textContent === handType) {
+                        const multiplierValue = document.querySelectorAll('.multiplier-value')[index];
+                        multiplierValue.classList.add('multiplier-win');
+                    }
+                });
+            }
+
+            // Update balance display
+            function updateBalance() {
+                balanceElement.textContent = balance.toLocaleString('en-IN');
+            }
+
+            // Add result to history
+            function addToHistory(selectedType, actualType, winAmount, isWin) {
+                // Add to game history array
+                gameHistory.unshift({
+                    selectedType,
+                    actualType: actualType.name,
+                    winAmount,
+                    isWin,
+                    timestamp: new Date()
+                });
+
+                // Keep only last 5 history items
+                if (gameHistory.length > 5) {
+                    gameHistory.pop();
+                }
+
+                // Update history display
+                updateHistoryDisplay();
+            }
+
+            // Update history display
+            function updateHistoryDisplay() {
+                historyElement.innerHTML = '';
+
+                gameHistory.forEach(game => {
+                    const historyItem = document.createElement('div');
+                    historyItem.className = `history-item ${game.isWin ? 'history-win' : 'history-lose'}`;
+
+                    if (game.isWin) {
+                        historyItem.innerHTML = `
+                            <span>${game.selectedType.toUpperCase()} (${multipliers[game.selectedType]}x) - ${game.actualType}</span>
+                            <span>जीत ₹${game.winAmount.toLocaleString('en-IN')}</span>
+                        `;
+                    } else {
+                        historyItem.innerHTML = `
+                            <span>${game.selectedType.toUpperCase()} (${multipliers[game.selectedType]}x) - ${game.actualType}</span>
+                            <span>हार ₹${betAmount}</span>
+                        `;
+                    }
+
+                    historyElement.appendChild(historyItem);
+                });
+            }
+
+            // Start countdown timer
+            function startCountdown() {
+                countdown = 30;
+                updateCountdownDisplay();
+                countdownInterval = setInterval(() => {
+                    countdown--;
+                    updateCountdownDisplay();
+
+                    // Play tick sound at 5, 4, 3, 2, 1
+                    if (countdown <= 5 && countdown > 0) {
+                        tickSound.currentTime = 0;
+                        tickSound.play();
+                    }
+
+                    if (countdown <= 0) {
+                        clearInterval(countdownInterval);
+                        // Show result every 30 seconds
+                        showAutoResult();
+                        startCountdown();
+                    }
+                }, 1000);
+            }
+
+            // Show automatic result every 30 seconds
+            function showAutoResult() {
+                // Disable button during dealing
+                dealBtn.disabled = true;
+                resultElement.textContent = "कार्ड डील हो रहे हैं...";
+                resultElement.className = 'result';
+                playerHandTypeElement.textContent = "";
+
+                // Play card sound
+                cardSound.currentTime = 0;
+                cardSound.play();
+
+                // Deal cards
+                const playerHand = generateHand();
+
+                // Display cards with animation
+                displayCards(playerHand, playerCardsElement);
+
+                // Evaluate hand after a delay
+                setTimeout(() => {
+                    const playerHandType = evaluateHand(playerHand);
+
+                    playerHandTypeElement.textContent = playerHandType.name;
+
+                    if (selectedHandType && betAmount > 0) {
+                        determineResult(selectedHandType, playerHandType);
+
+                        // Reset bet after round
+                        selectedHandType = null;
+                        handButtons.forEach(btn => btn.classList.remove('selected'));
+                    } else {
+                        resultElement.textContent = `आपके पत्ते: ${playerHandType.name} | कोई बाजी नहीं लगाई गई`;
+                        resultElement.className = 'result';
+                        highlightMultiplier(playerHandType.name);
+                    }
+
+                    dealBtn.disabled = false;
+                }, 1500);
+            }
+
+            // Update countdown display
+            function updateCountdownDisplay() {
+                countdownElement.textContent = countdown;
+            }
+
+            // Initial setup
+            function initGame() {
+                // Add some sample history
+                gameHistory = [
+                    { selectedType: 'set', actualType: 'SET', winAmount: 100000, isWin: true },
+                    { selectedType: 'pair', actualType: 'COLOR', winAmount: 0, isWin: false },
+                    { selectedType: 'pure_seq', actualType: 'PURE SEQ', winAmount: 50000, isWin: true }
+                ];
+
+                updateHistoryDisplay();
+            }
+
+            // Initialize the game
+            initGame();
+        });
+    </script>
+</body>
+
+</html>
