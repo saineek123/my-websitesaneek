@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Premium Investment Panel</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    :root {
+      --primary: #4e54c8;
+      --secondary: #8f94fb;
+      --success: #4CAF50;
+      --danger: #f44336;
+      --warning: #FFC107;
+      --dark: #2c3e50;
+      --light: #f8f9fa;
+      --gray: #6c757d;
+    }
+
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      max-width: 500px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+      overflow: hidden;
+      margin: 20px auto;
+    }
+
+    .header {
+      background: linear-gradient(to right, var(--primary), var(--secondary));
+      color: white;
+      padding: 25px 20px;
+      text-align: center;
+      position: relative;
+    }
+
+    .header h1 {
+      font-size: 26px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .header p {
+      font-size: 16px;
+      opacity: 0.9;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .wallet-container {
+      padding: 20px;
+    }
+
+    .wallet {
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e7fb 100%);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+      margin-bottom: 20px;
+    }
+
+    .wallet-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .wallet-title h3 {
+      color: var(--dark);
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .wallet-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+    }
+
+    .wallet-item {
+      background: white;
+      border-radius: 12px;
+      padding: 15px;
+      text-align: center;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.03);
+    }
+
+    .wallet-item p {
+      color: var(--gray);
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+
+    .wallet-item .amount {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--dark);
+    }
+
+    .investment-form {
+      background: white;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+      margin-bottom: 20px;
+    }
+
+    .input-group {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .input-group i {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray);
+    }
+
+    input {
+      width: 100%;
+      padding: 15px 15px 15px 45px;
+      border: 2px solid #e1e5f1;
+      border-radius: 12px;
+      font-size: 16px;
+      transition: all 0.3s;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: var(--secondary);
+      box-shadow: 0 0 0 3px rgba(143, 148, 251, 0.2);
+    }
+
+    .btn-invest {
+      background: linear-gradient(to right, var(--primary), var(--secondary));
+      color: white;
+      border: none;
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.3s;
+      box-shadow: 0 5px 15px rgba(78, 84, 200, 0.3);
+    }
+
+    .btn-invest:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(78, 84, 200, 0.4);
+    }
+
+    #message {
+      text-align: center;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 20px;
+      font-weight: 500;
+      font-size: 16px;
+    }
+
+    .success {
+      background: rgba(76, 175, 80, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(76, 175, 80, 0.2);
+    }
+
+    .error {
+      background: rgba(244, 67, 54, 0.15);
+      color: var(--danger);
+      border: 1px solid rgba(244, 67, 54, 0.2);
+    }
+
+    .summary {
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e7fb 100%);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .summary-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .summary-title h3 {
+      color: var(--dark);
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+    }
+
+    .summary-item {
+      background: white;
+      border-radius: 12px;
+      padding: 15px;
+      text-align: center;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.03);
+    }
+
+    .summary-item p {
+      color: var(--gray);
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+
+    .summary-item .value {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .highlight {
+      background: linear-gradient(135deg, #fff9c4 0%, #ffecb3 100%);
+      border-left: 4px solid var(--warning);
+    }
+
+    @media (max-width: 480px) {
+      .header h1 {
+        font-size: 22px;
+      }
+      
+      .header p {
+        font-size: 14px;
+      }
+      
+      .wallet-grid, .summary-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      
+      .wallet-item, .summary-item {
+        padding: 12px;
+      }
+      
+      input, .btn-invest {
+        padding: 14px;
+      }
+      
+      .wallet-container {
+        padding: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1><i class="fas fa-chart-line"></i> Premium Investment Panel</h1>
+      <p>Invest once and earn 10% return daily. Start growing your wealth today!</p>
+    </div>
+    
+    <div class="wallet-container">
+      <div class="wallet">
+        <div class="wallet-title">
+          <h3><i class="fas fa-wallet"></i> Wallet Balance</h3>
+        </div>
+        <div class="wallet-grid">
+          <div class="wallet-item">
+            <p>Total Balance</p>
+            <div class="amount">₹<span id="total">00</span></div>
+          </div>
+          <div class="wallet-item">
+            <p>Recharge</p>
+            <div class="amount">₹<span id="recharge">00</span></div>
+          </div>
+          <div class="wallet-item">
+            <p>Bonus</p>
+            <div class="amount">₹<span id="bonus">00</span></div>
+          </div>
+          <div class="wallet-item">
+            <p>Winning</p>
+            <div class="amount">₹<span id="winning">00</span></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="investment-form">
+        <div class="input-group">
+          <i class="fas fa-rupee-sign"></i>
+          <input type="number" id="amount" placeholder="Enter amount to invest (min ₹100)">
+        </div>
+        <button class="btn-invest" onclick="submitInvestment()">
+          <i class="fas fa-bolt"></i> Invest Now
+        </button>
+        <button class="btn-invest" style="background:#f44336" onclick="cancelInvestment()">
+  ❌ Cancel Investment
+</button>
+
+        <p id="message"></p>
+      </div>
+      
+      <div class="summary">
+        <div class="summary-title">
+          <h3><i class="fas fa-file-invoice-dollar"></i> Investment Summary</h3>
+        </div>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <p>Total Investment</p>
+            <div class="value">₹<span id="totalInv">00</span></div>
+          </div>
+          <div class="summary-item highlight">
+            <p>Daily Return (10%)</p>
+            <div class="value">₹<span id="dailyReturn">00</span></div>
+          </div>
+          <div class="summary-item">
+            <p>Last Credited</p>
+            <div class="value"><span id="lastDate">29 Jul 2025</span></div>
+          </div>
+          <div class="summary-item">
+            <p>Next Payout</p>
+            <div class="value"><span id="nextDate">30 Jul 2025</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+      authDomain: "betting-app-43800.firebaseapp.com",
+      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+      projectId: "betting-app-43800",
+      storageBucket: "betting-app-43800.appspot.com",
+      messagingSenderId: "1097111498871",
+      appId: "1:1097111498871:web:7b95f5d6b6e4c1c6a1f6e5"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();
+
+    let userId;
+    let wallet = { recharge: 0, bonus: 0, winning: 0 };
+
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        alert("Please login first");
+        location.href = "login.html";
+        return;
+      }
+
+      userId = user.uid;
+      loadWallet();
+      loadInvestment();
+    });
+
+    function loadWallet() {
+      const ref = db.ref("users/" + userId + "/wallet");
+      ref.on("value", snap => {
+        wallet = snap.val() || {};
+        const recharge = wallet.recharge || 0;
+        const bonus = wallet.bonus || 0;
+        const winning = wallet.winning || 0;
+        const total = recharge + bonus + winning;
+
+        document.getElementById("recharge").textContent = recharge.toFixed(2);
+        document.getElementById("bonus").textContent = bonus.toFixed(2);
+        document.getElementById("winning").textContent = winning.toFixed(2);
+        document.getElementById("total").textContent = total.toFixed(2);
+      });
+    }
+
+    function loadInvestment() {
+      const ref = db.ref("users/" + userId + "/investment");
+      ref.on("value", snap => {
+        const data = snap.val() || {};
+        const amt = data.amount || 0;
+        const last = data.lastCredited || 0;
+
+        document.getElementById("totalInv").textContent = amt.toFixed(2);
+        document.getElementById("dailyReturn").textContent = (amt * 0.04).toFixed(2);
+        document.getElementById("lastDate").textContent = last ? new Date(last).toLocaleDateString() : "N/A";
+      });
+    }
+
+    function submitInvestment() {
+      const amount = parseFloat(document.getElementById("amount").value);
+      const msg = document.getElementById("message");
+      msg.textContent = "";
+
+      if (isNaN(amount) || amount < 100) {
+        msg.textContent = "Minimum investment is ₹100";
+        msg.className = "error";
+        return;
+      }
+
+      let { recharge = 0, bonus = 0, winning = 0 } = wallet;
+      let total = recharge + bonus + winning;
+      if (amount > total) {
+        msg.textContent = "Insufficient balance";
+        msg.className = "error";
+        return;
+      }
+
+      let amtLeft = amount;
+      if (recharge > 0) {
+        const use = Math.min(amtLeft, recharge);
+        recharge -= use; amtLeft -= use;
+      }
+      if (amtLeft > 0 && bonus > 0) {
+        const use = Math.min(amtLeft, bonus);
+        bonus -= use; amtLeft -= use;
+      }
+      if (amtLeft > 0 && winning > 0) {
+        const use = Math.min(amtLeft, winning);
+        winning -= use; amtLeft -= use;
+      }
+
+      const updates = {
+        [`users/${userId}/wallet/recharge`]: recharge,
+        [`users/${userId}/wallet/bonus`]: bonus,
+        [`users/${userId}/wallet/winning`]: winning
+      };
+
+      db.ref("users/" + userId + "/investment").once("value", snap => {
+        const old = snap.val() || {};
+        const newAmt = (old.amount || 0) + amount;
+        updates[`users/${userId}/investment`] = {
+          amount: newAmt,
+          lastCredited: old.lastCredited || 0
+        };
+
+        db.ref().update(updates).then(() => {
+          msg.textContent = "✅ Investment successful!";
+          msg.className = "success";
+          document.getElementById("amount").value = "";
+        });
+      });
+    }
+
+    function cancelInvestment() {
+  if (!confirm("Are you sure you want to cancel your investment?")) return;
+
+  const ref = db.ref("users/" + userId + "/investment");
+  ref.once("value", snap => {
+    const invest = snap.val();
+    if (!invest || !invest.amount || invest.amount <= 0) {
+      alert("❌ No investment found to cancel.");
+      return;
+    }
+
+    const refund = invest.amount;
+    const newWin = (wallet.winning || 0) + refund;
+
+    const updates = {
+      [`users/${userId}/investment`]: null, // delete investment
+      [`users/${userId}/wallet/winning`]: newWin
+    };
+
+    db.ref().update(updates).then(() => {
+      alert("✅ Investment cancelled. ₹" + refund.toFixed(2) + " added to your winning balance.");
+    }).catch(err => {
+      alert("❌ Error: " + err.message);
+    });
+  });
+}
+  </script>
+</body>
+</html>
