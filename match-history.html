@@ -503,10 +503,13 @@
         return;
       }
 
-      snapshot.forEach((child) => {
-        const bet = child.val();
-        userBets.push(bet);
-      });
+    snapshot.forEach((matchSnap) => {
+  matchSnap.forEach((betSnap) => {
+    const bet = betSnap.val();
+    userBets.push(bet);
+  });
+});
+
 
       userBets.sort((a, b) => b.timestamp - a.timestamp);
       displayBets(userBets);
