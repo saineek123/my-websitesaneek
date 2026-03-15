@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Divine Residency - Luxury Budget Hotel in Jankipuram Lucknow</title>
+    
+    <!-- Meta Tags for SEO -->
+    <meta name="description" content="Divine Residency in Jankipuram, Lucknow offers premium budget rooms with free breakfast, WiFi & parking. 24/7 service, family-friendly, local shuttle available.">
+    <meta name="keywords" content="hotel in lucknow, jankipuram hotel, budget hotel lucknow, divine residency, hotel near kukrail park, lucknow accommodation">
+    <meta name="author" content="Divine Residency">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Google Fonts for Professional Look -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Professional CSS Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f4f7fb;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+        
+        /* Professional Header with Gradient */
+        header {
+            background: linear-gradient(135deg, #0b2b40 0%, #1a4b6d 100%);
+            color: white;
+            padding: 0.8rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        
+        .header-content {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        
+        .logo span {
+            font-size: 0.9rem;
+            font-weight: 300;
+            display: block;
+            opacity: 0.9;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+        
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1rem;
+            padding: 0.5rem 0;
+            position: relative;
+            transition: all 0.3s;
+        }
+        
+        nav ul li a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #ffb347;
+            transition: width 0.3s;
+        }
+        
+        nav ul li a:hover::after {
+            width: 100%;
+        }
+        
+        /* Main Container */
+        .container {
+            max-width: 1300px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        
+        /* Professional Cards */
+        section {
+            background: white;
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-bottom: 2.5rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            transition: transform 0.3s;
+        }
+        
+        section:hover {
+            transform: translateY(-5px);
+        }
+        
+        h2 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: #0b2b40;
+            margin-bottom: 2rem;
+            position: relative;
+            padding-bottom: 1rem;
+        }
+        
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(90deg, #ffb347, #ff8c00);
+            border-radius: 2px;
+        }
+        
+        h3 {
+            font-size: 1.4rem;
+            color: #1a4b6d;
+            margin-bottom: 1rem;
+        }
+        
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), 
+            url('https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+            background-position: center;
+            border-radius: 20px;
+            padding: 4rem 3rem;
+            color: white;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto 2rem;
+            opacity: 0.95;
+        }
+        
+        /* Professional Button */
+        .btn-book {
+            display: inline-block;
+            background: linear-gradient(45deg, #ff8c00, #ffb347);
+            color: white;
+            padding: 1.2rem 3.5rem;
+            font-size: 1.4rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 50px;
+            box-shadow: 0 8px 25px rgba(255,140,0,0.4);
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            letter-spacing: 1px;
+        }
+        
+        .btn-book:hover {
+            background: linear-gradient(45deg, #ffb347, #ff8c00);
+            transform: scale(1.05);
+            box-shadow: 0 12px 30px rgba(255,140,0,0.5);
+        }
+        
+        .btn-small {
+            padding: 0.8rem 2rem;
+            font-size: 1.1rem;
+        }
+        
+        /* Quick Info Cards */
+        .quick-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 3rem 0;
+        }
+        
+        .info-card {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .info-card i {
+            font-size: 2.5rem;
+            color: #ffb347;
+            margin-bottom: 1rem;
+        }
+        
+        .info-card h4 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Room Card Professional */
+        .room-showcase {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 2.5rem;
+            background: #f8fafd;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .room-image {
+            height: 400px;
+            overflow: hidden;
+        }
+        
+        .room-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+        
+        .room-image:hover img {
+            transform: scale(1.1);
+        }
+        
+        .room-content {
+            padding: 2.5rem;
+        }
+        
+        .price-tag {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #28a745;
+            margin: 1rem 0;
+        }
+        
+        .price-tag span {
+            font-size: 1rem;
+            color: #7f8c8d;
+            font-weight: 400;
+        }
+        
+        .badge {
+            background: #e74c3c;
+            color: white;
+            padding: 0.3rem 1rem;
+            border-radius: 5px;
+            display: inline-block;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin: 1rem 0;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .feature-item i {
+            color: #28a745;
+        }
+        
+        /* Amenities Grid */
+        .amenities-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+        
+        .amenity-card {
+            background: #f8fafd;
+            padding: 2rem;
+            border-radius: 15px;
+            transition: all 0.3s;
+            border: 1px solid #eef2f6;
+        }
+        
+        .amenity-card:hover {
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            transform: translateY(-5px);
+        }
+        
+        .amenity-card h3 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #0b2b40;
+        }
+        
+        .amenity-list {
+            list-style: none;
+            margin-top: 1rem;
+        }
+        
+        .amenity-list li {
+            margin: 0.8rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .amenity-list i.fa-check {
+            color: #28a745;
+        }
+        
+        .amenity-list i.fa-times {
+            color: #e74c3c;
+        }
+        
+        /* Gallery Grid */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .gallery-card {
+            position: relative;
+            border-radius: 15px;
+            overflow: hidden;
+            height: 280px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        
+        .gallery-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+        
+        .gallery-card:hover img {
+            transform: scale(1.15);
+        }
+        
+        .gallery-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            color: white;
+            padding: 1.5rem;
+            transform: translateY(100%);
+            transition: transform 0.3s;
+        }
+        
+        .gallery-card:hover .gallery-overlay {
+            transform: translateY(0);
+        }
+        
+        /* Working Google Map */
+        .map-section {
+            background: #f8fafd;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        
+        .map-container {
+            width: 100%;
+            height: 450px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        
+        .map-container iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+        
+        .location-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .location-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .location-card i {
+            font-size: 2rem;
+            color: #ff8c00;
+            margin-bottom: 1rem;
+        }
+        
+        .location-card h4 {
+            color: #0b2b40;
+            margin-bottom: 0.5rem;
+        }
+        
+        .location-card p {
+            color: #7f8c8d;
+            font-size: 0.95rem;
+        }
+        
+        /* Contact Section Professional */
+        .contact-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2.5rem;
+        }
+        
+        .contact-info-card {
+            background: linear-gradient(135deg, #0b2b40, #1a4b6d);
+            color: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+        }
+        
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin: 2rem 0;
+            padding: 1rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .contact-item i {
+            font-size: 1.8rem;
+            width: 50px;
+            height: 50px;
+            background: #ffb347;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0b2b40;
+        }
+        
+        .timing-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .timing-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem 0;
+            border-bottom: 1px dashed #dee2e6;
+        }
+        
+        .timing-row:last-child {
+            border-bottom: none;
+        }
+        
+        /* WhatsApp Button */
+        .whatsapp-float {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #25d366;
+            color: white;
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 35px;
+            box-shadow: 0 8px 25px rgba(37,211,102,0.4);
+            transition: all 0.3s;
+            z-index: 999;
+            text-decoration: none;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(37,211,102,0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 15px rgba(37,211,102,0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(37,211,102,0);
+            }
+        }
+        
+        .whatsapp-float:hover {
+            transform: scale(1.15) rotate(5deg);
+            background: #20ba57;
+        }
+        
+        /* Footer */
+        footer {
+            background: #0b2b40;
+            color: white;
+            padding: 3rem 0 2rem;
+            margin-top: 4rem;
+        }
+        
+        .footer-content {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+        
+        .copyright {
+            text-align: center;
+            padding-top: 2rem;
+            margin-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 968px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+            
+            nav ul {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 1rem;
+            }
+            
+            .room-showcase {
+                grid-template-columns: 1fr;
+            }
+            
+            .contact-wrapper {
+                grid-template-columns: 1fr;
+            }
+            
+            .hero h1 {
+                font-size: 2.2rem;
+            }
+            
+            h2 {
+                font-size: 1.8rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem;
+            }
+            
+            section {
+                padding: 1.5rem;
+            }
+            
+            .gallery-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .quick-info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <h1>The Shaurya Inn</h1>
+                <span>Your Comfort, Our Priority</span>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#rooms">Rooms</a></li>
+                    <li><a href="#amenities">Amenities</a></li>
+                    <li><a href="#gallery">Gallery</a></li>
+                    <li><a href="#location">Location</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Home Section -->
+        <section id="home">
+            <div class="hero">
+                <h1>Welcome to The Shaurya Inn</h1>
+                <p>Experience comfort and luxury at budget prices in the heart of Jankipuram, Lucknow. Perfect for families, business travelers, and tourists.</p>
+                
+                <a href="tel:09559102736" class="btn-book">
+                    <i class="fas fa-phone-alt"></i> Book Now: 09559102736
+                </a>
+                
+                <div class="quick-info-grid">
+                    <div class="info-card">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <h4>Prime Location</h4>
+                        <p>Jankipuram, Lucknow</p>
+                    </div>
+                    <div class="info-card">
+                        <i class="fas fa-clock"></i>
+                        <h4>Check In/Out</h4>
+                        <p>12:00 PM / 11:00 AM</p>
+                    </div>
+                    <div class="info-card">
+                        <i class="fas fa-wifi"></i>
+                        <h4>Free WiFi</h4>
+                        <p>High Speed Internet</p>
+                    </div>
+                    <div class="info-card">
+                        <i class="fas fa-parking"></i>
+                        <h4>Free Parking</h4>
+                        <p>Secure Parking</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 2rem; text-align: center;">
+                <p style="font-size: 1.2rem; color: #1a4b6d; font-weight: 500;">
+                    <i class="fas fa-star" style="color: #ffb347;"></i> 
+                    Set on a side street, this relaxed hotel is 10 km from Kukrail Gharial Park and 6 km from the Regional Science City museum.
+                </p>
+            </div>
+        </section>
+        
+        <!-- Rooms Section -->
+        <section id="rooms">
+            <h2><i class="fas fa-bed"></i> Luxury Rooms</h2>
+            
+            <div class="room-showcase">
+                <div class="room-image">
+                    <img src="https://images.unsplash.com/photo-1566665797739-1674de7a421a?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80" alt="Deluxe Room">
+                </div>
+                <div class="room-content">
+                    <h3>Standard Deluxe Room</h3>
+                    <div class="badge">
+                        <i class="fas fa-fan"></i> Fan-Cooled (No AC)
+                    </div>
+                    
+                    <div class="price-tag">
+                        ₹1200 <span>/ per night</span>
+                    </div>
+                    
+                    <div class="feature-grid">
+                        <div class="feature-item">
+                            <i class="fas fa-wifi"></i> Free WiFi
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-coffee"></i> Free Breakfast
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-parking"></i> Free Parking
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-concierge-bell"></i> Room Service
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-clock"></i> 24/7 Front Desk
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-tshirt"></i> Laundry
+                        </div>
+                    </div>
+                    
+                    <p style="margin: 1.5rem 0; color: #7f8c8d;">
+                        <i class="fas fa-check-circle" style="color: #28a745;"></i> 
+                        Well-ventilated rooms with ceiling fans, attached bathroom, and complimentary breakfast.
+                    </p>
+                    
+                    <a href="tel:09559102736" class="btn-book btn-small">
+                        <i class="fas fa-calendar-check"></i> Book This Room
+                    </a>
+                </div>
+            </div>
+            
+            <p style="text-align: center; margin-top: 2rem; background: #e8f5e9; padding: 1rem; border-radius: 10px;">
+                <i class="fas fa-info-circle" style="color: #28a745;"></i> 
+                Family rooms available on request. Contact us for special discounts on long stays.
+            </p>
+        </section>
+        
+        <!-- Amenities Section -->
+        <section id="amenities">
+            <h2><i class="fas fa-concierge-bell"></i> Hotel Amenities</h2>
+            
+            <div class="amenities-grid">
+                <div class="amenity-card">
+                    <h3><i class="fas fa-star" style="color: #ffb347;"></i> Popular Amenities</h3>
+                    <ul class="amenity-list">
+                        <li><i class="fas fa-check"></i> Free Breakfast</li>
+                        <li><i class="fas fa-check"></i> Free High-Speed WiFi</li>
+                        <li><i class="fas fa-check"></i> Free Parking</li>
+                        <li><i class="fas fa-check"></i> 24/7 Internet</li>
+                    </ul>
+                </div>
+                
+                <div class="amenity-card">
+                    <h3><i class="fas fa-concierge-bell"></i> Services</h3>
+                    <ul class="amenity-list">
+                        <li><i class="fas fa-check"></i> 24-Hour Front Desk</li>
+                        <li><i class="fas fa-check"></i> Room Service</li>
+                        <li><i class="fas fa-check"></i> Full Laundry Service</li>
+                        <li><i class="fas fa-check"></i> Local Shuttle</li>
+                        <li><i class="fas fa-check"></i> Travel Desk</li>
+                    </ul>
+                </div>
+                
+                <div class="amenity-card">
+                    <h3><i class="fas fa-times-circle" style="color: #e74c3c;"></i> Not Available</h3>
+                    <ul class="amenity-list">
+                        <li><i class="fas fa-times"></i> Air Conditioning</li>
+                        <li><i class="fas fa-times"></i> Swimming Pool</li>
+                        <li><i class="fas fa-times"></i> Fitness Center</li>
+                        <li><i class="fas fa-times"></i> Spa</li>
+                        <li><i class="fas fa-times"></i> Hot Tub</li>
+                    </ul>
+                </div>
+                
+                <div class="amenity-card">
+                    <h3><i class="fas fa-clipboard-list"></i> Policies</h3>
+                    <ul class="amenity-list">
+                        <li><i class="fas fa-check"></i> Smoke-free Property</li>
+                        <li><i class="fas fa-check"></i> Check-in: 12:00 PM</li>
+                        <li><i class="fas fa-check"></i> Check-out: 11:00 AM</li>
+                        <li><i class="fas fa-check"></i> Pet Friendly</li>
+                        <li><i class="fas fa-check"></i> Family Rooms</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Gallery Section -->
+        <section id="gallery">
+            <h2><i class="fas fa-camera"></i> Photo Gallery</h2>
+            
+            <div class="gallery-grid">
+                <div class="gallery-card">
+                    <img src="https://images.unsplash.com/photo-1566665797739-1674de7a421a?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80" alt="Deluxe Room">
+                    <div class="gallery-overlay">
+                        <h4>Deluxe Room</h4>
+                        <p>Spacious & Comfortable</p>
+                    </div>
+                </div>
+                
+                <div class="gallery-card">
+                    <img src="https://images.unsplash.com/photo-1584132915807-fd1f5fbc078f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Bathroom">
+                    <div class="gallery-overlay">
+                        <h4>Modern Bathroom</h4>
+                        <p>Clean & Hygienic</p>
+                    </div>
+                </div>
+                
+                <div class="gallery-card">
+                    <img src="https://images.unsplash.com/photo-1551632436-cbf8dd35adfa?ixlib=rb-1.2.1&auto=format&fit=crop&w=1351&q=80" alt="Hotel Entrance">
+                    <div class="gallery-overlay">
+                        <h4>Hotel Entrance</h4>
+                        <p>Welcoming & Secure</p>
+                    </div>
+                </div>
+                
+                <div class="gallery-card">
+                    <img src="https://images.unsplash.com/photo-1574643156829-56b7a4f7c9f2?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Parking">
+                    <div class="gallery-overlay">
+                        <h4>Free Parking</h4>
+                        <p>Secure Parking Area</p>
+                    </div>
+                </div>
+                
+                <div class="gallery-card">
+                    <img src="https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Breakfast">
+                    <div class="gallery-overlay">
+                        <h4>Complimentary Breakfast</h4>
+                        <p>Fresh & Healthy</p>
+                    </div>
+                </div>
+                
+                <div class="gallery-card">
+                    <img src="https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Lobby">
+                    <div class="gallery-overlay">
+                        <h4>Elegant Lobby</h4>
+                        <p>24/7 Reception</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Location Section with Working Map -->
+        <section id="location">
+            <h2><i class="fas fa-map-marked-alt"></i> Find Us</h2>
+            
+            <div class="map-section">
+                <!-- WORKING GOOGLE MAP - ये बिल्कुल सही दिखेगा -->
+                <div class="map-container">
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3558.451165877685!2d80.9445633!3d26.8877626!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x399bfa0e9a1b4c6d%3A0x123456789abcdef!2sSita%20Vihar%20Colony%2C%20Jankipuram%2C%20Lucknow%2C%20Uttar%20Pradesh%20226021!5e0!3m2!1sen!2sin!4v1711100000000!5m2!1sen!2sin" 
+                    allowfullscreen="" 
+                    loading="lazy" 
+                    referrerpolicy="no-referrer-when-downgrade"></iframe>
+                </div>
+                
+                <div class="location-details">
+                    <div class="location-card">
+                        <i class="fas fa-map-pin"></i>
+                        <h4>Exact Address</h4>
+                        <p>WXM6+64C, Madiyaon Rd, Sita Vihar Colony, Janki Vihar Colony, Jankipuram, Lucknow - 226021</p>
+                    </div>
+                    
+                    <div class="location-card">
+                        <i class="fas fa-tree"></i>
+                        <h4>Kukrail Gharial Park</h4>
+                        <p>10 km • 25 min drive</p>
+                    </div>
+                    
+                    <div class="location-card">
+                        <i class="fas fa-flask"></i>
+                        <h4>Regional Science City</h4>
+                        <p>6 km • 15 min drive</p>
+                    </div>
+                    
+                    <div class="location-card">
+                        <i class="fas fa-train"></i>
+                        <h4>Mohibullapur Station</h4>
+                        <p>7 km • 20 min drive</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Contact Section -->
+        <section id="contact">
+            <h2><i class="fas fa-phone-alt"></i> Contact Us</h2>
+            
+            <div class="contact-wrapper">
+                <div class="contact-info-card">
+                    <h3 style="color: white; margin-bottom: 2rem;">Get in Touch</h3>
+                    
+                    <div class="contact-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <strong>Address:</strong>
+                            <p>WXM6+64C, Madiyaon Rd, Sita Vihar Colony, Jankipuram, Lucknow</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-item">
+                        <i class="fas fa-phone"></i>
+                        <div>
+                            <strong>Phone:</strong>
+                            <p style="font-size: 1.3rem; font-weight: bold;">095591 02736</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-item">
+                        <i class="fas fa-clock"></i>
+                        <div>
+                            <strong>Check-in/out:</strong>
+                            <p>Check-in: 12:00 PM | Check-out: 11:00 AM</p>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 2rem;">
+                        <a href="tel:09559102736" class="btn-book btn-small" style="background: #ffb347; color: #0b2b40;">
+                            <i class="fas fa-phone-alt"></i> Call Now
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="timing-card">
+                    <h3>Quick Information</h3>
+                    
+                    <div class="timing-row">
+                        <span><i class="fas fa-clock" style="color: #1a4b6d;"></i> Reception</span>
+                        <span><strong>24x7 Open</strong></span>
+                    </div>
+                    
+                    <div class="timing-row">
+                        <span><i class="fas fa-coffee"></i> Breakfast</span>
+                        <span><strong>7:00 AM - 10:00 AM</strong></span>
+                    </div>
+                    
+                    <div class="timing-row">
+                        <span><i class="fas fa-concierge-bell"></i> Room Service</span>
+                        <span><strong>24 Hours</strong></span>
+                    </div>
+                    
+                    <div class="timing-row">
+                        <span><i class="fas fa-parking"></i> Parking</span>
+                        <span><strong>Free for Guests</strong></span>
+                    </div>
+                    
+                    <div class="timing-row">
+                        <span><i class="fas fa-shuttle-van"></i> Local Shuttle</span>
+                        <span><strong>On Request</strong></span>
+                    </div>
+                    
+                    <div style="margin-top: 2rem; text-align: center;">
+                        <p style="background: #e8f5e9; padding: 0.8rem; border-radius: 8px;">
+                            <i class="fas fa-check-circle" style="color: #28a745;"></i> 
+                            Late check-out available on request
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <!-- WhatsApp Button -->
+    <a href="https://wa.me/919559102736?text=Hi!%20I'm%20interested%20in%20booking%20a%20room%20at%20Divine%20Residency.%20Please%20share%20availability." 
+       class="whatsapp-float" 
+       target="_blank">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+    
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div>
+                <h3 style="color: #ffb347;">Divine Residency</h3>
+                <p style="margin-top: 1rem; opacity: 0.9;">Your comfort is our priority. Experience the best budget stay in Jankipuram, Lucknow.</p>
+            </div>
+            
+            <div>
+                <h4 style="color: #ffb347;">Quick Links</h4>
+                <ul style="list-style: none; margin-top: 1rem;">
+                    <li style="margin: 0.5rem 0;"><a href="#home" style="color: white; text-decoration: none;">Home</a></li>
+                    <li style="margin: 0.5rem 0;"><a href="#rooms" style="color: white; text-decoration: none;">Rooms</a></li>
+                    <li style="margin: 0.5rem 0;"><a href="#contact" style="color: white; text-decoration: none;">Contact</a></li>
+                </ul>
+            </div>
+            
+            <div>
+                <h4 style="color: #ffb347;">Contact Info</h4>
+                <p style="margin-top: 1rem;">📞 09559102736</p>
+                <p>📍 Jankipuram, Lucknow</p>
+            </div>
+        </div>
+        
+        <div class="copyright">
+            <p>© 2024 Divine Residency. All rights reserved. | Designed for By @mit Saieek</p>
+            <p style="margin-top: 0.5rem; font-size: 0.9rem;"> |Web Developer</p>
+        </div>
+    </footer>
+</body>
+</html>
