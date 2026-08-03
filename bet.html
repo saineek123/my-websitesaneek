@@ -1,172 +1,405 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>User Betting Platform</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BIG WIN - Premium Betting</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <style>
+    /* ===== RESET ===== */
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-    
+
     body {
-      background: linear-gradient(135deg, #0f0c29, #1a1a2e, #16213e);
-      color: #e0e0e0;
+      font-family: 'Poppins', sans-serif;
+      background: #0a0a1a;
+      color: #fff;
       min-height: 100vh;
-      padding-bottom: 20px;
+      overflow-x: hidden;
     }
-    
-    nav {
-      background: rgba(10, 10, 20, 0.85);
-      backdrop-filter: blur(10px);
-      padding: 12px 15px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0a0a1a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #00f7ff, #0077ff);
+      border-radius: 10px;
+    }
+
+    /* ===== HEADER ===== */
+    header {
+      background: linear-gradient(135deg, #0f0c29, #1a1a3e, #24243e);
+      padding: 12px 20px;
       position: sticky;
       top: 0;
       z-index: 100;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-      border-bottom: 1px solid rgba(0, 229, 255, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.8);
+      border-bottom: 1px solid rgba(0, 247, 255, 0.15);
+      flex-wrap: wrap;
+      gap: 10px;
     }
-    
+
     .logo {
       display: flex;
       align-items: center;
       gap: 10px;
-      font-weight: bold;
-      font-size: 1.2rem;
-      background: linear-gradient(90deg, #00e5ff, #00b8d4);
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .logo i {
+      color: #00f7ff;
+      font-size: 1.4rem;
+    }
+    .logo span {
+      background: linear-gradient(90deg, #00f7ff, #0077ff);
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
     }
-    
-    .logo i {
-      font-size: 1.5rem;
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
-    
+
+    /* ===== MINI BALANCE ===== */
+    .mini-balance {
+      background: rgba(0, 247, 255, 0.08);
+      border: 1px solid rgba(0, 247, 255, 0.2);
+      border-radius: 30px;
+      padding: 5px 14px;
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #00f7ff;
+      font-weight: 600;
+      backdrop-filter: blur(10px);
+    }
+    .mini-balance i {
+      font-size: 0.85rem;
+    }
+    .mini-balance span {
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .menu-icon {
+      font-size: 1.4rem;
+      cursor: pointer;
+      color: #fff;
+      transition: 0.3s;
+      padding: 5px;
+    }
+    .menu-icon:hover {
+      color: #00f7ff;
+      transform: rotate(90deg);
+    }
+
+    /* ===== NAV LINKS ===== */
     .nav-links {
       display: flex;
       gap: 5px;
       overflow-x: auto;
       padding: 5px 0;
+      flex: 1;
+      justify-content: center;
     }
-    
     .nav-links a {
       color: #a0a0d0;
       text-decoration: none;
-      padding: 8px 12px;
-      font-size: 0.85rem;
+      padding: 6px 14px;
+      font-size: 0.8rem;
       border-radius: 20px;
       transition: all 0.3s ease;
       white-space: nowrap;
+      font-weight: 500;
     }
-    
-    .nav-links a:hover, .nav-links a.active {
+    .nav-links a:hover,
+    .nav-links a.active {
       background: rgba(0, 229, 255, 0.15);
       color: #00e5ff;
     }
-    
-    .user-section {
+
+    /* ===== DRAWER ===== */
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.75);
+      z-index: 998;
+      display: none;
+      backdrop-filter: blur(5px);
+    }
+
+    .drawer {
+      position: fixed;
+      top: 0;
+      left: -300px;
+      width: 290px;
+      height: 100%;
+      background: linear-gradient(180deg, #12122a, #1a1a3e);
+      padding: 20px 0;
+      transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 999;
+      overflow-y: auto;
+      border-right: 2px solid rgba(0, 247, 255, 0.1);
+    }
+    .drawer.open {
+      left: 0;
+    }
+
+    .drawer-header {
+      padding: 0 20px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      margin-bottom: 10px;
+    }
+    .drawer .user-info {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 14px;
     }
-    
-    .user-section button {
-      background: transparent;
-      border: 1px solid rgba(255, 0, 0, 0.3);
-      color: #ff5555;
-      border-radius: 20px;
-      padding: 6px 12px;
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-    
-    .user-section button:hover {
-      background: rgba(255, 0, 0, 0.1);
-    }
-    
-    .wallet-info {
-      text-align: center;
-      margin: 20px auto;
-      padding: 20px;
-      max-width: 700px;
-      background: rgba(20, 20, 35, 0.5);
-      border-radius: 16px;
-      border: 1px solid rgba(0, 229, 255, 0.1);
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    }
-    
-    .wallet-info h2 {
-      font-size: 1.8rem;
-      margin-bottom: 20px;
-      background: linear-gradient(90deg, #00e5ff, #00b8d4);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+    .drawer .user-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #00f7ff, #302b63);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      font-size: 1.2rem;
+      box-shadow: 0 0 20px rgba(0, 247, 255, 0.2);
     }
-    
+    .drawer .user-name {
+      font-weight: 600;
+      font-size: 1.05rem;
+    }
+    .drawer .user-sub {
+      font-size: 0.75rem;
+      color: #00f7ff;
+      opacity: 0.7;
+    }
+
+    .drawer a {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      color: #ddd;
+      text-decoration: none;
+      font-weight: 500;
+      padding: 13px 25px;
+      margin: 3px 0;
+      transition: 0.3s;
+      font-size: 0.95rem;
+      border-left: 3px solid transparent;
+    }
+    .drawer a i {
+      width: 22px;
+      text-align: center;
+      font-size: 1.1rem;
+    }
+    .drawer a:hover {
+      background: rgba(0, 247, 255, 0.08);
+      color: #00f7ff;
+      border-left-color: #00f7ff;
+    }
+    .drawer .divider {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.06);
+      margin: 12px 20px;
+    }
+
+    /* ===== MAIN ===== */
+    .main-content {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px 16px 30px;
+    }
+
+    /* ===== WELCOME BANNER ===== */
+    .welcome-banner {
+      background: linear-gradient(135deg, #12122a, #0f3460);
+      border-radius: 20px;
+      padding: 28px 20px;
+      margin: 10px 0 20px;
+      text-align: center;
+      border: 1px solid rgba(0, 247, 255, 0.12);
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+    }
+    .welcome-banner::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 30% 50%, rgba(0, 247, 255, 0.03), transparent 60%);
+      pointer-events: none;
+    }
+    .welcome-banner h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      position: relative;
+    }
+    .welcome-banner h1 span {
+      background: linear-gradient(90deg, #00f7ff, #0077ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .welcome-banner p {
+      font-size: 0.95rem;
+      color: #aaa;
+      margin-top: 4px;
+      position: relative;
+    }
+
+    /* ===== BALANCE GRID ===== */
     .balance-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 15px;
-      margin-top: 20px;
+      gap: 12px;
+      margin: 15px 0;
     }
-    
     .balance-card {
       background: rgba(30, 30, 50, 0.7);
       border-radius: 12px;
-      padding: 15px;
+      padding: 14px;
       text-align: center;
       border: 1px solid rgba(0, 229, 255, 0.1);
       transition: all 0.3s ease;
     }
-    
     .balance-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 5px 15px rgba(0, 229, 255, 0.2);
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0, 229, 255, 0.15);
     }
-    
     .balance-card h3 {
-      font-size: 1rem;
-      margin-bottom: 8px;
+      font-size: 0.8rem;
+      margin-bottom: 6px;
       color: #a0a0d0;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 5px;
     }
-    
     .balance-card .amount {
-      font-size: 1.4rem;
-      font-weight: bold;
+      font-size: 1.2rem;
+      font-weight: 700;
       color: #00e5ff;
     }
-    
-    .matches-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 15px;
+
+    /* ===== INVESTMENT COMPACT ===== */
+    .promo-compact {
+      background: linear-gradient(135deg, #1a1a3e, #0f3460);
+      border-radius: 16px;
+      padding: 14px 22px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border: 1px solid rgba(0, 247, 255, 0.12);
+      box-shadow: 0 4px 25px rgba(0, 0, 0, 0.4);
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 15px 0;
     }
-    
+    .promo-compact .icon-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #00f7ff, #0077ff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: #000;
+      flex-shrink: 0;
+    }
+    .promo-compact .info {
+      flex: 1;
+      min-width: 120px;
+    }
+    .promo-compact .info h4 {
+      font-size: 0.95rem;
+      color: #00f7ff;
+      font-weight: 700;
+    }
+    .promo-compact .info p {
+      font-size: 0.75rem;
+      color: #bbb;
+      margin-top: 2px;
+    }
+    .promo-compact .btn-invest {
+      background: linear-gradient(90deg, #00f7ff, #0077ff);
+      padding: 7px 18px;
+      border-radius: 30px;
+      color: #000;
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 0.8rem;
+      transition: 0.3s;
+      white-space: nowrap;
+    }
+    .promo-compact .btn-invest:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 25px rgba(0, 247, 255, 0.4);
+    }
+
+    /* ===== DOWNLOAD APP ===== */
+    .download-section {
+      display: flex;
+      justify-content: center;
+      margin: 10px 0 15px;
+    }
+    .btn-download {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, #00f7ff, #0077ff);
+      padding: 10px 26px;
+      border-radius: 50px;
+      color: #000;
+      font-weight: 700;
+      font-size: 0.9rem;
+      text-decoration: none;
+      transition: 0.3s;
+      box-shadow: 0 4px 25px rgba(0, 247, 255, 0.25);
+      border: none;
+      cursor: pointer;
+    }
+    .btn-download i {
+      font-size: 1.2rem;
+    }
+    .btn-download:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 40px rgba(0, 247, 255, 0.45);
+    }
+
+    /* ===== MATCHES ===== */
     .section-title {
       text-align: center;
-      margin: 20px 0 25px;
-      font-size: 1.8rem;
+      margin: 20px 0 18px;
+      font-size: 1.5rem;
+      font-weight: 700;
       background: linear-gradient(90deg, #00e5ff, #00b8d4);
       -webkit-background-clip: text;
       background-clip: text;
@@ -176,752 +409,859 @@
       justify-content: center;
       gap: 12px;
     }
-    
-    .history-link {
-      text-align: center;
-      margin-bottom: 25px;
-    }
-    
-    .history-link a {
-      color: #ff5555;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 20px;
-      border-radius: 30px;
-      background: rgba(255, 85, 85, 0.1);
-      transition: all 0.3s ease;
-    }
-    
-    .history-link a:hover {
-      background: rgba(255, 85, 85, 0.2);
-      transform: translateY(-2px);
-    }
-    
+
     .matches {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-      gap: 25px;
-      padding: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 20px;
+      padding: 5px 0;
     }
-    
+
     .match-card {
       background: rgba(30, 30, 50, 0.7);
       backdrop-filter: blur(10px);
       border-radius: 16px;
-      padding: 25px;
+      padding: 22px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
       border: 1px solid rgba(0, 229, 255, 0.15);
       transition: all 0.3s ease;
       position: relative;
     }
-    
     .match-card:hover {
       transform: translateY(-5px);
-      box-shadow: 0 15px 40px rgba(0, 229, 255, 0.2);
+      box-shadow: 0 15px 40px rgba(0, 229, 255, 0.15);
     }
-    
-    .match-card h3 {
-      text-align: center;
-      margin-bottom: 20px;
-      font-size: 1.4rem;
-      color: #00e5ff;
-      padding-bottom: 15px;
-      border-bottom: 1px solid rgba(0, 229, 255, 0.1);
-    }
-    
-    .team-btn {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: rgba(20, 20, 35, 0.7);
-      padding: 15px;
-      margin: 15px 0;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      border: 1px solid transparent;
-    }
-    
-    .team-btn:hover {
-      background: rgba(30, 40, 60, 0.8);
-      border-color: rgba(0, 229, 255, 0.3);
-      transform: translateY(-3px);
-    }
-    
-    .team-btn.selected {
-      background: rgba(0, 229, 255, 0.1);
-      border-color: #00e5ff;
-      box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
-    }
-    
-    .team-btn.disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    
-    .team-name {
-      font-size: 1.1rem;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    
-    .rate {
-      background: linear-gradient(135deg, #00e5ff, #00b8d4);
-      padding: 6px 12px;
-      border-radius: 20px;
-      color: #000;
-      font-weight: bold;
-      min-width: 70px;
-      text-align: center;
-    }
-    
-    .bet-input {
-      position: relative;
-      margin-top: 20px;
-    }
-    
-    .bet-input i {
-      position: absolute;
-      left: 15px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #00e5ff;
-      font-size: 18px;
-    }
-    
-    .bet-input input {
-      width: 100%;
-      padding: 14px 15px 14px 45px;
-      background: rgba(20, 20, 35, 0.7);
-      border: 1px solid rgba(0, 229, 255, 0.2);
-      border-radius: 10px;
-      color: #fff;
-      font-size: 16px;
-      transition: all 0.3s ease;
-    }
-    
-    .bet-input input:focus {
-      outline: none;
-      border-color: #00e5ff;
-      box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.2);
-      background: rgba(25, 25, 45, 0.8);
-    }
-    
-    .bet-input input::placeholder {
-      color: #8888bb;
-    }
-    
-    .bet-btn {
-      width: 100%;
-      padding: 14px;
-      border-radius: 10px;
-      border: none;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      margin-top: 15px;
-      background: linear-gradient(90deg, #00e5ff, #00b8d4);
-      color: #000;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 10px;
-    }
-    
-    .bet-btn:hover {
-      background: linear-gradient(90deg, #00d0eb, #00a0c0);
-      transform: translateY(-3px);
-      box-shadow: 0 5px 15px rgba(0, 229, 255, 0.3);
-    }
-    
-    .bet-btn:disabled {
-      background: #555;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-    
-    .selected-team {
-      text-align: center;
-      margin-top: 15px;
-      padding: 10px;
-      border-radius: 8px;
-      background: rgba(0, 229, 255, 0.1);
-      border: 1px solid rgba(0, 229, 255, 0.2);
-      font-size: 14px;
-      color: #00e5ff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-    
-    .payout-info {
-      text-align: center;
-      margin-top: 10px;
-      padding: 8px;
-      border-radius: 8px;
-      background: rgba(0, 229, 255, 0.05);
-      border: 1px dashed rgba(0, 229, 255, 0.2);
-      font-size: 14px;
-      color: #00e5ff;
-    }
-    
-    .notification {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 15px 25px;
-      background: rgba(30, 30, 50, 0.9);
-      border-left: 4px solid #00e5ff;
-      border-radius: 8px;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-      transform: translateX(110%);
-      transition: transform 0.4s ease;
-      z-index: 1000;
-      backdrop-filter: blur(10px);
-      max-width: 350px;
-    }
-    
-    .notification.show {
-      transform: translateX(0);
-    }
-    
-    .notification.error {
-      border-left-color: #ff5555;
-    }
-    
-    .notification.success {
-      border-left-color: #55ff55;
-    }
-    
+
     .match-status {
       position: absolute;
-      top: 10px;
+      top: 12px;
       right: 15px;
-      padding: 5px 10px;
+      padding: 4px 12px;
       border-radius: 15px;
-      font-size: 12px;
-      font-weight: bold;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
     }
-    
     .status-live {
       background: rgba(255, 0, 0, 0.2);
       color: #ff5555;
       border: 1px solid rgba(255, 0, 0, 0.3);
       animation: pulse 1.5s infinite;
     }
-    
     .status-upcoming {
       background: rgba(0, 229, 255, 0.2);
       color: #00e5ff;
       border: 1px solid rgba(0, 229, 255, 0.3);
     }
-    
     .status-locked {
-      background: rgba(255, 85, 85, 0.2);
+      background: rgba(255, 85, 85, 0.15);
       color: #ff5555;
-      border: 1px solid rgba(255, 85, 85, 0.3);
+      border: 1px solid rgba(255, 85, 85, 0.2);
     }
-    
+
     .timer {
       text-align: center;
-      margin-top: 10px;
-      font-size: 14px;
+      margin: 5px 0 12px;
+      font-size: 0.8rem;
       color: #8888bb;
     }
-    
     .timer.locked {
       color: #ff5555;
-      font-weight: bold;
+      font-weight: 600;
     }
-    
+
+    .match-card h3 {
+      text-align: center;
+      margin-bottom: 15px;
+      font-size: 1.2rem;
+      color: #00e5ff;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(0, 229, 255, 0.1);
+    }
+
+    .team-btn {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(20, 20, 35, 0.7);
+      padding: 12px 16px;
+      margin: 10px 0;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 1px solid transparent;
+    }
+    .team-btn:hover {
+      background: rgba(30, 40, 60, 0.8);
+      border-color: rgba(0, 229, 255, 0.3);
+      transform: translateY(-2px);
+    }
+    .team-btn.selected {
+      background: rgba(0, 229, 255, 0.1);
+      border-color: #00e5ff;
+      box-shadow: 0 0 20px rgba(0, 229, 255, 0.15);
+    }
+    .team-btn.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .team-btn .team-name {
+      font-size: 0.95rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .team-btn .rate {
+      background: linear-gradient(135deg, #00e5ff, #00b8d4);
+      padding: 4px 12px;
+      border-radius: 20px;
+      color: #000;
+      font-weight: 700;
+      font-size: 0.8rem;
+      min-width: 60px;
+      text-align: center;
+    }
+
+    .bet-input {
+      position: relative;
+      margin-top: 15px;
+    }
+    .bet-input i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #00e5ff;
+      font-size: 0.9rem;
+    }
+    .bet-input input {
+      width: 100%;
+      padding: 11px 15px 11px 40px;
+      background: rgba(20, 20, 35, 0.7);
+      border: 1px solid rgba(0, 229, 255, 0.2);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+    }
+    .bet-input input:focus {
+      outline: none;
+      border-color: #00e5ff;
+      box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.15);
+      background: rgba(25, 25, 45, 0.8);
+    }
+    .bet-input input::placeholder {
+      color: #8888bb;
+      font-size: 0.85rem;
+    }
+    .bet-input input:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .payout-info {
+      text-align: center;
+      margin-top: 10px;
+      padding: 8px;
+      border-radius: 8px;
+      background: rgba(0, 229, 255, 0.05);
+      border: 1px dashed rgba(0, 229, 255, 0.15);
+      font-size: 0.8rem;
+      color: #00e5ff;
+    }
+
+    .bet-btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 12px;
+      background: linear-gradient(90deg, #00e5ff, #00b8d4);
+      color: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+    }
+    .bet-btn:hover {
+      background: linear-gradient(90deg, #00d0eb, #00a0c0);
+      transform: translateY(-3px);
+      box-shadow: 0 5px 20px rgba(0, 229, 255, 0.3);
+    }
+    .bet-btn:disabled {
+      background: #444;
+      color: #999;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .selected-team {
+      text-align: center;
+      margin-top: 12px;
+      padding: 8px;
+      border-radius: 8px;
+      background: rgba(0, 229, 255, 0.08);
+      border: 1px solid rgba(0, 229, 255, 0.15);
+      font-size: 0.8rem;
+      color: #00e5ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
     .lock-message {
       text-align: center;
       margin-top: 10px;
       padding: 8px;
-      background: rgba(255, 85, 85, 0.1);
-      border: 1px solid rgba(255, 85, 85, 0.2);
+      background: rgba(255, 85, 85, 0.08);
+      border: 1px solid rgba(255, 85, 85, 0.15);
       border-radius: 8px;
       color: #ff5555;
-      font-size: 14px;
+      font-size: 0.8rem;
     }
-    
+
+    .no-matches {
+      text-align: center;
+      padding: 40px 20px;
+      background: rgba(30, 30, 50, 0.5);
+      border-radius: 16px;
+      border: 1px solid rgba(0, 229, 255, 0.1);
+    }
+    .no-matches i {
+      font-size: 3rem;
+      color: #00e5ff;
+      margin-bottom: 15px;
+      opacity: 0.5;
+    }
+    .no-matches h3 {
+      font-size: 1.2rem;
+      color: #aaa;
+    }
+    .no-matches p {
+      color: #666;
+      margin-top: 5px;
+    }
+
+    .history-link {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .history-link a {
+      color: #ff5555;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 18px;
+      border-radius: 30px;
+      background: rgba(255, 85, 85, 0.08);
+      transition: all 0.3s ease;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    .history-link a:hover {
+      background: rgba(255, 85, 85, 0.18);
+      transform: translateY(-2px);
+    }
+
+    /* ===== LOGOUT ===== */
+    .logout-section {
+      text-align: center;
+      margin: 35px 0 10px;
+    }
+    .logout-btn {
+      padding: 10px 40px;
+      background: linear-gradient(135deg, #ff4b5c, #ff7b87);
+      border: none;
+      border-radius: 30px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .logout-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 30px rgba(255, 75, 92, 0.4);
+    }
+
+    /* ===== NOTIFICATION ===== */
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 14px 24px;
+      background: rgba(30, 30, 50, 0.95);
+      border-left: 4px solid #00e5ff;
+      border-radius: 10px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+      transform: translateX(120%);
+      transition: transform 0.4s ease;
+      z-index: 1000;
+      backdrop-filter: blur(12px);
+      max-width: 360px;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    .notification.show {
+      transform: translateX(0);
+    }
+    .notification.error {
+      border-left-color: #ff5555;
+    }
+    .notification.success {
+      border-left-color: #55ff55;
+    }
+
+    /* ===== LOADER ===== */
     .loader {
       display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 3px solid rgba(255, 255, 255, 0.3);
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
       border-radius: 50%;
       border-top-color: #00e5ff;
-      animation: spin 1s ease-in-out infinite;
-      margin-left: 10px;
+      animation: spin 0.8s ease-in-out infinite;
+      margin-left: 6px;
     }
-    
+
+    /* ===== ANIMATIONS ===== */
     @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    
-    @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.6; }
-      100% { opacity: 1; }
-    }
-    
-    @media (max-width: 768px) {
-      nav {
-        flex-direction: column;
-        gap: 15px;
+      to {
+        transform: rotate(360deg);
       }
-      
+    }
+    @keyframes pulse {
+      0% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+      100% {
+        opacity: 1;
+      }
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      header {
+        flex-direction: column;
+        gap: 8px;
+        padding: 10px 15px;
+      }
       .nav-links {
         width: 100%;
         justify-content: center;
+        gap: 3px;
       }
-      
-      .user-section {
+      .nav-links a {
+        font-size: 0.7rem;
+        padding: 5px 10px;
+      }
+      .header-right {
         width: 100%;
         justify-content: center;
       }
-      
       .matches {
         grid-template-columns: 1fr;
       }
-      
       .balance-grid {
         grid-template-columns: 1fr 1fr;
       }
-    }
-    
-    @media (max-width: 480px) {
-      .nav-links a {
-        font-size: 0.75rem;
-        padding: 6px 10px;
+      .welcome-banner h1 {
+        font-size: 1.4rem;
       }
-      
+    }
+
+    @media (max-width: 480px) {
       .balance-grid {
         grid-template-columns: 1fr;
       }
-      
       .match-card {
-        padding: 20px;
+        padding: 16px;
       }
-      
       .team-btn {
-        padding: 12px;
-        font-size: 0.9rem;
+        padding: 10px 14px;
+      }
+      .team-btn .team-name {
+        font-size: 0.85rem;
+      }
+      .promo-compact {
+        padding: 12px 16px;
+        gap: 10px;
+      }
+      .promo-compact .info h4 {
+        font-size: 0.85rem;
+      }
+      .btn-download {
+        padding: 8px 20px;
+        font-size: 0.8rem;
+      }
+      .mini-balance {
+        font-size: 0.65rem;
+        padding: 4px 10px;
+      }
+      .section-title {
+        font-size: 1.2rem;
       }
     }
   </style>
 </head>
 <body>
 
-<nav>
-  <div class="logo">
-    <i class="fas fa-dice"></i>
-    <span>BETPRO</span>
-  </div>
-  
-  <div class="nav-links">
-    <a href="#" class="active"><i class="fas fa-home"></i> Home</a>
-    <a href="#"><i class="fas fa-wallet"></i> Recharge</a>
-    <a href="#"><i class="fas fa-money-bill-wave"></i> Withdraw</a>
-    <a href="#"><i class="fas fa-history"></i> History</a>
-    <a href="#"><i class="fas fa-user"></i> Account</a>
-    <a href="#"><i class="fas fa-headset"></i> Support</a>
-  </div>
-  
-  <div class="user-section">
-    <button id="logoutBtn">
-      <i class="fas fa-sign-out-alt"></i> Logout
-    </button>
-  </div>
-</nav>
+  <!-- ===== OVERLAY ===== -->
+  <div class="overlay" id="overlay" onclick="toggleDrawer()"></div>
 
-<div class="wallet-info">
-  <h2><i class="fas fa-wallet"></i> Your Wallet</h2>
-  
-  <div class="balance-grid">
-    <div class="balance-card">
-      <h3><i class="fas fa-money-bill"></i> Total Balance</h3>
-      <div class="amount">₹<span id="totalBalance">Loading <span class="loader"></span></span></div>
+  <!-- ===== DRAWER ===== -->
+  <div class="drawer" id="drawer">
+    <div class="drawer-header">
+      <div class="user-info">
+        <div class="user-avatar"><i class="fas fa-user"></i></div>
+        <div>
+          <div class="user-name" id="drawerUserName">User</div>
+          <div class="user-sub">🎯 VIP Member</div>
+        </div>
+      </div>
     </div>
-    
-    <div class="balance-card">
-      <h3><i class="fas fa-credit-card"></i> Recharge</h3>
-      <div class="amount">₹<span id="rechargeBalance">Loading <span class="loader"></span></span></div>
+
+    <a href="invesment.html"><i class="fas fa-chart-line"></i> Investment</a>
+    <a href="wallet.html"><i class="fas fa-credit-card"></i> Wallet</a>
+    <a href="recharge.html"><i class="fas fa-wallet"></i> Recharge</a>
+    <a href="withdraw.html"><i class="fas fa-money-bill-wave"></i> Withdraw</a>
+    <a href="history.html"><i class="fas fa-history"></i> History</a>
+    <a href="account.html"><i class="fas fa-user-circle"></i> Account</a>
+    <div class="divider"></div>
+    <a href="support.html"><i class="fas fa-headset"></i> Support</a>
+    <a href="invite.html"><i class="fas fa-gift"></i> Invite Friends</a>
+    <a href="settings.html"><i class="fas fa-cog"></i> Settings</a>
+    <div class="divider"></div>
+    <a href="login.html" style="color: #ff7b87;"><i class="fas fa-sign-out-alt"></i> Logout</a>
+  </div>
+
+  <!-- ===== HEADER ===== -->
+  <header>
+    <div class="logo">
+      <i class="fas fa-flag-checkered"></i>
+      <span>BIG WIN</span>
     </div>
-    
-    <div class="balance-card">
-      <h3><i class="fas fa-gift"></i> Bonus</h3>
-      <div class="amount">₹<span id="bonusBalance">Loading <span class="loader"></span></span></div>
+    <div class="nav-links">
+      <a href="#" class="active"><i class="fas fa-home"></i> Home</a>
+      <a href="#"><i class="fas fa-wallet"></i> Recharge</a>
+      <a href="#"><i class="fas fa-money-bill-wave"></i> Withdraw</a>
+      <a href="#"><i class="fas fa-history"></i> History</a>
+      <a href="#"><i class="fas fa-user"></i> Account</a>
+      <a href="#"><i class="fas fa-headset"></i> Support</a>
     </div>
-    
-    <div class="balance-card">
-      <h3><i class="fas fa-trophy"></i> Winning</h3>
-      <div class="amount">₹<span id="winningBalance">Loading <span class="loader"></span></span></div>
+    <div class="header-right">
+      <div class="mini-balance">
+        <i class="fas fa-wallet"></i>
+        ₹<span id="miniBalance">0.00</span>
+      </div>
+      <div class="menu-icon" onclick="toggleDrawer()">
+        <i class="fas fa-bars"></i>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main-content">
+
+    <!-- Welcome Banner -->
+    <div class="welcome-banner">
+      <h1>Welcome, <span id="userName">User</span>! 🎉</h1>
+      <p>Your ultimate betting experience starts here</p>
+    </div>
+
+    <!-- Balance Grid -->
+    <div class="balance-grid">
+      <div class="balance-card">
+        <h3><i class="fas fa-money-bill"></i> Total</h3>
+        <div class="amount">₹<span id="totalBalance">0.00</span></div>
+      </div>
+      <div class="balance-card">
+        <h3><i class="fas fa-credit-card"></i> Recharge</h3>
+        <div class="amount">₹<span id="rechargeBalance">0.00</span></div>
+      </div>
+      <div class="balance-card">
+        <h3><i class="fas fa-gift"></i> Bonus</h3>
+        <div class="amount">₹<span id="bonusBalance">0.00</span></div>
+      </div>
+      <div class="balance-card">
+        <h3><i class="fas fa-trophy"></i> Winning</h3>
+        <div class="amount">₹<span id="winningBalance">0.00</span></div>
+      </div>
+    </div>
+
+    <!-- Download App -->
+    <div class="download-section">
+      <button class="btn-download" onclick="alert('📲 Download BIG WIN App Now!')">
+        <i class="fas fa-download"></i> Download App
+        <i class="fas fa-chevron-right" style="font-size:0.7rem;"></i>
+      </button>
+    </div>
+
+    <!-- Investment Compact -->
+    <div class="promo-compact">
+      <div class="icon-box"><i class="fas fa-coins"></i></div>
+      <div class="info">
+        <h4>📈 Investment Plan</h4>
+        <p>Earn 10% daily for 24 hours</p>
+      </div>
+      <a href="invesment.html" class="btn-invest">Invest Now →</a>
+    </div>
+
+    <!-- Live Betting -->
+    <h2 class="section-title"><i class="fas fa-fire"></i> Live Betting</h2>
+
+    <div class="history-link">
+      <a href="match-history.html"><i class="fas fa-history"></i> View Match History</a>
+    </div>
+
+    <div class="matches" id="matchesContainer">
+      <!-- Matches loaded via JS -->
+    </div>
+
+    <!-- Logout -->
+    <div class="logout-section">
+      <button class="logout-btn" onclick="logout()">Logout</button>
     </div>
   </div>
-</div>
 
-<div class="matches-container">
-  <h2 class="section-title"><i class="fas fa-fire"></i> Live Betting</h2>
-  
-  <div class="history-link">
-    <a href="match-history.html"><i class="fas fa-history"></i> View Match History</a>
-  </div>
-  
-  <div class="matches" id="matchesContainer">
-    <!-- Matches will be loaded here -->
-  </div>
-</div>
+  <!-- ===== NOTIFICATION ===== -->
+  <div id="notification" class="notification"></div>
 
-<div id="notification" class="notification"></div>
+  <script>
+    // ===== FIREBASE CONFIG =====
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
+      authDomain: "betting-app-43800.firebaseapp.com",
+      databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
+      projectId: "betting-app-43800"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();
 
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
-    authDomain: "betting-app-43800.firebaseapp.com",
-    databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
-    projectId: "betting-app-43800",
-    storageBucket: "betting-app-43800.appspot.com",
-    messagingSenderId: "1234567890",
-    appId: "1:1234567890:web:abc123def456"
-  };
+    // ===== VARIABLES =====
+    let userBalance = { total: 0, recharge: 0, bonus: 0, winning: 0 };
+    let selectedBets = {};
+    let allMatches = {};
+    let userBets = {};
+    let matchTimers = {};
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-  const auth = firebase.auth();
-
-  let userBalance = { total: 0, recharge: 0, bonus: 0, winning: 0 };
-  let selectedBets = {};
-  let allMatches = {};
-  let userBets = {};
-  let matchTimers = {};
-
-  function formatCurrency(amount) {
-    return amount.toLocaleString('en-IN', {
-      maximumFractionDigits: 2,
-      minimumFractionDigits: 2
-    });
-  }
-
-  function updateBalanceDisplay() {
-    document.getElementById("totalBalance").textContent = formatCurrency(userBalance.total);
-    document.getElementById("rechargeBalance").textContent = formatCurrency(userBalance.recharge);
-    document.getElementById("bonusBalance").textContent = formatCurrency(userBalance.bonus);
-    document.getElementById("winningBalance").textContent = formatCurrency(userBalance.winning);
-  }
-
-  function fetchUserBalance() {
-    const user = auth.currentUser;
-    if (!user) return;
-
-    db.ref(`users/${user.uid}/wallet`).on('value', (snapshot) => {
-      const wallet = snapshot.val() || {};
-      userBalance.recharge = wallet.recharge || 0;
-      userBalance.bonus = wallet.bonus || 0;
-      userBalance.winning = wallet.winning || 0;
-      userBalance.total = userBalance.recharge + userBalance.bonus + userBalance.winning;
-      updateBalanceDisplay();
-    });
-  }
-
-  function fetchMatches() {
-    db.ref('matches').on('value', (snapshot) => {
-      allMatches = snapshot.val() || {};
-      renderMatches();
-      setupMatchTimers();
-    });
-  }
-
-  function fetchUserBets() {
-    const user = auth.currentUser;
-    if (!user) return;
-
-    db.ref(`users/${user.uid}/bets`).on('value', (snapshot) => {
-      userBets = snapshot.val() || {};
-      renderMatches();
-    });
-  }
-
-  function renderMatches() {
-    const matchesContainer = document.getElementById("matchesContainer");
-    matchesContainer.innerHTML = "";
-
-    if (!allMatches || Object.keys(allMatches).length === 0) {
-      matchesContainer.innerHTML = `
-        <div class="no-matches">
-          <i class="fas fa-calendar-times"></i>
-          <h3>कोई मैच उपलब्ध नहीं</h3>
-          <p>बाद में चेक करें</p>
-        </div>
-      `;
-      return;
+    // ===== DRAWER TOGGLE =====
+    function toggleDrawer() {
+      const drawer = document.getElementById('drawer');
+      const overlay = document.getElementById('overlay');
+      drawer.classList.toggle('open');
+      overlay.style.display = drawer.classList.contains('open') ? 'block' : 'none';
     }
 
-    Object.keys(allMatches).forEach(matchId => {
-      const match = allMatches[matchId];
-
-      // ✅ Hide matches with result
-      if (match.result) return;
-
-      const isLocked = match.status === 'locked' || match.locked;
-      const isLive = match.status === 'live';
-      const isUpcoming = match.status === 'upcoming';
-      const hasBet = userBets && userBets[matchId];
-
-      const card = document.createElement("div");
-      card.className = "match-card";
-      card.innerHTML = `
-        <div class="match-status ${isLive ? 'status-live' : isUpcoming ? 'status-upcoming' : 'status-locked'}">
-          ${isLive ? 'LIVE' : isUpcoming ? 'UPCOMING' : 'LOCKED'}
-        </div>
-        <div class="timer ${isLocked ? 'locked' : ''}" id="timer-${matchId}">
-          <i class="fas fa-clock"></i> ${match.timeRemaining || '00:00'}
-        </div>
-        <h3>${match.team1} vs ${match.team2}</h3>
-        <div class="team-btn ${isLocked || hasBet ? 'disabled' : ''}" id="btn-${matchId}-1" 
-          onclick="${!isLocked && !hasBet ? `selectTeam('${matchId}', '${match.team1}', ${match.rate1})` : ''}">
-          <span class="team-name"><i class="fas fa-users"></i> ${match.team1}</span>
-          <span class="rate">@${match.rate1}</span>
-        </div>
-        <div class="team-btn ${isLocked || hasBet ? 'disabled' : ''}" id="btn-${matchId}-2" 
-          onclick="${!isLocked && !hasBet ? `selectTeam('${matchId}', '${match.team2}', ${match.rate2})` : ''}">
-          <span class="team-name"><i class="fas fa-users"></i> ${match.team2}</span>
-          <span class="rate">@${match.rate2}</span>
-        </div>
-        <div class="bet-input">
-          <i class="fas fa-rupee-sign"></i>
-          <input type="number" id="amount-${matchId}" placeholder="बेट राशि डालें" 
-            ${isLocked || hasBet ? 'disabled' : ''} oninput="calculatePayout('${matchId}')"/>
-        </div>
-        <div class="payout-info" id="payout-${matchId}">
-          <i class="fas fa-calculator"></i> संभावित जीत: ₹0.00
-        </div>
-        <button class="bet-btn" onclick="placeBet('${matchId}')" ${isLocked || hasBet ? 'disabled' : ''}>
-          <i class="fas fa-coins"></i> ${hasBet ? 'बेट लग चुका' : isLocked ? 'बेटिंग बंद' : 'बेट लगाएं'}
-        </button>
-        <div class="selected-team" id="selected-${matchId}">
-          ${hasBet ? 
-            `<i class="fas fa-check-circle"></i> बेट: ${userBets[matchId].team} @${userBets[matchId].rate} (₹${userBets[matchId].amount})` :
-            `<i class="fas fa-hand-pointer"></i> कोई टीम नहीं चुनी`}
-        </div>
-        ${isLocked ? `<div class="lock-message"><i class="fas fa-lock"></i> बेटिंग बंद की गई</div>` : ''}
-        ${hasBet ? `<div class="lock-message"><i class="fas fa-check"></i> आप पहले ही बेट लगा चुके हैं</div>` : ''}
-      `;
-      matchesContainer.appendChild(card);
-
-      if (selectedBets[matchId]) {
-        const btnId = selectedBets[matchId].team === match.team1 ? '1' : '2';
-        const btnEl = document.getElementById(`btn-${matchId}-${btnId}`);
-        if (btnEl) btnEl.classList.add("selected");
-      }
-    });
-  }
-
-  function setupMatchTimers() {
-    Object.keys(matchTimers).forEach(matchId => clearInterval(matchTimers[matchId]));
-    matchTimers = {};
-
-    Object.keys(allMatches).forEach(matchId => {
-      const match = allMatches[matchId];
-      if (!match.startTime) return;
-
-      const startTime = typeof match.startTime === 'number' ? match.startTime : match.startTime * 1000;
-
-      matchTimers[matchId] = setInterval(() => {
-        const now = Date.now();
-        const timeLeft = startTime - now;
-
-        if (timeLeft <= 0) {
-          clearInterval(matchTimers[matchId]);
-          updateMatchStatus(matchId, 'live');
-          return;
-        }
-
-        const hours = Math.floor(timeLeft / 3600000);
-        const minutes = Math.floor((timeLeft % 3600000) / 60000);
-        const seconds = Math.floor((timeLeft % 60000) / 1000);
-
-        const timerEl = document.getElementById(`timer-${matchId}`);
-        if (timerEl) {
-          timerEl.innerHTML = `<i class="fas fa-clock"></i> ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }
-      }, 1000);
-    });
-  }
-
-  function updateMatchStatus(matchId, newStatus) {
-    db.ref(`matches/${matchId}/status`).set(newStatus);
-    if (newStatus === 'live') {
-      setTimeout(() => {
-        db.ref(`matches/${matchId}/locked`).set(true);
-      }, 300000);
-    }
-  }
-
-  function selectTeam(matchId, team, rate) {
-    const btn1 = document.getElementById(`btn-${matchId}-1`);
-    const btn2 = document.getElementById(`btn-${matchId}-2`);
-    if (btn1) btn1.classList.remove("selected");
-    if (btn2) btn2.classList.remove("selected");
-
-    const btnId = team === allMatches[matchId].team1 ? '1' : '2';
-    const selectedBtn = document.getElementById(`btn-${matchId}-${btnId}`);
-    if (selectedBtn) selectedBtn.classList.add("selected");
-
-    selectedBets[matchId] = { team, rate };
-
-    const selectedEl = document.getElementById(`selected-${matchId}`);
-    if (selectedEl) {
-      selectedEl.innerHTML = `<i class="fas fa-check-circle"></i> चुनी गई: ${team} @${rate}`;
+    // ===== UTILITY =====
+    function formatCurrency(amount) {
+      return amount.toLocaleString('en-IN', { maximumFractionDigits: 2, minimumFractionDigits: 2 });
     }
 
-    calculatePayout(matchId);
-  }
-
-  function calculatePayout(matchId) {
-    const amountInput = document.getElementById(`amount-${matchId}`);
-    const payoutEl = document.getElementById(`payout-${matchId}`);
-    if (!amountInput || !payoutEl) return;
-
-    const amount = parseFloat(amountInput.value);
-    const bet = selectedBets[matchId];
-
-    if (!bet) {
-      payoutEl.innerHTML = `<i class="fas fa-calculator"></i> पहले टीम चुनें`;
-      return;
+    function showNotification(msg, isError = false) {
+      const n = document.getElementById('notification');
+      if (!n) return;
+      n.textContent = msg;
+      n.className = isError ? 'notification error show' : 'notification success show';
+      clearTimeout(n._timer);
+      n._timer = setTimeout(() => { n.className = 'notification'; }, 3000);
     }
 
-    if (isNaN(amount) || amount <= 0) {
-      payoutEl.innerHTML = `<i class="fas fa-calculator"></i> वैध राशि डालें`;
-      return;
+    // ===== UPDATE UI =====
+    function updateBalanceDisplay() {
+      document.getElementById('totalBalance').textContent = formatCurrency(userBalance.total);
+      document.getElementById('rechargeBalance').textContent = formatCurrency(userBalance.recharge);
+      document.getElementById('bonusBalance').textContent = formatCurrency(userBalance.bonus);
+      document.getElementById('winningBalance').textContent = formatCurrency(userBalance.winning);
+      document.getElementById('miniBalance').textContent = formatCurrency(userBalance.total);
     }
 
-    // Fixed: Total payout = (amount * rate) includes original bet
-    const payout = amount * bet.rate;
-    payoutEl.innerHTML = `<i class="fas fa-calculator"></i> संभावित जीत: ₹${payout.toFixed(2)} (₹${amount} बेट + ₹${(payout - amount).toFixed(2)} जीत)`;
-  }
-
-  function placeBet(matchId) {
-    const user = auth.currentUser;
-    if (!user) return showNotification("कृपया पहले लॉगिन करें", true);
-
-    const amountInput = document.getElementById(`amount-${matchId}`);
-    const amount = parseFloat(amountInput.value);
-    const bet = selectedBets[matchId];
-
-    if (!bet) return showNotification("पहले एक टीम चुनें", true);
-    if (isNaN(amount) || amount <= 0) return showNotification("वैध बेट राशि डालें", true);
-    if (amount > userBalance.total) return showNotification("पैसे कम हैं", true);
-    if (amount < 10) return showNotification("न्यूनतम बेट ₹10", true);
-
-    // Deduction logic
-    let newRecharge = userBalance.recharge;
-    let newBonus = userBalance.bonus;
-    let newWinning = userBalance.winning;
-    let amountLeft = amount;
-
-    if (newRecharge > 0) {
-      const deductRecharge = Math.min(amountLeft, newRecharge);
-      newRecharge -= deductRecharge;
-      amountLeft -= deductRecharge;
-    }
-    
-    if (amountLeft > 0 && newBonus > 0) {
-      const deductBonus = Math.min(amountLeft, newBonus);
-      newBonus -= deductBonus;
-      amountLeft -= deductBonus;
-    }
-    
-    if (amountLeft > 0 && newWinning > 0) {
-      const deductWinning = Math.min(amountLeft, newWinning);
-      newWinning -= deductWinning;
-      amountLeft -= deductWinning;
-    }
-
-    if (amountLeft > 0) {
-      showNotification("पैसे कम हैं", true);
-      return;
-    }
-
-   const match = allMatches[matchId];
-const matchTitle = `${match.team1} vs ${match.team2}`;
-const returnAmount = 0; // Because match result is pending
-
-const betData = {
-  matchId,
-  match: matchTitle,
-  team: bet.team,
-  rate: bet.rate,
-  amount,
-  return: returnAmount,
-  timestamp: Date.now(),
-  result: "pending"
-};
-
-    const updates = {};
-    updates[`users/${user.uid}/wallet/recharge`] = newRecharge;
-    updates[`users/${user.uid}/wallet/bonus`] = newBonus;
-    updates[`users/${user.uid}/wallet/winning`] = newWinning;
-    updates[`users/${user.uid}/bets/${matchId}`] = betData;
-
-    db.ref().update(updates).then(() => {
-      showNotification(`${bet.team} पर ₹${amount} का बेट लगा!`, false);
-      userBalance.recharge = newRecharge;
-      userBalance.bonus = newBonus;
-      userBalance.winning = newWinning;
-      userBalance.total = newRecharge + newBonus + newWinning;
-      userBets[matchId] = betData;
-      delete selectedBets[matchId];
-      updateBalanceDisplay();
-      renderMatches();
-    }).catch(() => {
-      showNotification("बेट लगाने में समस्या. फिर कोशिश करें", true);
-    });
-  }
-
-  function showNotification(msg, isError = false) {
-    const n = document.getElementById("notification");
-    if (!n) return;
-    n.innerText = msg;
-    n.className = isError ? "notification error show" : "notification success show";
-    setTimeout(() => {
-      n.className = "notification";
-    }, 3000);
-  }
-
-  function initApp() {
-    const logoutBtn = document.getElementById("logoutBtn");
-    if (logoutBtn) {
-      logoutBtn.addEventListener("click", () => {
-        auth.signOut().then(() => {
-          showNotification("आप लॉग आउट हो गए", false);
-          setTimeout(() => window.location.href = "login.html", 1500);
-        });
+    // ===== FETCH USER BALANCE =====
+    function fetchUserBalance() {
+      const user = auth.currentUser;
+      if (!user) return;
+      db.ref(`users/${user.uid}/wallet`).on('value', (snapshot) => {
+        const wallet = snapshot.val() || {};
+        userBalance.recharge = wallet.recharge || 0;
+        userBalance.bonus = wallet.bonus || 0;
+        userBalance.winning = wallet.winning || 0;
+        userBalance.total = userBalance.recharge + userBalance.bonus + userBalance.winning;
+        updateBalanceDisplay();
       });
     }
 
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        fetchUserBalance();
-        fetchMatches();
-        fetchUserBets();
-      } else {
-        showNotification("कृपया लॉगिन करें", true);
-        setTimeout(() => window.location.href = "login.html", 2000);
-      }
-    });
-  }
+    // ===== FETCH MATCHES =====
+    function fetchMatches() {
+      db.ref('matches').on('value', (snapshot) => {
+        allMatches = snapshot.val() || {};
+        renderMatches();
+        setupMatchTimers();
+      });
+    }
 
-  document.addEventListener('DOMContentLoaded', initApp);
-</script>
+    // ===== FETCH USER BETS =====
+    function fetchUserBets() {
+      const user = auth.currentUser;
+      if (!user) return;
+      db.ref(`users/${user.uid}/bets`).on('value', (snapshot) => {
+        userBets = snapshot.val() || {};
+        renderMatches();
+      });
+    }
+
+    // ===== RENDER MATCHES =====
+    function renderMatches() {
+      const container = document.getElementById('matchesContainer');
+      container.innerHTML = '';
+
+      const matchIds = Object.keys(allMatches).filter(id => !allMatches[id].result);
+
+      if (matchIds.length === 0) {
+        container.innerHTML = `
+          <div class="no-matches">
+            <i class="fas fa-calendar-times"></i>
+            <h3>कोई मैच उपलब्ध नहीं</h3>
+            <p>बाद में चेक करें</p>
+          </div>
+        `;
+        return;
+      }
+
+      matchIds.forEach(matchId => {
+        const match = allMatches[matchId];
+        const isLocked = match.status === 'locked' || match.locked;
+        const isLive = match.status === 'live';
+        const isUpcoming = match.status === 'upcoming';
+        const hasBet = userBets && userBets[matchId];
+
+        const card = document.createElement('div');
+        card.className = 'match-card';
+        card.innerHTML = `
+          <div class="match-status ${isLive ? 'status-live' : isUpcoming ? 'status-upcoming' : 'status-locked'}">
+            ${isLive ? 'LIVE' : isUpcoming ? 'UPCOMING' : 'LOCKED'}
+          </div>
+          <div class="timer ${isLocked ? 'locked' : ''}" id="timer-${matchId}">
+            <i class="fas fa-clock"></i> ${match.timeRemaining || '00:00:00'}
+          </div>
+          <h3>${match.team1} vs ${match.team2}</h3>
+          <div class="team-btn ${isLocked || hasBet ? 'disabled' : ''}" id="btn-${matchId}-1" 
+            onclick="${!isLocked && !hasBet ? `selectTeam('${matchId}', '${match.team1}', ${match.rate1})` : ''}">
+            <span class="team-name"><i class="fas fa-users"></i> ${match.team1}</span>
+            <span class="rate">@${match.rate1}</span>
+          </div>
+          <div class="team-btn ${isLocked || hasBet ? 'disabled' : ''}" id="btn-${matchId}-2" 
+            onclick="${!isLocked && !hasBet ? `selectTeam('${matchId}', '${match.team2}', ${match.rate2})` : ''}">
+            <span class="team-name"><i class="fas fa-users"></i> ${match.team2}</span>
+            <span class="rate">@${match.rate2}</span>
+          </div>
+          <div class="bet-input">
+            <i class="fas fa-rupee-sign"></i>
+            <input type="number" id="amount-${matchId}" placeholder="बेट राशि डालें" 
+              ${isLocked || hasBet ? 'disabled' : ''} oninput="calculatePayout('${matchId}')"/>
+          </div>
+          <div class="payout-info" id="payout-${matchId}">
+            <i class="fas fa-calculator"></i> संभावित जीत: ₹0.00
+          </div>
+          <button class="bet-btn" onclick="placeBet('${matchId}')" ${isLocked || hasBet ? 'disabled' : ''}>
+            <i class="fas fa-coins"></i> ${hasBet ? 'बेट लग चुका' : isLocked ? 'बेटिंग बंद' : 'बेट लगाएं'}
+          </button>
+          <div class="selected-team" id="selected-${matchId}">
+            ${hasBet ? 
+              `<i class="fas fa-check-circle"></i> बेट: ${userBets[matchId].team} @${userBets[matchId].rate} (₹${userBets[matchId].amount})` :
+              `<i class="fas fa-hand-pointer"></i> कोई टीम नहीं चुनी`}
+          </div>
+          ${isLocked ? `<div class="lock-message"><i class="fas fa-lock"></i> बेटिंग बंद की गई</div>` : ''}
+          ${hasBet ? `<div class="lock-message"><i class="fas fa-check"></i> आप पहले ही बेट लगा चुके हैं</div>` : ''}
+        `;
+        container.appendChild(card);
+
+        if (selectedBets[matchId]) {
+          const btnId = selectedBets[matchId].team === match.team1 ? '1' : '2';
+          const btnEl = document.getElementById(`btn-${matchId}-${btnId}`);
+          if (btnEl) btnEl.classList.add('selected');
+        }
+      });
+    }
+
+    // ===== SETUP TIMERS =====
+    function setupMatchTimers() {
+      Object.keys(matchTimers).forEach(id => clearInterval(matchTimers[id]));
+      matchTimers = {};
+
+      Object.keys(allMatches).forEach(matchId => {
+        const match = allMatches[matchId];
+        if (!match.startTime) return;
+        const startTime = typeof match.startTime === 'number' ? match.startTime : match.startTime * 1000;
+
+        matchTimers[matchId] = setInterval(() => {
+          const now = Date.now();
+          const timeLeft = startTime - now;
+          if (timeLeft <= 0) {
+            clearInterval(matchTimers[matchId]);
+            db.ref(`matches/${matchId}/status`).set('live');
+            setTimeout(() => db.ref(`matches/${matchId}/locked`).set(true), 300000);
+            return;
+          }
+          const h = String(Math.floor(timeLeft / 3600000)).padStart(2, '0');
+          const m = String(Math.floor((timeLeft % 3600000) / 60000)).padStart(2, '0');
+          const s = String(Math.floor((timeLeft % 60000) / 1000)).padStart(2, '0');
+          const el = document.getElementById(`timer-${matchId}`);
+          if (el) el.innerHTML = `<i class="fas fa-clock"></i> ${h}:${m}:${s}`;
+        }, 1000);
+      });
+    }
+
+    // ===== SELECT TEAM =====
+    function selectTeam(matchId, team, rate) {
+      const match = allMatches[matchId];
+      if (!match) return;
+
+      const btn1 = document.getElementById(`btn-${matchId}-1`);
+      const btn2 = document.getElementById(`btn-${matchId}-2`);
+      if (btn1) btn1.classList.remove('selected');
+      if (btn2) btn2.classList.remove('selected');
+
+      const btnId = team === match.team1 ? '1' : '2';
+      const selectedBtn = document.getElementById(`btn-${matchId}-${btnId}`);
+      if (selectedBtn) selectedBtn.classList.add('selected');
+
+      selectedBets[matchId] = { team, rate };
+      const el = document.getElementById(`selected-${matchId}`);
+      if (el) el.innerHTML = `<i class="fas fa-check-circle"></i> चुनी गई: ${team} @${rate}`;
+
+      calculatePayout(matchId);
+    }
+
+    // ===== CALCULATE PAYOUT =====
+    function calculatePayout(matchId) {
+      const amountInput = document.getElementById(`amount-${matchId}`);
+      const payoutEl = document.getElementById(`payout-${matchId}`);
+      if (!amountInput || !payoutEl) return;
+
+      const amount = parseFloat(amountInput.value);
+      const bet = selectedBets[matchId];
+
+      if (!bet) {
+        payoutEl.innerHTML = `<i class="fas fa-calculator"></i> पहले टीम चुनें`;
+        return;
+      }
+      if (isNaN(amount) || amount <= 0) {
+        payoutEl.innerHTML = `<i class="fas fa-calculator"></i> वैध राशि डालें`;
+        return;
+      }
+
+      const payout = amount * bet.rate;
+      payoutEl.innerHTML = `<i class="fas fa-calculator"></i> संभावित जीत: ₹${payout.toFixed(2)} (₹${amount} बेट + ₹${(payout - amount).toFixed(2)} जीत)`;
+    }
+
+    // ===== PLACE BET =====
+    function placeBet(matchId) {
+      const user = auth.currentUser;
+      if (!user) return showNotification('कृपया पहले लॉगिन करें', true);
+
+      const amountInput = document.getElementById(`amount-${matchId}`);
+      const amount = parseFloat(amountInput.value);
+      const bet = selectedBets[matchId];
+
+      if (!bet) return showNotification('पहले एक टीम चुनें', true);
+      if (isNaN(amount) || amount <= 0) return showNotification('वैध बेट राशि डालें', true);
+      if (amount > userBalance.total) return showNotification('पैसे कम हैं', true);
+      if (amount < 10) return showNotification('न्यूनतम बेट ₹10', true);
+
+      let remaining = amount;
+      let newRecharge = userBalance.recharge;
+      let newBonus = userBalance.bonus;
+      let newWinning = userBalance.winning;
+
+      const deduct = (bal, max) => {
+        const d = Math.min(max, remaining);
+        remaining -= d;
+        return bal - d;
+      };
+
+      if (newRecharge > 0) newRecharge = deduct(newRecharge, newRecharge);
+      if (remaining > 0 && newBonus > 0) newBonus = deduct(newBonus, newBonus);
+      if (remaining > 0 && newWinning > 0) newWinning = deduct(newWinning, newWinning);
+
+      if (remaining > 0) return showNotification('पैसे कम हैं', true);
+
+      const match = allMatches[matchId];
+      const betData = {
+        matchId,
+        match: `${match.team1} vs ${match.team2}`,
+        team: bet.team,
+        rate: bet.rate,
+        amount,
+        return: 0,
+        timestamp: Date.now(),
+        result: 'pending'
+      };
+
+      const updates = {};
+      updates[`users/${user.uid}/wallet/recharge`] = newRecharge;
+      updates[`users/${user.uid}/wallet/bonus`] = newBonus;
+      updates[`users/${user.uid}/wallet/winning`] = newWinning;
+      updates[`users/${user.uid}/bets/${matchId}`] = betData;
+
+      db.ref().update(updates).then(() => {
+        showNotification(`${bet.team} पर ₹${amount} का बेट लगा!`, false);
+        userBalance.recharge = newRecharge;
+        userBalance.bonus = newBonus;
+        userBalance.winning = newWinning;
+        userBalance.total = newRecharge + newBonus + newWinning;
+        userBets[matchId] = betData;
+        delete selectedBets[matchId];
+        updateBalanceDisplay();
+        renderMatches();
+      }).catch(() => {
+        showNotification('बेट लगाने में समस्या. फिर कोशिश करें', true);
+      });
+    }
+
+    // ===== LOGOUT =====
+    function logout() {
+      auth.signOut().catch(e => console.error(e)).finally(() => {
+        localStorage.removeItem('userId');
+        localStorage.removeItem('loggedInUser');
+        showNotification('आप लॉग आउट हो गए', false);
+        setTimeout(() => window.location.href = 'login.html', 1500);
+      });
+    }
+
+    // ===== INIT =====
+    function initApp() {
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          // Get user name
+          db.ref(`users/${user.uid}/name`).once('value', (snap) => {
+            const name = snap.val() || 'User';
+            document.getElementById('userName').textContent = name;
+            document.getElementById('drawerUserName').textContent = name;
+          });
+          fetchUserBalance();
+          fetchMatches();
+          fetchUserBets();
+        } else {
+          showNotification('कृपया लॉगिन करें', true);
+          setTimeout(() => window.location.href = 'login.html', 2000);
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', initApp);
+  </script>
 
 </body>
 </html>
