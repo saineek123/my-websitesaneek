@@ -1,457 +1,603 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BIG WIN - Premium Betting Experience</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BIG WIN - Premium Betting</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
-    /* ----- Reset & Base ----- */
+    /* ===== RESET ===== */
     * {
-      box-sizing: border-box;
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
     }
 
     body {
       font-family: 'Poppins', sans-serif;
-      background: radial-gradient(circle at top, #0c1015, #000);
+      background: #0a0a1a;
       color: #fff;
       min-height: 100vh;
       overflow-x: hidden;
     }
 
-    /* ----- Header ----- */
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0a0a1a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #00f7ff, #0077ff);
+      border-radius: 10px;
+    }
+
+    /* ===== HEADER ===== */
     header {
-      background: linear-gradient(90deg, #0f0c29, #302b63, #24243e);
-      padding: 15px 20px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+      background: linear-gradient(135deg, #0f0c29, #1a1a3e, #24243e);
+      padding: 12px 20px;
       position: sticky;
       top: 0;
       z-index: 100;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.8);
+      border-bottom: 1px solid rgba(0, 247, 255, 0.15);
     }
 
     .logo {
       display: flex;
       align-items: center;
-      gap: 12px;
-      font-size: 1.8rem;
-      font-weight: 700;
-      letter-spacing: 1px;
+      gap: 10px;
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
     }
-
     .logo i {
       color: #00f7ff;
+      font-size: 1.6rem;
+    }
+    .logo span {
+      background: linear-gradient(90deg, #00f7ff, #0077ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
     }
 
-    .user-controls {
+    .header-right {
       display: flex;
       align-items: center;
-      gap: 15px;
+      gap: 12px;
+    }
+
+    /* ===== MINI BALANCE ===== */
+    .mini-balance {
+      background: rgba(0, 247, 255, 0.08);
+      border: 1px solid rgba(0, 247, 255, 0.2);
+      border-radius: 30px;
+      padding: 5px 14px;
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #00f7ff;
+      font-weight: 600;
+      backdrop-filter: blur(10px);
+    }
+    .mini-balance i {
+      font-size: 0.85rem;
+    }
+    .mini-balance span {
+      color: #fff;
+      font-weight: 700;
     }
 
     .menu-icon {
-      font-size: 1.8rem;
+      font-size: 1.6rem;
       cursor: pointer;
       color: #fff;
+      transition: 0.3s;
+      padding: 5px;
+    }
+    .menu-icon:hover {
+      color: #00f7ff;
+      transform: rotate(90deg);
     }
 
-    /* ----- Drawer Navigation ----- */
+    /* ===== DRAWER ===== */
     .overlay {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.75);
       z-index: 998;
       display: none;
+      backdrop-filter: blur(5px);
     }
 
     .drawer {
       position: fixed;
       top: 0;
-      left: -280px;
-      width: 280px;
+      left: -300px;
+      width: 290px;
       height: 100%;
-      background: #1a1a2e;
+      background: linear-gradient(180deg, #12122a, #1a1a3e);
       padding: 20px 0;
-      transition: 0.4s ease;
+      transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
       z-index: 999;
       overflow-y: auto;
+      border-right: 2px solid rgba(0, 247, 255, 0.1);
     }
-
     .drawer.open {
       left: 0;
     }
 
     .drawer-header {
       padding: 0 20px 20px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      margin-bottom: 15px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      margin-bottom: 10px;
     }
-
     .drawer .user-info {
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 20px;
+      gap: 14px;
     }
-
     .drawer .user-avatar {
-      width: 50px;
-      height: 50px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       background: linear-gradient(135deg, #00f7ff, #302b63);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 1.2rem;
+      box-shadow: 0 0 20px rgba(0, 247, 255, 0.2);
     }
-
     .drawer .user-name {
       font-weight: 600;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
+    }
+    .drawer .user-sub {
+      font-size: 0.75rem;
+      color: #00f7ff;
+      opacity: 0.7;
     }
 
     .drawer a {
       display: flex;
       align-items: center;
       gap: 15px;
-      color: #fff;
+      color: #ddd;
       text-decoration: none;
       font-weight: 500;
-      padding: 14px 25px;
-      margin: 5px 0;
-      transition: 0.3s ease;
-      font-size: 1rem;
+      padding: 13px 25px;
+      margin: 3px 0;
+      transition: 0.3s;
+      font-size: 0.95rem;
+      border-left: 3px solid transparent;
     }
-
     .drawer a i {
-      width: 24px;
+      width: 22px;
       text-align: center;
-      font-size: 1.2rem;
+      font-size: 1.1rem;
     }
-
     .drawer a:hover {
-      background: rgba(0, 247, 255, 0.15);
+      background: rgba(0, 247, 255, 0.08);
       color: #00f7ff;
+      border-left-color: #00f7ff;
     }
-
     .drawer .divider {
       height: 1px;
-      background: rgba(255, 255, 255, 0.1);
-      margin: 15px 0;
+      background: rgba(255, 255, 255, 0.06);
+      margin: 12px 20px;
     }
 
-    /* ----- Main Content ----- */
-    .main-content {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
+    /* ===== NOTIFICATION ===== */
+    .notification {
+      position: fixed;
+      top: 78px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 92%;
+      max-width: 600px;
+      display: flex;
+      align-items: center;
+      background: linear-gradient(135deg, #1a1a3e, #2a2a5e);
+      border-radius: 16px;
+      padding: 10px 18px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+      z-index: 50;
+      border: 1px solid rgba(0, 247, 255, 0.15);
+      backdrop-filter: blur(12px);
+      animation: slideDown 0.6s ease;
+    }
+    @keyframes slideDown {
+      from {
+        transform: translateX(-50%) translateY(-120%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+      }
     }
 
-    /* Welcome Banner (without wallet breakdown) */
-    .welcome-banner {
-      background: linear-gradient(135deg, #1a1a2e, #0f3460);
-      border-radius: 15px;
-      padding: 25px;
-      margin: 20px 0;
+    .sound-icon {
+      width: 22px;
+      height: 22px;
+      margin-right: 12px;
+      animation: pulse 1.2s infinite;
+      filter: brightness(0) invert(1);
+    }
+    @keyframes pulse {
+      0%,
+      100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.25);
+      }
+    }
+
+    .text {
+      font-size: 0.85rem;
+      color: #eee;
+      flex: 1;
       text-align: center;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
-      border: 1px solid rgba(0, 247, 255, 0.3);
+      font-weight: 500;
+      transition: opacity 0.3s;
+    }
+    .btn-detail {
+      margin-left: 12px;
+      background: linear-gradient(135deg, #ff4e50, #ff7b87);
+      border: none;
+      color: #fff;
+      padding: 5px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.75rem;
+      transition: 0.3s;
+    }
+    .btn-detail:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(255, 75, 92, 0.4);
     }
 
+    /* ===== MAIN ===== */
+    .main-content {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px 16px 30px;
+    }
+
+    /* ===== WELCOME BANNER ===== */
+    .welcome-banner {
+      background: linear-gradient(135deg, #12122a, #0f3460);
+      border-radius: 20px;
+      padding: 28px 20px;
+      margin: 10px 0 20px;
+      text-align: center;
+      border: 1px solid rgba(0, 247, 255, 0.12);
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+    }
+    .welcome-banner::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 30% 50%, rgba(0, 247, 255, 0.03), transparent 60%);
+      pointer-events: none;
+    }
     .welcome-banner h1 {
-      font-size: 2rem;
-      margin-bottom: 10px;
+      font-size: 1.8rem;
+      font-weight: 700;
+      position: relative;
+    }
+    .welcome-banner h1 span {
       background: linear-gradient(90deg, #00f7ff, #0077ff);
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
-      display: inline-block;
     }
-
     .welcome-banner p {
-      font-size: 1.1rem;
-      color: #bbb;
-      margin-bottom: 15px;
+      font-size: 0.95rem;
+      color: #aaa;
+      margin-top: 4px;
+      position: relative;
     }
 
-    /* Promo Banner - only Investment plan */
-    .promo-banner {
-      background: linear-gradient(135deg, #1a1a2e, #0f3460);
-      border-radius: 20px;
-      padding: 20px;
-      margin: 20px 0;
+    /* ===== PROMO (Investment only - compact) ===== */
+    .promo-section {
       display: flex;
+      justify-content: center;
+      margin: 18px 0 28px;
+    }
+    .promo-compact {
+      background: linear-gradient(135deg, #1a1a3e, #0f3460);
+      border-radius: 16px;
+      padding: 16px 28px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      border: 1px solid rgba(0, 247, 255, 0.12);
+      box-shadow: 0 4px 25px rgba(0, 0, 0, 0.4);
       flex-wrap: wrap;
-      gap: 20px;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
-      border: 1px solid rgba(0, 247, 255, 0.3);
       justify-content: center;
+      width: 100%;
+      max-width: 500px;
     }
-
-    .promo-card {
-      flex: 1;
-      min-width: 300px;
-      max-width: 400px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 15px;
-      overflow: hidden;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-      transition: transform 0.3s ease;
-      border: 1px solid rgba(0, 247, 255, 0.2);
-    }
-
-    .promo-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 10px 20px rgba(0, 247, 255, 0.2);
-    }
-
-    .promo-image {
-      height: 150px;
-      background: linear-gradient(135deg, #24243e, #302b63);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 3rem;
-      color: #00f7ff;
-    }
-
-    .promo-content {
-      padding: 15px;
-      text-align: center;
-    }
-
-    .promo-content h3 {
-      font-size: 1.2rem;
-      margin-bottom: 10px;
-      color: #00f7ff;
-    }
-
-    .promo-content p {
-      font-size: 0.9rem;
-      color: #ccc;
-      margin-bottom: 15px;
-    }
-
-    .btn-promo {
-      display: inline-block;
-      background: linear-gradient(to right, #00f7ff, #0077ff);
-      color: #000;
-      padding: 8px 20px;
-      border-radius: 30px;
-      font-weight: 600;
-      text-decoration: none;
-      transition: 0.3s;
-    }
-
-    .btn-promo:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 15px rgba(0, 247, 255, 0.5);
-    }
-
-    /* ----- Games Grid (Popular Games on Top) ----- */
-    .section-title {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 30px 0 20px;
-      font-size: 1.5rem;
-      color: #00f7ff;
-    }
-
-    .section-title i {
-      font-size: 1.8rem;
-    }
-
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-      gap: 20px;
-    }
-
-    .card {
-      background: linear-gradient(145deg, rgba(31, 31, 47, 0.8), rgba(46, 46, 62, 0.8));
-      border-radius: 15px;
-      padding: 20px;
-      text-align: center;
-      backdrop-filter: blur(10px);
-      transition: all 0.3s ease;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .card:hover {
-      transform: translateY(-8px);
-      box-shadow: 0 10px 25px rgba(0, 247, 255, 0.3);
-      border-color: rgba(0, 247, 255, 0.3);
-    }
-
-    .card-icon {
-      width: 60px;
-      height: 60px;
+    .promo-compact .icon-box {
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       background: linear-gradient(135deg, #00f7ff, #0077ff);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 15px;
-      font-size: 1.8rem;
+      font-size: 1.4rem;
+      color: #000;
+      flex-shrink: 0;
     }
-
-    .card h3 {
-      margin: 10px 0;
-      font-size: 1.2rem;
-      font-weight: 600;
+    .promo-compact .info {
+      flex: 1;
+      min-width: 140px;
     }
-
-    .card p {
-      font-size: 0.9rem;
+    .promo-compact .info h4 {
+      font-size: 1rem;
+      color: #00f7ff;
+      font-weight: 700;
+    }
+    .promo-compact .info p {
+      font-size: 0.8rem;
       color: #bbb;
-      margin-bottom: 15px;
-      flex-grow: 1;
+      margin-top: 2px;
     }
-
-    .card-btn {
-      padding: 10px 20px;
-      background: linear-gradient(to right, #00f7ff, #0077ff);
-      border: none;
+    .promo-compact .btn-invest {
+      background: linear-gradient(90deg, #00f7ff, #0077ff);
+      padding: 8px 22px;
       border-radius: 30px;
       color: #000;
-      font-weight: bold;
-      font-size: 0.95rem;
-      cursor: pointer;
-      transition: 0.3s ease;
-      width: 100%;
-    }
-
-    .card-btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 15px rgba(0, 247, 255, 0.5);
-    }
-
-    /* ----- Logout Button ----- */
-    .logout {
-      text-align: center;
-      margin: 40px 0 20px;
-    }
-
-    .logout-btn {
-      padding: 12px 40px;
-      background: linear-gradient(to right, #ff4b5c, #ff7b87);
-      border: none;
-      border-radius: 30px;
-      color: white;
-      font-weight: bold;
-      font-size: 1rem;
-      cursor: pointer;
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 0.85rem;
       transition: 0.3s;
+      white-space: nowrap;
     }
-
-    .logout-btn:hover {
+    .promo-compact .btn-invest:hover {
       transform: scale(1.05);
-      box-shadow: 0 0 15px rgba(255, 75, 92, 0.5);
+      box-shadow: 0 0 25px rgba(0, 247, 255, 0.4);
     }
 
-    /* ----- Notification Bar ----- */
-    .notification {
-      position: fixed;
-      top: 10%;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100%;
-      max-width: 700px;
+    /* ===== DOWNLOAD APP BUTTON ===== */
+    .download-section {
+      display: flex;
+      justify-content: center;
+      margin: 0 0 22px;
+    }
+    .btn-download {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(135deg, #00f7ff, #0077ff);
+      padding: 12px 30px;
+      border-radius: 50px;
+      color: #000;
+      font-weight: 700;
+      font-size: 1rem;
+      text-decoration: none;
+      transition: 0.3s;
+      box-shadow: 0 4px 25px rgba(0, 247, 255, 0.25);
+      border: none;
+      cursor: pointer;
+    }
+    .btn-download i {
+      font-size: 1.4rem;
+    }
+    .btn-download:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 40px rgba(0, 247, 255, 0.45);
+    }
+
+    /* ===== GAMES GRID ===== */
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 10px 0 18px;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #00f7ff;
+    }
+    .section-title i {
+      font-size: 1.5rem;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: linear-gradient(145deg, rgba(26, 26, 46, 0.85), rgba(18, 18, 42, 0.9));
+      border-radius: 16px;
+      padding: 18px 14px;
+      text-align: center;
+      backdrop-filter: blur(10px);
+      transition: all 0.35s ease;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+    }
+    .card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(0, 247, 255, 0.3);
+      box-shadow: 0 10px 30px rgba(0, 247, 255, 0.12);
+    }
+
+    .card-icon {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #00f7ff, #0077ff);
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #fff;
-      border-radius: 0 0 30px 30px;
-      padding: 10px 20px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-      font-family: Arial, sans-serif;
-      z-index: 9999;
-      animation: slideDown 0.5s ease;
+      font-size: 1.5rem;
+      color: #000;
+      margin-bottom: 10px;
+      transition: 0.3s;
+    }
+    .card:hover .card-icon {
+      transform: scale(1.08);
+      box-shadow: 0 0 25px rgba(0, 247, 255, 0.3);
     }
 
-    @keyframes slideDown {
-      from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
-      to { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .card h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin: 6px 0 3px;
     }
-
-    .sound-icon {
-      width: 20px;
-      height: 20px;
-      margin-right: 10px;
-      animation: pulse 1s infinite;
+    .card p {
+      font-size: 0.75rem;
+      color: #999;
+      margin-bottom: 12px;
+      flex-grow: 1;
     }
-
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.3); }
-    }
-
-    .text {
-      font-size: 14px;
-      color: #333;
-      transition: opacity 0.3s;
-      flex: 1;
-      text-align: center;
-    }
-
-    .btn-detail {
-      margin-left: 15px;
-      background: #ff4e50;
+    .card-btn {
+      padding: 7px 16px;
+      background: linear-gradient(90deg, #00f7ff, #0077ff);
       border: none;
-      color: white;
-      padding: 6px 15px;
-      border-radius: 20px;
+      border-radius: 30px;
+      color: #000;
+      font-weight: 700;
+      font-size: 0.8rem;
       cursor: pointer;
-      font-weight: bold;
+      transition: 0.3s;
+      width: 100%;
+    }
+    .card-btn:hover {
+      transform: scale(1.04);
+      box-shadow: 0 0 20px rgba(0, 247, 255, 0.3);
     }
 
-    .btn-detail:hover {
-      background: #ff2e30;
+    /* ===== LOGOUT ===== */
+    .logout {
+      text-align: center;
+      margin: 35px 0 10px;
+    }
+    .logout-btn {
+      padding: 10px 40px;
+      background: linear-gradient(135deg, #ff4b5c, #ff7b87);
+      border: none;
+      border-radius: 30px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .logout-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 30px rgba(255, 75, 92, 0.4);
     }
 
-    /* ----- Responsive ----- */
-    @media (max-width: 768px) {
-      .logo { font-size: 1.5rem; }
-      .cards { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
-      .card-icon { width: 50px; height: 50px; font-size: 1.5rem; }
-      .card h3 { font-size: 1.1rem; }
-      .promo-card { min-width: 100%; max-width: 100%; }
-      .welcome-banner h1 { font-size: 1.7rem; }
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 600px) {
+      .logo {
+        font-size: 1.2rem;
+      }
+      .logo i {
+        font-size: 1.3rem;
+      }
+      .mini-balance {
+        font-size: 0.65rem;
+        padding: 4px 10px;
+      }
+      .welcome-banner h1 {
+        font-size: 1.4rem;
+      }
+      .cards {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 12px;
+      }
+      .card {
+        padding: 14px 10px;
+      }
+      .card-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 1.2rem;
+      }
+      .card h3 {
+        font-size: 0.85rem;
+      }
+      .promo-compact {
+        padding: 14px 18px;
+        gap: 12px;
+      }
+      .promo-compact .info h4 {
+        font-size: 0.9rem;
+      }
+      .btn-download {
+        padding: 10px 22px;
+        font-size: 0.85rem;
+      }
+      .notification {
+        top: 72px;
+        padding: 8px 14px;
+        width: 95%;
+      }
+      .text {
+        font-size: 0.75rem;
+      }
     }
 
-    @media (max-width: 480px) {
-      .user-controls { gap: 10px; }
-      .cards { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
-      .card { padding: 15px; }
-      .card-btn { padding: 8px 15px; font-size: 0.85rem; }
-      .welcome-banner h1 { font-size: 1.5rem; }
+    @media (max-width: 400px) {
+      .cards {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 10px;
+      }
+      .card-icon {
+        width: 38px;
+        height: 38px;
+        font-size: 1rem;
+      }
+      .card h3 {
+        font-size: 0.75rem;
+      }
+      .card-btn {
+        font-size: 0.7rem;
+        padding: 5px 10px;
+      }
     }
   </style>
 </head>
 <body>
 
-  <!-- Overlay & Drawer -->
+  <!-- ===== OVERLAY ===== -->
   <div class="overlay" id="overlay" onclick="toggleDrawer()"></div>
+
+  <!-- ===== DRAWER ===== -->
   <div class="drawer" id="drawer">
     <div class="drawer-header">
       <div class="user-info">
         <div class="user-avatar"><i class="fas fa-user"></i></div>
         <div>
           <div class="user-name" id="drawerUserName">User</div>
-          <!-- Balance removed from drawer -->
+          <div class="user-sub">🎯 VIP Member</div>
         </div>
       </div>
     </div>
@@ -470,220 +616,235 @@
     <a href="login.html" style="color: #ff7b87;"><i class="fas fa-sign-out-alt"></i> Logout</a>
   </div>
 
-  <!-- Header -->
+  <!-- ===== HEADER ===== -->
   <header>
     <div class="logo">
       <i class="fas fa-flag-checkered"></i>
       <span>BIG WIN</span>
     </div>
-    <div class="user-controls">
-      <!-- Balance display removed -->
+    <div class="header-right">
+      <!-- Mini Balance -->
+      <div class="mini-balance">
+        <i class="fas fa-wallet"></i>
+        ₹<span id="miniBalance">0.00</span>
+      </div>
       <div class="menu-icon" onclick="toggleDrawer()">
         <i class="fas fa-bars"></i>
       </div>
     </div>
   </header>
 
-  <!-- Notification -->
-  <div class="notification">
+  <!-- ===== NOTIFICATION ===== -->
+  <div class="notification" id="notificationBar">
     <img class="sound-icon" src="https://cdn-icons-png.flaticon.com/512/727/727269.png" alt="Sound" />
     <div class="text" id="notifText">Loading message...</div>
     <button class="btn-detail">🔥 Detail</button>
   </div>
 
-  <!-- Main Content -->
+  <!-- ===== MAIN ===== -->
   <div class="main-content">
 
-    <!-- Welcome Banner (no wallet breakdown) -->
+    <!-- Welcome Banner -->
     <div class="welcome-banner">
-      <h1>Welcome, <span id="userName">User</span>!</h1>
+      <h1>Welcome, <span id="userName">User</span>! 🎉</h1>
       <p>Your ultimate betting experience starts here</p>
     </div>
 
-    <!-- Promo Banner - Only Investment Plan (Recharge Bonus removed) -->
-    <div class="promo-banner">
-      <div class="promo-card">
-        <div class="promo-image">
-          <i class="fas fa-coins"></i>
+    <!-- Download App Button -->
+    <div class="download-section">
+      <button class="btn-download" onclick="alert('📲 Download BIG WIN App Now!')">
+        <i class="fas fa-download"></i> Download App
+        <i class="fas fa-chevron-right" style="font-size:0.8rem;"></i>
+      </button>
+    </div>
+
+    <!-- Investment Plan - Compact -->
+    <div class="promo-section">
+      <div class="promo-compact">
+        <div class="icon-box"><i class="fas fa-coins"></i></div>
+        <div class="info">
+          <h4>📈 Investment Plan</h4>
+          <p>Earn 10% daily for 24 hours</p>
         </div>
-        <div class="promo-content">
-          <h3>Investment Plan</h3>
-          <p>Earn 10% daily for 24 hours on your investments</p>
-          <a href="invesment.html" class="btn-promo">Invest Now</a>
-        </div>
+        <a href="invesment.html" class="btn-invest">Invest Now →</a>
       </div>
     </div>
 
-    <!-- Popular Games (placed at top) -->
+    <!-- Popular Games -->
     <div class="section-title">
       <i class="fas fa-gamepad"></i>
       <h2>Popular Games</h2>
     </div>
 
     <div class="cards">
-      <div class="card">
+      <div class="card" onclick="window.location.href='bet.html'">
         <div class="card-icon"><i class="fas fa-futbol"></i></div>
         <h3>Sports Betting</h3>
-        <p>Bet on your favorite sports</p>
-        <button class="card-btn" onclick="window.location.href='bet.html'">Play Now</button>
+        <p>Bet on favorites</p>
+        <button class="card-btn">Play Now</button>
       </div>
 
-      <div class="card">
+      <div class="card" onclick="window.location.href='mines.html'">
         <div class="card-icon"><i class="fas fa-bomb"></i></div>
         <h3>Mines Game</h3>
-        <p>Avoid the mines to win</p>
-        <button class="card-btn" onclick="window.location.href='mines.html'">Play Now</button>
+        <p>Avoid & win</p>
+        <button class="card-btn">Play Now</button>
       </div>
 
-      <div class="card">
+      <div class="card" onclick="window.location.href='slots.html'">
         <div class="card-icon"><i class="fas fa-dice"></i></div>
         <h3>Slots</h3>
-        <p>Spin to win big</p>
-        <button class="card-btn" onclick="window.location.href='slots.html'">Play Now</button>
+        <p>Spin & win big</p>
+        <button class="card-btn">Play Now</button>
       </div>
 
-      <div class="card">
+      <div class="card" onclick="window.location.href='andar-bahar.html'">
         <div class="card-icon"><i class="fas fa-coins"></i></div>
         <h3>Andar Bahar</h3>
-        <p>Classic Indian card game</p>
-        <button class="card-btn" onclick="window.location.href='andar-bahar.html'">Play Now</button>
+        <p>Classic card game</p>
+        <button class="card-btn">Play Now</button>
       </div>
 
-      <div class="card">
+      <div class="card" onclick="window.location.href='dragon.html'">
         <div class="card-icon"><i class="fas fa-dragon"></i></div>
         <h3>Dragon vs Tiger</h3>
-        <p>Fast-paced card game</p>
-        <button class="card-btn" onclick="window.location.href='dragon.html'">Play Now</button>
+        <p>Fast & fun</p>
+        <button class="card-btn">Play Now</button>
       </div>
 
-      <div class="card">
+      <div class="card" onclick="window.location.href='red.html'">
         <div class="card-icon"><i class="fas fa-heart"></i></div>
         <h3>Red & Black</h3>
-        <p>Simple color betting</p>
-        <button class="card-btn" onclick="window.location.href='red.html'">Play Now</button>
+        <p>Simple color bet</p>
+        <button class="card-btn">Play Now</button>
       </div>
 
-      <div class="card">
+      <div class="card" onclick="window.location.href='spin.html'">
         <div class="card-icon"><i class="fas fa-sync-alt"></i></div>
         <h3>Lucky Spin</h3>
-        <p>Spin the wheel for prizes</p>
-        <button class="card-btn" onclick="window.location.href='spin.html'">Play Now</button>
+        <p>Win prizes</p>
+        <button class="card-btn">Play Now</button>
       </div>
 
-      <div class="card">
+      <div class="card" onclick="window.location.href='K3_Game_Mobile_Final.html'">
         <div class="card-icon"><i class="fas fa-ticket-alt"></i></div>
-        <h3>K3 DICE Lottery</h3>
-        <p>Try your luck today</p>
-        <button class="card-btn" onclick="window.location.href='K3_Game_Mobile_Final.html'">Play Now</button>
+        <h3>K3 Lottery</h3>
+        <p>Try your luck</p>
+        <button class="card-btn">Play Now</button>
       </div>
 
-      <div class="card">
+      <div class="card" onclick="window.location.href='k3.html'">
         <div class="card-icon"><i class="fas fa-gem"></i></div>
-        <h3>Lucky Card Clash</h3>
-        <p>Choose your color and win!</p>
-        <button class="card-btn" onclick="window.location.href='k3.html'">Play Now</button>
+        <h3>Lucky Clash</h3>
+        <p>Choose & win</p>
+        <button class="card-btn">Play Now</button>
       </div>
 
-      <div class="card">
+      <div class="card" onclick="window.location.href='big.html'">
         <div class="card-icon"><i class="fas fa-skull"></i></div>
         <h3>Teen Patti</h3>
-        <p>Classic Indian teen patti card game</p>
-        <button class="card-btn" onclick="window.location.href='big.html'">Play Now</button>
+        <p>Classic Indian</p>
+        <button class="card-btn">Play Now</button>
       </div>
     </div>
 
-    <!-- Logout Button -->
+    <!-- Logout -->
     <div class="logout">
       <button class="logout-btn" onclick="logout()">Logout</button>
     </div>
   </div>
 
-  <!-- Firebase SDK -->
+  <!-- ===== FIREBASE ===== -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 
   <script>
-    // ----- Firebase Config -----
+    // ===== FIREBASE CONFIG =====
     const firebaseConfig = {
       apiKey: "AIzaSyDTIIz6F0Dpxow48HiIyhn1qCISHcdubiQ",
       authDomain: "betting-app-43800.firebaseapp.com",
       databaseURL: "https://betting-app-43800-default-rtdb.firebaseio.com",
       projectId: "betting-app-43800"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const auth = firebase.auth();
 
-    // ----- Drawer Toggle -----
+    // ===== DRAWER TOGGLE =====
     function toggleDrawer() {
-      const drawer = document.getElementById("drawer");
-      const overlay = document.getElementById("overlay");
-      drawer.classList.toggle("open");
-      overlay.style.display = drawer.classList.contains("open") ? "block" : "none";
+      const drawer = document.getElementById('drawer');
+      const overlay = document.getElementById('overlay');
+      drawer.classList.toggle('open');
+      overlay.style.display = drawer.classList.contains('open') ? 'block' : 'none';
     }
 
-    // ----- Auth & User Data -----
-    const localUid = localStorage.getItem("userId");
+    // ===== AUTH & USER DATA =====
+    const localUid = localStorage.getItem('userId');
 
     if (!localUid) {
-      window.location.href = "login.html";
+      window.location.href = 'login.html';
     } else {
       const userId = localUid;
-
-      db.ref("users/" + userId).on("value", (snapshot) => {
+      db.ref('users/' + userId).on('value', (snapshot) => {
         const userData = snapshot.val();
         if (userData) {
-          document.getElementById("userName").textContent = userData.name || "User";
-          document.getElementById("drawerUserName").textContent = userData.name || "User";
+          const name = userData.name || 'User';
+          document.getElementById('userName').textContent = name;
+          document.getElementById('drawerUserName').textContent = name;
+
+          // Balance
+          const wallet = userData.wallet || {};
+          const total = (wallet.recharge || 0) + (wallet.bonus || 0) + (wallet.winning || 0);
+          document.getElementById('miniBalance').textContent = total.toFixed(2);
         }
       });
     }
 
-    // ----- Logout -----
+    // ===== LOGOUT =====
     function logout() {
-      auth.signOut().catch((error) => {
-        console.error("Logout error:", error);
-      }).finally(() => {
-        localStorage.removeItem("userId");
-        localStorage.removeItem("loggedInUser");
-        window.location.href = "login.html";
-      });
+      auth.signOut().catch((e) => console.error(e))
+        .finally(() => {
+          localStorage.removeItem('userId');
+          localStorage.removeItem('loggedInUser');
+          window.location.href = 'login.html';
+        });
     }
 
-    // ----- Notification Messages -----
+    // ===== NOTIFICATION MESSAGES =====
     const messages = [
-      "Get 10% extra bonus on your first recharge!",
-      "Withdrawals are processed within 10 minutes daily.",
-      "Play and win up to ₹10,000 daily!",
-      "Refer friends and earn ₹100 per invite!",
-      "9856276849 recharged ₹500 successfully.",
-      "7073497620 recharged ₹1000 successfully.",
-      "6395789345 recharged ₹200 successfully.",
-      "9845729027 recharged ₹300 successfully.",
-      "9792345678 recharged ₹1500 successfully.",
-      "856789345 recharged ₹2500 successfully.",
-      "935678912 recharged ₹400 successfully.",
-      "7234567890 recharged ₹600 successfully.",
-      "7856789123 recharged ₹800 successfully.",
-      "867891234 withdrew  ₹1200 successfully.",
+      '🎉 Get 10% bonus on first recharge!',
+      '⚡ Withdrawals processed in 10 mins!',
+      '🏆 Win up to ₹10,000 daily!',
+      '👥 Refer & earn ₹100 per friend!',
+      '📱 Download app for exclusive offers!',
+      '💰 9856276849 recharged ₹500',
+      '💰 7073497620 recharged ₹1000',
+      '💰 6395789345 recharged ₹200',
+      '💰 9845729027 recharged ₹300',
+      '💰 9792345678 recharged ₹1500',
+      '💰 856789345 recharged ₹2500',
+      '💰 935678912 recharged ₹400',
+      '💰 7234567890 recharged ₹600',
+      '💰 7856789123 recharged ₹800',
+      '💸 867891234 withdrew ₹1200',
     ];
 
-    let index = 0;
-    const textEl = document.getElementById("notifText");
+    let msgIndex = 0;
+    const textEl = document.getElementById('notifText');
 
-    function showNextMessage() {
+    function showNextMsg() {
       textEl.style.opacity = 0;
       setTimeout(() => {
-        textEl.textContent = messages[index];
+        textEl.textContent = messages[msgIndex];
         textEl.style.opacity = 1;
-        index = (index + 1) % messages.length;
+        msgIndex = (msgIndex + 1) % messages.length;
       }, 300);
     }
 
-    showNextMessage();
-    setInterval(showNextMessage, 2000);
+    showNextMsg();
+    setInterval(showNextMsg, 2200);
   </script>
+
 </body>
 </html>
